@@ -197,11 +197,11 @@ def pprint_result_by_party(result):
     """
     Print the output of the parser for results by party.
 
-    So that it makes more sense what it's doing.
+    So that it makes more sense.
+
     """
-    for key in result.keys():
+    for key, value in result.items():
         print key.kind
         print key.details
-        value = result[key]
-        for key in value.keys():
-            print key, ':', value[key]
+        for value_key, value_value  in value.items():
+            print value_key, ':', value_value

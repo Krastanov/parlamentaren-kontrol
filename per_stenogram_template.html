@@ -1,0 +1,56 @@
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head>
+    <h1>${stenogram.date}</h1>
+    <hr>
+
+    <h2>Регистрация</h2>
+    <table>
+        <tr>
+            <th>Партия</th>
+            <th>Присъстващи</th>
+            <th>Отсъстващи</th>
+            <th>Общо Регистрирани</th>
+        </tr>
+        <% issue, parties = stenogram.by_party_votes.items()[0] %>
+        % for party, reg_stat in parties.items():
+            <tr>
+                <td>${party}</td>
+                <td>${reg_stat.present}</td>
+                <td>${reg_stat.expected-reg_stat.present}</td>
+                <td>${reg_stat.expected}</td>
+            </tr>
+        % endfor
+    </table>
+    <% total = map(sum, zip(*parties.values())) %>
+    ВСИЧКИ ПАРТИИ: Присъстващи: ${total[0]}, Общо регистрирани: ${total[1]}
+    <hr>
+
+    % for issue, parties in stenogram.by_party_votes.items()[1:]:
+        <h3>${issue.kind}: ${issue.details}</h3>
+        <table>
+            <tr>
+                <th>Партия</th>
+                <th>За</th>
+                <th>Против</th>
+                <th>Въздържали се</th>
+                <th>Общо</th>
+            </tr>
+            % for party, vote_stat in parties.items():
+                <tr>
+                    <td>${party}</td>
+                    <td>${vote_stat.yes}</td>
+                    <td>${vote_stat.no}</td>
+                    <td>${vote_stat.abstained}</td>
+                    <td>${vote_stat.total}</td>
+                </tr>
+            % endfor
+        </table>
+        <% total = map(sum, zip(*parties.values())) %>
+        ВСИЧКИ ПАРТИИ: За: ${total[0]}, Против: ${total[1]}, Въздържали се: ${total[2]}, Общо: ${total[3]}
+        <hr>
+    % endfor
+
+    <div>
+        ${'<br>'.join(stenogram.text_lines)}
+    </div>

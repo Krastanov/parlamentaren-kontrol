@@ -12,6 +12,7 @@ import shelve
 ################
 
 class StenogramsHTMLParser(HTMLParser):
+    # TODO text_lines does not contain all the content
 
     def __init__(self):
         HTMLParser.__init__(self)

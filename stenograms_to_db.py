@@ -1,13 +1,18 @@
 from HTMLParser import HTMLParser
 from urllib2 import urlopen
-from collections import namedtuple
-from parse_excel import *
-from collections import OrderedDict
-import shelve
+from collections import namedtuple, OrderedDict
 import xlrd
+import shelve
 
+
+################
+###
+### HTML PARSING
+###
+################
 
 class StenogramsHTMLParser(HTMLParser):
+    # TODO text_lines does not contain all the content
 
     def __init__(self):
         HTMLParser.__init__(self)
@@ -38,34 +43,7 @@ class StenogramsHTMLParser(HTMLParser):
             self.data_list.append(data)
 
 
-stgram = namedtuple('stgram', ['date', 'text_lines', 'by_name_votes'])
-
-
-if __name__ == '__main__':
-    stenograms = {}
-    stenogram_IDs = open('data/IDs_plenary_stenograms').readlines()
-    for ID in stenogram_IDs[:2]:
-        print "At ID: ", ID
-        parser = StenogramsHTMLParser()
-        f = urlopen('http://www.parliament.bg/bg/plenaryst/ID/'+ID)
-        parser.feed(f.read().decode('utf-8'))
-        print parser.date
-
-        by_name_temp = open('data/temp.excel', 'wb') # TODO the next 3 lines should use the datetype
-        day, month, year = parser.date.split('/')
-        date_string = day + month + year[2:]
-        by_name_web = urlopen("http://www.parliament.bg/pub/StenD/iv%s.xls" % date_string)
-        by_name_temp.write(by_name_web.read())
-        by_name_temp.close()
-        by_name_dict = parse_excel_by_name('data/temp.excel')
-
-        stenograms[ID]=stgram(date=parser.date,
-                              text_lines=parser.data_list,
-                              by_name_votes=by_name_dict)
-
-    stenograms_dump = shelve.open('data/stenograms_dump')
-    stenograms_dump['stenograms'] = stenograms
-    stenograms_dump.close()
+stgram = namedtuple('stgram', ['date', 'text_lines', 'by_name_votes', 'by_party_votes'])
 
 
 #################
@@ -74,6 +52,8 @@ if __name__ == '__main__':
 ###
 #################
 
+# TODO rename these so it is obvious that they are containers
+# for instance a suffix _tuple
 rep = namedtuple('rep', ['name', 'party'])
 session = namedtuple('session', ['kind', 'details'])
 reg_stats = namedtuple('reg_stats', ['present', 'expected'])
@@ -148,7 +128,7 @@ def parse_excel_by_party(filename):
                 dictionary:
                     key: party
                     value:
-                        dictionary:
+                        namedtuple:
                             key: present/expected for 'REGISTRACIA', or
                                  for/against/skipped/total for 'GLASUVANE'
                             value: corresponding numbers in int format
@@ -162,9 +142,9 @@ def parse_excel_by_party(filename):
     row = 0
     while row < rows:
         first = sheet.cell_value(rowx=row, colx=0)
-        if first.find(registration) != -1:
+        if registration in first:
             kind = registration
-            details = first
+            details = first.split(registration)[-1].strip()
             key = session(kind=kind, details=details)
             row += 2
             value = {}
@@ -175,9 +155,9 @@ def parse_excel_by_party(filename):
                 expected = int(sheet.cell_value(rowx=row, colx=2))
                 value[party] = reg_stats(present=present, expected=expected)
             result[key] = value
-        elif first.find(vote) != -1:
+        elif vote in first:
             kind = vote
-            details = first
+            details = first.split(vote)[-1].strip()
             key = session(kind=kind, details=details)
             row += 2
             value = {}
@@ -205,3 +185,41 @@ def pprint_result_by_party(result):
         print key.details
         for value_key, value_value  in value.items():
             print value_key, ':', value_value
+
+
+
+
+if __name__ == '__main__':
+    stenograms = {}
+    stenogram_IDs = open('data/IDs_plenary_stenograms').readlines()
+    for ID in stenogram_IDs[:2]:
+        ID = ID.strip()
+        print "At ID: ", ID
+        parser = StenogramsHTMLParser()
+        f = urlopen('http://www.parliament.bg/bg/plenaryst/ID/'+ID)
+        parser.feed(f.read().decode('utf-8'))
+        print parser.date
+
+        day, month, year = parser.date.split('/')# TODO the next 3 lines should use the datetype
+        date_string = day + month + year[2:]
+
+        by_name_temp = open('data/temp_name.excel', 'wb')
+        by_name_web = urlopen("http://www.parliament.bg/pub/StenD/iv%s.xls" % date_string)
+        by_name_temp.write(by_name_web.read())
+        by_name_temp.close()
+        by_name_dict = parse_excel_by_name('data/temp_name.excel')
+
+        by_party_temp = open('data/temp_party.excel', 'wb')
+        by_party_web = urlopen("http://www.parliament.bg/pub/StenD/gv%s.xls" % date_string)
+        by_party_temp.write(by_party_web.read())
+        by_party_temp.close()
+        by_party_dict = parse_excel_by_party('data/temp_party.excel')
+
+        stenograms[ID]=stgram(date=parser.date,
+                              text_lines=parser.data_list,
+                              by_name_votes=by_name_dict,
+                              by_party_votes=by_party_dict)
+
+    stenograms_dump = shelve.open('data/stenograms_dump')
+    stenograms_dump['stenograms'] = stenograms
+    stenograms_dump.close()

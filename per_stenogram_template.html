@@ -76,6 +76,7 @@
     <p><strong>Всички Партии</strong>: Присъстващи: ${total[0]}, Общо регистрирани: ${total[1]}</p>
     <hr class="alt1" />
 
+
     <h2>Гласувания</h2>
     <div class="col_12"><button id="showAllSession" onClick="toggle('sessions','showAllSession','Покажи', 'Скрий');" >Покажи</button></div>
     <div class="col_1"></div>
@@ -86,7 +87,10 @@
         % endif
         <h3>Гласуване ${i+1}</h3>
         <div class="col_8"><blockquote>${session.description}</blockquote></div><div class="col_4"></div>
-        <div class="col_12"><button class="small" id="showSession${i}" onClick="toggle('session${i}','showSession${i}','Покажи таблица', 'Скрий');" >Покажи таблица</button></div>
+        <div class="col_12">
+            <button class="small" id="showSession${i}" onClick="toggle('session${i}','showSession${i}','Покажи таблица', 'Скрий');" >Покажи таблица</button>
+            <a class="small" href="#votesInText${i}">Намери в текста</a>
+        </div>
         <div class="col_12 "id="session${i}" style="display: none;">
         <table class="sortable">
             <thead><tr>
@@ -117,9 +121,19 @@
     </div>
     <hr class="alt1" />
 
+
     <h2>Пълен Текст</h2>
     <p>
-        ${'<br>'.join(stenogram.text_lines)}
+    <% count = 0 %>
+    % for i, line in enumerate(stenogram.text_lines):
+        % if i in stenogram.in_text_votes:
+            <strong id="votesInText${count}">${line}</strong>
+            <% count += 1 %>
+        % else:
+            ${line}
+        % endif
+        <br />
+    % endfor
     </p>
 
 

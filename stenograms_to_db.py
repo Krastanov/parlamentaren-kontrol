@@ -1,14 +1,15 @@
-from HTMLParser import HTMLParser
 from urllib2 import urlopen
 from collections import namedtuple, OrderedDict
+from HTMLParser import HTMLParser
 import xlrd
+import re
 import shelve
 
 
 ##############################################################################
 # Data Containers
 ##############################################################################
-stgram_tuple = namedtuple('stgram_tuple', ['date', 'text_lines',
+stgram_tuple = namedtuple('stgram_tuple', ['date', 'text_lines', 'in_text_votes',
                                            'reg_by_name_dict',
                                             # {name_string: registered_bool}
                                            'reg_by_party_dict',
@@ -33,35 +34,45 @@ vote_stats_per_party_tuple = namedtuple('vote_stats_per_party_tuple', ['yes', 'n
 ##############################################################################
 # HTML Parsing
 ##############################################################################
-class StenogramsHTMLParser(HTMLParser):
-    # TODO text_lines does not contain all the content
+how_many_have_voted_marker = u'\u0413\u043b\u0430\u0441\u0443\u0432\u0430\u043b\u0438 \\d* \u043d\u0430\u0440\u043e\u0434\u043d\u0438 \u043f\u0440\u0435\u0434\u0441\u0442\u0430\u0432\u0438\u0442\u0435\u043b\u0438:'
 
+class StenogramsHTMLParser(HTMLParser):
     def __init__(self):
         HTMLParser.__init__(self)
         self.in_marktitle = 0
+        self.in_markcontent = False
         self.in_dateclass = False
+        self.in_a = False
+        self.in_ul = False
         self.data_list = []
         self.date = None
+        self.votes_indices = []
 
     def handle_starttag(self, tag, attrs):
         if tag == 'div':
             if self.in_marktitle:
                 self.in_marktitle += 1
-
             if ('class', 'marktitle') in attrs:
                 self.in_marktitle = 1
+            elif ('class', 'markcontent') in attrs:
+                self.in_markcontent = True
             elif ('class', 'dateclass') in attrs:
                 self.in_dateclass = True
 
     def handle_endtag(self, tag):
         if tag == 'div' and self.in_marktitle:
             self.in_marktitle -= 1
+        elif tag == 'div' and self.in_markcontent:
+            self.in_markcontent = False
 
     def handle_data(self, data):
         if self.in_dateclass:
             self.date = data.strip() #TODO there must be a date type
             self.in_dateclass = False
-        elif self.in_marktitle:
+        elif self.in_markcontent:
+            data = data.strip()
+            if re.search(how_many_have_voted_marker, data):
+                self.votes_indices.append(len(self.data_list))
             self.data_list.append(data)
 
 
@@ -163,7 +174,7 @@ def parse_excel_by_party(filename):
 if __name__ == '__main__':
     stenograms = {}
     stenogram_IDs = open('data/IDs_plenary_stenograms').readlines()
-    for ID in stenogram_IDs[:2]:
+    for ID in stenogram_IDs[:1]:
         ID = ID.strip()
         print "###########"
         print "#### At ID: ", ID
@@ -197,6 +208,7 @@ if __name__ == '__main__':
 
         stenograms[ID]=stgram_tuple(parser.date,
                                     parser.data_list,
+                                    parser.votes_indices,
                                     None,
                                     reg_by_party_dict,
                                     sessions)

@@ -1,5 +1,6 @@
 from urllib2 import urlopen
 from collections import namedtuple, OrderedDict
+import datetime
 from HTMLParser import HTMLParser
 import xlrd
 import re
@@ -67,7 +68,7 @@ class StenogramsHTMLParser(HTMLParser):
 
     def handle_data(self, data):
         if self.in_dateclass:
-            self.date = data.strip() #TODO there must be a date type
+            self.date = datetime.datetime.strptime(data.strip(), '%d/%m/%Y')
             self.in_dateclass = False
         elif self.in_markcontent:
             data = data.strip()
@@ -184,8 +185,7 @@ if __name__ == '__main__':
         f = urlopen('http://www.parliament.bg/bg/plenaryst/ID/'+ID)
         parser.feed(f.read().decode('utf-8'))
 
-        day, month, year = parser.date.split('/')# TODO the next 3 lines should use the datetype
-        date_string = day + month + year[2:]
+        date_string = parser.date.strftime('%d%m%y')
 
         print "- downloading and parsing votes-by-name excel data"
         by_name_temp = open('data/temp_name.excel', 'wb')

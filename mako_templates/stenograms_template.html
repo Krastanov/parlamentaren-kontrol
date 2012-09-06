@@ -1,0 +1,34 @@
+<%include file="header.html" />
+
+
+<!-- ##################################################################### -->
+<!-- ##################################################################### -->
+<h1>Стенограми на Народните Събрания</h1>
+
+<hr class="alt1" />
+
+<div class="col_12">
+    <table class="striped">
+        <col width="10%">
+        <col width="90%">
+        <thead><tr>
+            <th>Дата</th>
+            <% array_str = "['"+"', '".join(['sessionDescription'+str(i) for i in stenograms.keys()])+"']"%>
+            <th>Гласувания <button class="small" id="showMoreInfo" onClick="toggle_array(${array_str}, 'showMoreInfo', 'покажи', 'скрий')">покажи</button></th>
+        </tr></thead>
+        <tbody>
+            % for index, st in stenograms.items():
+            <tr>
+            <th valign="top"><a href="stenogram${index}.html">${st.date.strftime('%d/%m/%Y')}</a></th>
+            <td><div id="sessionDescription${index}" style="display: none;"><ul class="alt">
+                % for session in st.sessions:
+                <li>${session.description.split(u'по тема ')[-1]}</li>
+                % endfor
+            </ul></div></td>
+            </tr>
+            % endfor
+        </tbody>
+    </table>
+</div>
+
+<%include file="footer.html" />

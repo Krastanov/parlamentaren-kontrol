@@ -173,12 +173,12 @@ def parse_excel_by_party(filename):
 # Parse and save to disc.
 ##############################################################################
 if __name__ == '__main__':
-    stenograms = {}
+    stenograms = OrderedDict()
     stenogram_IDs = open('data/IDs_plenary_stenograms').readlines()
-    for ID in stenogram_IDs[:1]:
+    for i, ID in enumerate(stenogram_IDs[:20]):
         ID = ID.strip()
         print "###########"
-        print "#### At ID: ", ID
+        print "#### At ID: ", ID, ' - %d of %d'%(i, len(stenogram_IDs))
         print "###########"
         print "- downloading and parsing HTML data"
         parser = StenogramsHTMLParser()
@@ -187,12 +187,12 @@ if __name__ == '__main__':
 
         date_string = parser.date.strftime('%d%m%y')
 
-        print "- downloading and parsing votes-by-name excel data"
-        by_name_temp = open('data/temp_name.excel', 'wb')
-        by_name_web = urlopen("http://www.parliament.bg/pub/StenD/iv%s.xls" % date_string)
-        by_name_temp.write(by_name_web.read())
-        by_name_temp.close()
-        by_name_dict = parse_excel_by_name('data/temp_name.excel')
+#        print "- downloading and parsing votes-by-name excel data"
+#        by_name_temp = open('data/temp_name.excel', 'wb')
+#        by_name_web = urlopen("http://www.parliament.bg/pub/StenD/iv%s.xls" % date_string)
+#        by_name_temp.write(by_name_web.read())
+#        by_name_temp.close()
+#        by_name_dict = parse_excel_by_name('data/temp_name.excel')
 
         print "- downloading and parsing votes-by-party excel data"
         by_party_temp = open('data/temp_party.excel', 'wb')

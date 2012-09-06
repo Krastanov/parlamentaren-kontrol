@@ -1,3 +1,19 @@
+In order to craw the parliament site and generate html reports run
+`sh start_over.sh`.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 http://www.parliament.bg/bg/plenarysittings дава достъп то три различни
 страници:
 

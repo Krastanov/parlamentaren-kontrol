@@ -1,5 +1,7 @@
 rm -rf data
+rm -rf generated_html
 mkdir data
+mkdir generated_html
 echo "Update all periods for which there is a record."
 sh update_all_periods.sh
 echo "Update all IDs of plenary stenograms."

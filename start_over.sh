@@ -6,5 +6,5 @@ echo "Update all IDs of plenary stenograms."
 sh update_IDs_plenary_stenograms_after_2012.sh
 echo "Download and parse the stenograms."
 python stenograms_to_db.py > /dev/null
-echo "Print a sample from the data base."
-python load_stenograms_db.py
+echo "Create the html pages."
+python create_html_pages.py

@@ -1,56 +1,145 @@
+<!DOCTYPE html>
+<html>
+
+
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+
+    <title>${stenogram.date.strftime('%d/%m/%Y')}</title>
+    <meta charset="UTF-8">
+    <meta name="description" content="" />
+
+
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+    <!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+    <script type="text/javascript" src="js/prettify.js"></script>                                   <!-- PRETTIFY -->
+    <script type="text/javascript" src="js/kickstart.js"></script>                                  <!-- KICKSTART -->
+    <link rel="stylesheet" type="text/css" href="css/kickstart.css" media="all" />                  <!-- KICKSTART -->
+    <link rel="stylesheet" type="text/css" href="style.css" media="all" />                          <!-- CUSTOM STYLES -->
+
+
+    <script language="javascript"> 
+    function toggle(showHideDiv, switchTextDiv, showText, hideText) {
+        var ele = document.getElementById(showHideDiv);
+        var text = document.getElementById(switchTextDiv);
+        if(ele.style.display == "block") {
+                ele.style.display = "none";
+            text.innerHTML = showText;
+        }
+        else {
+            ele.style.display = "block";
+            text.innerHTML = hideText;
+        }
+    } 
+    </script>
+
+
 </head>
-    <h1>${stenogram.date}</h1>
-    <hr>
+
+
+
+<body>
+
+
+<a id="top-of-page"></a>
+<div id="wrap" class="clearfix">
+<div class="col_12">
+
+
+    <h1>${stenogram.date.strftime('%d/%m/%Y')}</h1>
+    <hr class="alt1" />
+
 
     <h2>Регистрация</h2>
-    <table>
-        <tr>
+    <table class="sortable">
+        <thead><tr>
             <th>Партия</th>
             <th>Присъстващи</th>
             <th>Отсъстващи</th>
+            <th>Отсъстващи %</th>
             <th>Общо Регистрирани</th>
-        </tr>
-        <% issue, parties = stenogram.by_party_votes.items()[0] %>
-        % for party, reg_stat in parties.items():
+        </tr></thead>
+        <tbody>
+        % for party, reg_stat in stenogram.reg_by_party_dict.items():
             <tr>
                 <td>${party}</td>
                 <td>${reg_stat.present}</td>
                 <td>${reg_stat.expected-reg_stat.present}</td>
+                <td>${int(100*float(reg_stat.expected-reg_stat.present)/reg_stat.expected)} %</td>
                 <td>${reg_stat.expected}</td>
             </tr>
         % endfor
+        </tbody>
     </table>
-    <% total = map(sum, zip(*parties.values())) %>
-    ВСИЧКИ ПАРТИИ: Присъстващи: ${total[0]}, Общо регистрирани: ${total[1]}
-    <hr>
 
-    % for issue, parties in stenogram.by_party_votes.items()[1:]:
-        <h3>${issue.kind}: ${issue.details}</h3>
-        <table>
-            <tr>
+    <% total = map(sum, zip(*stenogram.reg_by_party_dict.values())) %>
+    <p><strong>Всички Партии</strong>: Присъстващи: ${total[0]}, Общо регистрирани: ${total[1]}</p>
+    <hr class="alt1" />
+
+
+    <h2>Гласувания</h2>
+    <div class="col_12"><button id="showAllSession" onClick="toggle('sessions','showAllSession','Покажи', 'Скрий');" >Покажи</button></div>
+    <div class="col_1"></div>
+    <div class="col_11 "id="sessions" style="display: none;">
+    % for i, session in enumerate(stenogram.sessions):
+        % if i:
+            <hr />
+        % endif
+        <h3>Гласуване ${i+1}</h3>
+        <div class="col_8"><blockquote>${session.description}</blockquote></div><div class="col_4"></div>
+        <div class="col_12">
+            <button class="small" id="showSession${i}" onClick="toggle('session${i}','showSession${i}','Покажи таблица', 'Скрий');" >Покажи таблица</button>
+            <a class="small" href="#votesInText${i}">Намери в текста</a>
+        </div>
+        <div class="col_12 "id="session${i}" style="display: none;">
+        <table class="sortable">
+            <thead><tr>
                 <th>Партия</th>
                 <th>За</th>
                 <th>Против</th>
                 <th>Въздържали се</th>
-                <th>Общо</th>
-            </tr>
-            % for party, vote_stat in parties.items():
+                <th>Общо Гласували</th>
+                <th>Не Гласували</th>
+            </tr></thead>
+            <tbody>
+            % for party, vote_stat in session.votes_by_party_dict.items():
                 <tr>
                     <td>${party}</td>
                     <td>${vote_stat.yes}</td>
                     <td>${vote_stat.no}</td>
                     <td>${vote_stat.abstained}</td>
                     <td>${vote_stat.total}</td>
+                    <td>${stenogram.reg_by_party_dict[party].expected - (vote_stat.yes + vote_stat.no + vote_stat.abstained)}</td>
                 </tr>
             % endfor
+            </tbody>
         </table>
-        <% total = map(sum, zip(*parties.values())) %>
-        ВСИЧКИ ПАРТИИ: За: ${total[0]}, Против: ${total[1]}, Въздържали се: ${total[2]}, Общо: ${total[3]}
-        <hr>
+        <% total = map(sum, zip(*session.votes_by_party_dict.values())) %>
+        <p><strong>Всички Партии</strong>: За: ${total[0]}, Против: ${total[1]}, Въздържали се: ${total[2]}, Общо Гласували: ${total[3]}</p>
+        </div>
     % endfor
-
-    <div>
-        ${'<br>'.join(stenogram.text_lines)}
     </div>
+    <hr class="alt1" />
+
+
+    <h2>Пълен Текст</h2>
+    <p>
+    <% count = 0 %>
+    % for i, line in enumerate(stenogram.text_lines):
+        % if i in stenogram.in_text_votes:
+            <strong id="votesInText${count}">${line}</strong>
+            <% count += 1 %>
+        % else:
+            ${line}
+        % endif
+        <br />
+    % endfor
+    </p>
+
+
+</div>
+</div>
+</body>
+
+
+</html>

@@ -1,6 +1,11 @@
 from mako.template import Template
 from stenograms_to_db import *
 import shelve
+import os
+
+os.system('cp -r htmlkickstart/css generated_html/css')
+os.system('cp -r htmlkickstart/js generated_html/js')
+os.system('cp htmlkickstart/style.css generated_html/style.css')
 
 stenograms_dump = shelve.open('data/stenograms_dump')
 stenograms = stenograms_dump['stenograms']

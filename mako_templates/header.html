@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Парламентарен Контрол</title>
+
+
+    <meta charset="UTF-8"i />
+    <meta name="description" content="" />
+
+
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+    <!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+    <script type="text/javascript" src="js/prettify.js"></script>
+    <script type="text/javascript" src="js/kickstart.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/kickstart.css" media="all" />
+    <link rel="stylesheet" type="text/css" href="style.css" media="all" /><!-- CUSTOM STYLES -->
+
+
+    <script language="javascript"> 
+    function toggle(showHideDiv, switchTextDiv, showText, hideText) {
+        var ele = document.getElementById(showHideDiv);
+        var text = document.getElementById(switchTextDiv);
+        if(ele.style.display == "block") {
+                ele.style.display = "none";
+            text.innerHTML = showText;
+        }
+        else {
+            ele.style.display = "block";
+            text.innerHTML = hideText;
+        }
+    } 
+    </script>
+
+    <script language="javascript"> 
+    function toggle_array(contents, switchTextDiv, showText, hideText) {
+        for(i=0; i < contents.length; i++) {
+            toggle(contents[i], switchTextDiv, showText, hideText);
+        }
+    }
+    </script>
+</head>
+
+
+<body>
+    <a id="top-of-page"></a>
+    <div id="wrap" class="clearfix">
+    <div class="col_12">

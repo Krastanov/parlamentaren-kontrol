@@ -7,28 +7,57 @@
 
 <hr class="alt1" />
 
-<div class="col_12">
-    <table class="striped">
-        <col width="10%">
-        <col width="90%">
-        <thead><tr>
-            <th>Дата</th>
-            <% array_str = "['"+"', '".join(['sessionDescription'+str(i) for i in stenograms.keys()])+"']"%>
-            <th>Гласувания <button class="small" id="showMoreInfo" onClick="toggle_array(${array_str}, 'showMoreInfo', 'покажи', 'скрий')">покажи</button></th>
-        </tr></thead>
-        <tbody>
-            % for index, st in stenograms.items():
-            <tr>
-            <th valign="top"><a href="stenogram${index}.html">${st.date.strftime('%d/%m/%Y')}</a></th>
-            <td><div id="sessionDescription${index}" style="display: none;"><ul class="alt">
-                % for session in st.sessions:
-                <li>${session.description.split(u'по тема ')[-1]}</li>
+<% years = sorted(list({s.date.year for s in stenograms.values()})) %>
+<% stenogram_yeargroups = [[s for s in stenograms.values() if s.date.year == y] for y in years] %>
+
+<ul class="tabs left">
+    % for y in years:
+    <li><a href="#yeartab${y}">${y}</a></li>
+    % endfor
+    <li><a href="#yeartaball">Всички години</a></li>
+</ul>
+
+% for y, stenogram_ygroup in zip(years + ["all"], stenogram_yeargroups + [stenograms.values()]):
+<div id="yeartab${y}" class="tab-content">
+    <% months = sorted(list({s.date.month for s in stenogram_ygroup})) %>
+    <% month_names = [u'Януари', u'Февруари', u'Март', u'Април', u'Май', u'Юни', u'Юли', u'Август', u'Септември', u'Октомври', u'Ноември', u'Декември'] %>
+    <% stenogram_monthgroups = [[s for s in stenogram_ygroup if s.date.month == m] for m in months] %>
+
+    <ul class="tabs left">
+        % for m in months:
+        <li><a href="#monthtab${y}${m}">${month_names[m-1]}</a></li>
+        % endfor
+        <li><a href="#monthtab${y}all">Всички месеци</a></li>
+    </ul>
+
+    % for m, stenogram_mgroup in zip(months + ["all"], stenogram_monthgroups + [stenogram_ygroup]):
+    <div id="monthtab${y}${m}" class="tab-content">
+        <div class="col_12">
+        <table class="striped">
+            <col width="10%">
+            <col width="90%">
+            <thead><tr>
+                <th>Дата</th>
+                <% array_str = "['"+"', '".join(['sessionDescription%s%s'%(y,m)+s.date.strftime('%Y%m%d') for s in stenogram_mgroup])+"']" %>
+                <th>Гласувания <button class="small" id="showMoreInfo${y}${m}" onClick="toggle_array(${array_str}, 'showMoreInfo${y}${m}', 'покажи', 'скрий')">покажи</button></th>
+            </tr></thead>
+            <tbody>
+                % for st in stenogram_mgroup:
+                <tr>
+                <th valign="top"><a href="stenogram${st.date.strftime('%Y%m%d')}.html">${st.date.strftime('%d/%m/%Y')}</a></th>
+                <td><div id="sessionDescription${y}${m}${st.date.strftime('%Y%m%d')}" style="display: none;"><ul class="alt">
+                    % for session in st.sessions:
+                    <li>${session.description.split(u'по тема ')[-1]}</li>
+                    % endfor
+                </ul></div></td>
+                </tr>
                 % endfor
-            </ul></div></td>
-            </tr>
-            % endfor
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+        </div>
+    </div>
+    % endfor
 </div>
+% endfor
 
 <%include file="footer.html" />

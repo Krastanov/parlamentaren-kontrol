@@ -16,9 +16,9 @@ templates = TemplateLookup(directories=['mako_templates'],
                            output_encoding='utf-8')
 
 per_stenogram_template = templates.get_template('stenogramN_template.html')
-for k, st in stenograms.items():
-    with open('generated_html/stenogram%s.html'%k, 'w') as html_file:
-        html_file.write(per_stenogram_template.render(stenogram=st))
+#for st in stenograms.values():
+#    with open('generated_html/stenogram%s.html'%st.date.strftime('%Y%m%d'), 'w') as html_file:
+#        html_file.write(per_stenogram_template.render(stenogram=st))
 
 all_stenograms_template = templates.get_template('stenograms_template.html')
 with open('generated_html/stenograms.html', 'w') as html_file:

@@ -175,7 +175,7 @@ def parse_excel_by_party(filename):
 if __name__ == '__main__':
     stenograms = OrderedDict()
     stenogram_IDs = open('data/IDs_plenary_stenograms').readlines()
-    for i, ID in enumerate(stenogram_IDs[:20]):
+    for i, ID in enumerate(stenogram_IDs):
         ID = ID.strip()
         print "###########"
         print "#### At ID: ", ID, ' - %d of %d'%(i, len(stenogram_IDs))
@@ -195,11 +195,16 @@ if __name__ == '__main__':
 #        by_name_dict = parse_excel_by_name('data/temp_name.excel')
 
         print "- downloading and parsing votes-by-party excel data"
-        by_party_temp = open('data/temp_party.excel', 'wb')
-        by_party_web = urlopen("http://www.parliament.bg/pub/StenD/gv%s.xls" % date_string)
-        by_party_temp.write(by_party_web.read())
-        by_party_temp.close()
-        reg_by_party_dict, sessions_dict = parse_excel_by_party('data/temp_party.excel')
+        try:
+            by_party_temp = open('data/temp_party.excel', 'wb')
+            by_party_web = urlopen("http://www.parliament.bg/pub/StenD/gv%s.xls" % date_string)
+            by_party_temp.write(by_party_web.read())
+            by_party_temp.close()
+            reg_by_party_dict, sessions_dict = parse_excel_by_party('data/temp_party.excel')
+        except Exception:
+            NA = u'\u041d\u044f\u043c\u0430 \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044f'
+            reg_by_party_dict = {NA: reg_stats_per_party_tuple(1, 1)}
+            sessions_dict = {NA: {NA: vote_stats_per_party_tuple(1, 1, 1, 1)}}
 
         sessions = [session_tuple(description,
                                   None,

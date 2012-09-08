@@ -4,8 +4,7 @@ import datetime
 from HTMLParser import HTMLParser
 import xlrd
 import re
-import shelve
-
+import cPickle
 
 ##############################################################################
 # Data Containers
@@ -218,6 +217,6 @@ if __name__ == '__main__':
                                     reg_by_party_dict,
                                     sessions)
 
-    stenograms_dump = shelve.open('data/stenograms_dump')
-    stenograms_dump['stenograms'] = stenograms
+    stenograms_dump = open('data/stenograms_dump', 'w')
+    cPickle.dump(stenograms, stenograms_dump, 2)
     stenograms_dump.close()

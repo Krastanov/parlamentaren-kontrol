@@ -1,7 +1,7 @@
 rm -f /data/IDs_plenary_stenograms
 for i in `cat data/periods_plenary_stenograms`
 do
-    if [ "`echo $i | cut -d"-" -f1`" -ge "2012" ]
+    if [ "`echo $i | cut -d"-" -f1`" -ge "2011" ]
     then
         curl "http://www.parliament.bg/bg/plenaryst/period/"$i 2> /dev/null |\
             grep "/bg/plenaryst/ID/" |\

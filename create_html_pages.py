@@ -7,6 +7,7 @@ import cPickle
 os.system('cp -r htmlkickstart/css generated_html/css')
 os.system('cp -r htmlkickstart/js generated_html/js')
 os.system('cp htmlkickstart/style.css generated_html/style.css')
+os.system('cp google93d3e91ac1977e5b.html generated_html/google93d3e91ac1977e5b.html')
 
 stenograms_dump = open('data/stenograms_dump', 'r')
 stenograms = cPickle.load(stenograms_dump)
@@ -24,4 +25,12 @@ for st in stenograms.values():
 all_stenograms_template = templates.get_template('stenograms_template.html')
 with open('generated_html/stenograms.html', 'w') as html_file:
     html_file.write(all_stenograms_template.render(stenograms=stenograms))
+
+index_template = templates.get_template('index_template.html')
+with open('generated_html/index.html', 'w') as html_file:
+    html_file.write(index_template.render())
+
+contacts_template = templates.get_template('contacts_template.html')
+with open('generated_html/contacts.html', 'w') as html_file:
+    html_file.write(contacts_template.render())
 

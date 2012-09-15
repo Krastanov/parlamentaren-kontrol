@@ -34,7 +34,9 @@ vote_stats_per_party_tuple = namedtuple('vote_stats_per_party_tuple', ['yes', 'n
 ##############################################################################
 # HTML Parsing
 ##############################################################################
-how_many_have_voted_marker = u'\u0413\u043b\u0430\u0441\u0443\u0432\u0430\u043b\u0438 \\d* \u043d\u0430\u0440\u043e\u0434\u043d\u0438 \u043f\u0440\u0435\u0434\u0441\u0442\u0430\u0432\u0438\u0442\u0435\u043b\u0438:'
+how_many_have_voted_marker = u'\u0413\u043b\u0430\u0441\u0443\u0432\u0430\u043b[\u0438]?[ ]*\\d*[ ]*\u043d\u0430\u0440\u043e\u0434\u043d\u0438[ ]*\u043f\u0440\u0435\u0434\u0441\u0442\u0430\u0432\u0438\u0442\u0435\u043b\u0438:'
+# The above marker regex must permit a number of spelling errors that can be
+# pressent in the stenograms.
 
 class StenogramsHTMLParser(HTMLParser):
     def __init__(self):

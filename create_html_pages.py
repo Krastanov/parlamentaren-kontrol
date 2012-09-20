@@ -39,6 +39,7 @@ def registration_figure(datestr, reg_by_party_dict):
 
     pos = np.arange(len(names))
     width = 0.35
+    plt.clf()
     p1 = plt.bar(pos, presences, width, color='g')
     p2 = plt.bar(pos, absences, width, color='r', bottom=presences)
     plt.ylabel(u'Брой Депутати')

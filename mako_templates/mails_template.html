@@ -1,0 +1,18 @@
+<%include file="header.html" />
+<%include file="navs.html" />
+
+
+<!-- ##################################################################### -->
+<!-- ##################################################################### -->
+<h1>Адреси за контракт с народните представители</h1>
+
+<hr class="alt1" />
+
+<div class="col_12">
+% for party, mails in mails_per_party_dict.items():
+    <h2>${party}</h2>
+    <blockquote>${mails}</blockquote>
+% endfor
+</div>
+
+<%include file="footer.html" />

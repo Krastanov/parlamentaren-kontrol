@@ -50,7 +50,7 @@ text-shadow: 0px 0px 1px transparent; /* google font pixelation fix */
 }
 
 #wrap{
-width:960px;/*960*/
+width:1100px;
 background:#fff;
 margin:30px auto 30px auto;
 padding:0;

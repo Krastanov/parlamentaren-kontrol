@@ -13,6 +13,7 @@
 <!-- ##################################################################### -->
 <h2>Регистрация</h2>
 
+<div class="col_6">
 <table class="sortable">
     <thead><tr>
         <th>Партия</th>
@@ -34,9 +35,13 @@
     % endfor
     </tbody>
 </table>
-
 <% total = map(sum, zip(*stenogram.reg_by_party_dict.values())) %>
 <p><strong>Всички Партии</strong>: Присъстващи: ${total[0]}, Общо регистрирани: ${total[1]}</p>
+</div>
+<div class="col_6">
+    <img class="full-width" src="registration${stenogram.date.strftime('%Y%m%d')}.png" />
+</div>
+
 
 <hr class="alt1" />
 

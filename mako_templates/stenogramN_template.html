@@ -38,7 +38,7 @@
 <p><strong>Всички Партии</strong>: Присъстващи: ${total[0]}, Общо регистрирани: ${total[1]}</p>
 </div>
 <div class="col_6">
-    <img class="full-width" src="registration${stenogram.date.strftime('%Y%m%d')}.png" />
+    <img class="full-width" src="registration${stenogram.date.strftime('%Y%m%d')}.png" alt="Регистрирани и отсъстващи депутати."/>
 </div>
 
 
@@ -51,8 +51,7 @@
 
 <div class="col_12"><button id="showAllSession" onClick="toggle('sessions','showAllSession','Покажи', 'Скрий');" >Покажи</button></div>
 
-<div class="col_1"></div>
-<div class="col_11 "id="sessions" style="display: none;">
+<div class="col_12 "id="sessions" style="display: none;">
 
 % for i, session in enumerate(stenogram.sessions):
     % if i:
@@ -61,7 +60,8 @@
 
     <h3>Гласуване ${i+1}</h3>
 
-    <div class="col_8"><blockquote>${session.description}</blockquote></div><div class="col_4"></div>
+    <div class="col_6"><blockquote>${session.description}</blockquote></div>
+    <div class="col_6"><img class="full-width" src="session${stenogram.date.strftime('%Y%m%d')}votes${i}.png" alt="Гласували и отсъстващи депутати."/></div>
 
     <div class="col_12">
         <button class="small" id="showSession${i}" onClick="toggle('session${i}','showSession${i}','Покажи таблица', 'Скрий');" >Покажи таблица</button>

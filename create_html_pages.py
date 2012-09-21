@@ -50,10 +50,35 @@ def registration_figure(datestr, reg_by_party_dict):
     plt.legend((p1[0], p2[0]), (u'Присъстващи', u'Отсъстващи'))
     plt.savefig('generated_html/registration%s.png' % datestr)
 
+def votes_by_party_figure(datestr, i, vote_by_party_dict, reg_by_party_dict):
+    list_of_votes = sorted(vote_by_party_dict.items(), key=lambda x: x[0])
+    names = [x[0] for x in list_of_votes]
+    expected = np.array([reg_by_party_dict[n].expected for n in names])
+    yes = np.array([x[1].yes for x in list_of_votes])
+    no = np.array([x[1].no for x in list_of_votes])
+    abstained = np.array([x[1].abstained for x in list_of_votes])
+    absences = expected - yes - no - abstained
+
+    pos = np.arange(len(names))
+    width = 0.35
+    plt.clf()
+    p1 = plt.bar(pos, yes, width, color='g')
+    p2 = plt.bar(pos, no, width, color='r', bottom=yes)
+    p3 = plt.bar(pos, abstained, width, color='c', bottom=yes+no)
+    p4 = plt.bar(pos, absences, width, color='k', bottom=yes+no+abstained)
+    plt.ylabel(u'Брой Депутати')
+    plt.title(u'Гласували Депутати')
+    plt.xticks(pos+width/2., names)
+    plt.xlim(-0.5*width, pos[-1]+1.5*width)
+    plt.legend((p1[0], p2[0], p3[0], p4[0]), (u'За', u'Против', u'Въздържали се', u'Отсъстващи'))
+    plt.savefig('generated_html/session%svotes%s.png' % (datestr, i))
+
 per_stenogram_template = templates.get_template('stenogramN_template.html')
 for st in stenograms.values():
     datestr = st.date.strftime('%Y%m%d')
     registration_figure(datestr, st.reg_by_party_dict)
+    for i, session in enumerate(st.sessions):
+        votes_by_party_figure(datestr, i, session.votes_by_party_dict, st.reg_by_party_dict)
     with open('generated_html/stenogram%s.html'%datestr, 'w') as html_file:
         html_file.write(per_stenogram_template.render(stenogram=st))
 

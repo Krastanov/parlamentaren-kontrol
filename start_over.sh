@@ -14,3 +14,7 @@ echo "Download and parse the stenograms."
 python stenograms_to_db.py
 echo "Create the html pages."
 python create_html_pages.py
+echo "Optimize the png files."
+cd generated_html
+optipng -zc9 -zm8 -zs0 -f0 -i0 *.png > /dev/null
+cd ..

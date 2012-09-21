@@ -16,6 +16,7 @@ rcParams['figure.dpi'] = 80
 os.system('cp -r htmlkickstart/css generated_html/css')
 os.system('cp -r htmlkickstart/js generated_html/js')
 os.system('cp style.css generated_html/style.css')
+os.system('cp retina_dust/retina_dust.png generated_html/css/img/grid.png')
 os.system('cp google93d3e91ac1977e5b.html generated_html/google93d3e91ac1977e5b.html')
 
 stenograms_dump = open('data/stenograms_dump', 'r')

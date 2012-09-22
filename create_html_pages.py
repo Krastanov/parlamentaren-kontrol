@@ -2,7 +2,7 @@
 from mako.template import Template
 from mako.lookup import TemplateLookup
 from stenograms_to_db import *
-from matplotlib import rcParams
+from matplotlib import rcParams, gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -10,8 +10,13 @@ import cPickle
 
 rcParams['font.family'] = 'sans-serif'
 rcParams['font.sans-serif'] = ['FreeSans']
-rcParams['figure.figsize'] = (5, 3)
-rcParams['figure.dpi'] = 80
+rcParams['font.size'] = 8
+rcParams['figure.figsize'] = (5., 3)
+rcParams['savefig.dpi'] = 80
+rcParams['legend.fontsize'] = 'small'
+rcParams['text.antialiased'] = True
+rcParams['patch.antialiased'] = True
+rcParams['lines.antialiased'] = True
 
 os.system('cp -r htmlkickstart/css generated_html/css')
 os.system('cp -r htmlkickstart/js generated_html/js')
@@ -40,15 +45,23 @@ def registration_figure(datestr, reg_by_party_dict):
 
     pos = np.arange(len(names))
     width = 0.35
-    plt.clf()
-    p1 = plt.bar(pos, presences, width, color='g')
-    p2 = plt.bar(pos, absences, width, color='r', bottom=presences)
-    plt.ylabel(u'Брой Депутати')
-    plt.title(u'Регистрирани Депутати')
-    plt.xticks(pos+width/2., names)
-    plt.xlim(-0.5*width, pos[-1]+1.5*width)
-    plt.legend((p1[0], p2[0]), (u'Присъстващи', u'Отсъстващи'))
-    plt.savefig('generated_html/registration%s.png' % datestr)
+    f = plt.figure()
+    f.suptitle(u'Регистрирани Депутати')
+    gs = gridspec.GridSpec(3,5)
+    main = f.add_subplot(gs[:,0:-1])
+    p1 = main.bar(pos, presences, width, color='g')
+    p2 = main.bar(pos, absences, width, color='r', bottom=presences)
+    main.set_ylabel(u'Брой Депутати')
+    main.set_xticks(pos+width/2.)
+    main.set_xticklabels(names)
+    main.tick_params(axis='x', length=0)
+    main.set_xlim(-0.5*width, pos[-1]+1.5*width)
+    main.legend((p1[0], p2[0]), (u'Присъстващи', u'Отсъстващи'), loc='upper left', bbox_to_anchor=(1,1))
+    summ = f.add_subplot(gs[-1,-1])
+    pie_array = [np.sum(presences), np.sum(absences)]
+    summ.pie(pie_array, colors=['g', 'r'])
+    summ.set_title(u'Общо')
+    f.savefig('generated_html/registration%s.png' % datestr)
 
 def votes_by_party_figure(datestr, i, vote_by_party_dict, reg_by_party_dict):
     list_of_votes = sorted(vote_by_party_dict.items(), key=lambda x: x[0])
@@ -61,22 +74,64 @@ def votes_by_party_figure(datestr, i, vote_by_party_dict, reg_by_party_dict):
 
     pos = np.arange(len(names))
     width = 0.35
-    plt.clf()
-    p1 = plt.bar(pos, yes, width, color='g')
-    p2 = plt.bar(pos, no, width, color='r', bottom=yes)
-    p3 = plt.bar(pos, abstained, width, color='c', bottom=yes+no)
-    p4 = plt.bar(pos, absences, width, color='k', bottom=yes+no+abstained)
-    plt.ylabel(u'Брой Депутати')
-    plt.title(u'Гласували Депутати')
-    plt.xticks(pos+width/2., names)
-    plt.xlim(-0.5*width, pos[-1]+1.5*width)
-    plt.legend((p1[0], p2[0], p3[0], p4[0]), (u'За', u'Против', u'Въздържали се', u'Отсъстващи'))
-    plt.savefig('generated_html/session%svotes%s.png' % (datestr, i))
+    f = plt.figure()
+    f.suptitle(u'Гласували Депутати')
+    gs = gridspec.GridSpec(3,5)
+    main = f.add_subplot(gs[:,0:-1])
+    p1 = main.bar(pos, yes, width, color='g')
+    p2 = main.bar(pos, no, width, color='r', bottom=yes)
+    p3 = main.bar(pos, abstained, width, color='c', bottom=yes+no)
+    p4 = main.bar(pos, absences, width, color='k', bottom=yes+no+abstained)
+    main.set_ylabel(u'Брой Депутати')
+    main.set_xticks(pos+width/2.)
+    main.set_xticklabels(names)
+    main.tick_params(axis='x', length=0)
+    main.set_xlim(-0.5*width, pos[-1]+1.5*width)
+    main.legend((p1[0], p2[0], p3[0], p4[0]), (u'За', u'Против', u'Въздържали се', u'Отсъстващи'), loc='upper left', bbox_to_anchor=(1,1))
+    summ = f.add_subplot(gs[-1,-1])
+    pie_array = [np.sum(yes), np.sum(no), np.sum(abstained), np.sum(absences)]
+    summ.pie(pie_array, colors=['g', 'r', 'c', 'k'])
+    summ.set_title(u'Общо')
+    f.savefig('generated_html/session%svotes%s.png' % (datestr, i))
+
+def absences_figures(datestr, reg_by_party_dict, sessions):
+    list_of_regs = sorted(reg_by_party_dict.items(), key=lambda x: x[0])
+    names = [x[0] for x in list_of_regs]
+    presences = np.array([x[1].present for x in list_of_regs])
+    expected = np.array([x[1].expected for x in list_of_regs])
+    reg_absences = expected - presences
+    all_absences = [reg_absences]
+    for vote_by_party_dict in [s.votes_by_party_dict for s in sessions]:
+        yes = np.array([vote_by_party_dict[n].yes for n in names])
+        no = np.array([vote_by_party_dict[n].no for n in names])
+        abstained = np.array([vote_by_party_dict[n].abstained for n in names])
+        all_absences.append(expected - yes - no - abstained)
+    all_absences_percent = [a*100/expected for a in all_absences]
+    all_absences = np.column_stack(all_absences).T
+    all_absences_percent = np.column_stack(all_absences_percent).T
+
+    f = plt.figure()
+    f.suptitle(u'Отсъствия по Време на Гласуване.')
+    gs = gridspec.GridSpec(2,5)
+    su = f.add_subplot(gs[0,:-1])
+    su.plot(all_absences, alpha=0.8)
+    su.set_ylabel(u'Брой Депутати')
+    su.set_ylim(0)
+    su.set_xticks([])
+    su.legend(names, loc='upper left', bbox_to_anchor=(1,1))
+    sd = f.add_subplot(gs[1,:-1], sharex=su)
+    sd.plot(all_absences_percent, alpha=0.8)
+    sd.set_ylabel(u'Процент от Партията')
+    sd.set_ylim(0, 100)
+    sd.set_xticks([])
+    f.autofmt_xdate()
+    f.savefig('generated_html/absences%s.png' % datestr)
 
 per_stenogram_template = templates.get_template('stenogramN_template.html')
 for st in stenograms.values():
     datestr = st.date.strftime('%Y%m%d')
     registration_figure(datestr, st.reg_by_party_dict)
+    absences_figures(datestr, st.reg_by_party_dict, st.sessions)
     for i, session in enumerate(st.sessions):
         votes_by_party_figure(datestr, i, session.votes_by_party_dict, st.reg_by_party_dict)
     with open('generated_html/stenogram%s.html'%datestr, 'w') as html_file:

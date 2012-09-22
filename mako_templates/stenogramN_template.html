@@ -37,10 +37,10 @@
 <% total = map(sum, zip(*stenogram.reg_by_party_dict.values())) %>
 <p><strong>Всички Партии</strong>: Присъстващи: ${total[0]}, Общо регистрирани: ${total[1]}</p>
 </div>
+
 <div class="col_6">
     <img class="full-width" src="registration${stenogram.date.strftime('%Y%m%d')}.png" alt="Регистрирани и отсъстващи депутати."/>
 </div>
-
 
 <hr class="alt1" />
 
@@ -49,9 +49,12 @@
 <!-- ##################################################################### -->
 <h2>Гласувания</h2>
 
-<div class="col_12"><button id="showAllSession" onClick="toggle('sessions','showAllSession','Покажи', 'Скрий');" >Покажи</button></div>
+<div class="col_6">
+<img class="full-width" src="absences${stenogram.date.strftime('%Y%m%d')}.png" alt="Отсъствия на депутати."/>
+</div>
+<div class="col_6"></div>
 
-<div class="col_12 "id="sessions" style="display: none;">
+<div class="col_12 "id="sessions">
 
 % for i, session in enumerate(stenogram.sessions):
     % if i:

@@ -28,7 +28,7 @@
             <td>${party}</td>
             <td>${reg_stat.present}</td>
             <td>${reg_stat.expected-reg_stat.present}</td>
-            <td>${int(100*float(reg_stat.expected-reg_stat.present)/reg_stat.expected)} %</td>
+            <td class="percentage">${int(100*float(reg_stat.expected-reg_stat.present)/reg_stat.expected)}</td>
             <td>${reg_stat.expected}</td>
         </tr>
     % endfor

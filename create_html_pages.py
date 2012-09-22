@@ -62,6 +62,7 @@ def registration_figure(datestr, reg_by_party_dict):
     summ.pie(pie_array, colors=['g', 'r'])
     summ.set_title(u'Общо')
     f.savefig('generated_html/registration%s.png' % datestr)
+    plt.close()
 
 def votes_by_party_figure(datestr, i, vote_by_party_dict, reg_by_party_dict):
     list_of_votes = sorted(vote_by_party_dict.items(), key=lambda x: x[0])
@@ -93,6 +94,7 @@ def votes_by_party_figure(datestr, i, vote_by_party_dict, reg_by_party_dict):
     summ.pie(pie_array, colors=['g', 'r', 'c', 'k'])
     summ.set_title(u'Общо')
     f.savefig('generated_html/session%svotes%s.png' % (datestr, i))
+    plt.close()
 
 def absences_figures(datestr, reg_by_party_dict, sessions):
     list_of_regs = sorted(reg_by_party_dict.items(), key=lambda x: x[0])
@@ -126,6 +128,7 @@ def absences_figures(datestr, reg_by_party_dict, sessions):
     sd.set_xticks([])
     f.autofmt_xdate()
     f.savefig('generated_html/absences%s.png' % datestr)
+    plt.close()
 
 per_stenogram_template = templates.get_template('stenogramN_template.html')
 for st in stenograms.values():

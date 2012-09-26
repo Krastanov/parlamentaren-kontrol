@@ -1,4 +1,4 @@
-<%include file="header.html" />
+<%include file="header.html" args="title='${title}'"/>
 
 
 <!-- ##################################################################### -->
@@ -50,9 +50,15 @@
 <h2>Гласувания</h2>
 
 <div class="col_6">
+<h3>Съдържание</h3>
+    <p>
+    Отиди директно на гласуване номер: <br />
+    ${', '.join(['<a href="#vote%d"><span class="tooltip-bottom" title="%s">%d</span></a>'%(i+1, s.description, i+1) for i, s in enumerate(stenogram.sessions)])}
+    </p>
+</div>
+<div class="col_6">
 <img class="full-width" src="absences${stenogram.date.strftime('%Y%m%d')}.png" alt="Отсъствия на депутати."/>
 </div>
-<div class="col_6"></div>
 
 <div class="col_12 "id="sessions">
 
@@ -61,16 +67,16 @@
         <hr />
     % endif
 
-    <h3>Гласуване ${i+1}</h3>
+    <h3 id="vote${i+1}"><a href="#vote${i+1}">Гласуване ${i+1}</a></h3>
 
     <div class="col_6"><blockquote>${session.description}</blockquote></div>
-    <div class="col_6"><img class="full-width" src="session${stenogram.date.strftime('%Y%m%d')}votes${i}.png" alt="Гласували и отсъстващи депутати."/></div>
+    <div class="col_6"><img class="full-width" src="session${stenogram.date.strftime('%Y%m%d')}votes${i+1}.png" alt="Гласували и отсъстващи депутати."/></div>
 
     <div class="col_12">
-        <button class="small" id="showSession${i}" onClick="toggle('session${i}','showSession${i}','Покажи таблица', 'Скрий');" >Покажи таблица</button>
-        <a class="small" href="#votesInText${i}">Намери в текста</a>
+        <button class="small" id="showSession${i+1}" onClick="toggle('session${i+1}','showSession${i+1}','Покажи таблица', 'Скрий');" >Покажи таблица</button>
+        <a class="small" href="#votesInText${i+1}">Намери в текста</a>
     </div>
-    <div class="col_12 "id="session${i}" style="display: none;">
+    <div class="col_12 "id="session${i+1}" style="display: none;">
 
     <table class="sortable">
         <thead><tr>
@@ -111,7 +117,7 @@
 <h2>Пълен Текст</h2>
 
 <p>
-<% count = 0 %>
+<% count = 1 %>
 % for i, line in enumerate(stenogram.text_lines):
     % if i in stenogram.in_text_votes:
         <strong id="votesInText${count}">${line}</strong>

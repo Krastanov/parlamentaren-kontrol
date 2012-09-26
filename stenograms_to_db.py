@@ -6,6 +6,9 @@ import xlrd
 import re
 import cPickle
 
+import logging
+logging.basicConfig(filename="stenograms_to_db.log", level=logging.INFO)
+
 ##############################################################################
 # Data Containers
 ##############################################################################
@@ -178,13 +181,11 @@ if __name__ == '__main__':
     stenogram_IDs = open('data/IDs_plenary_stenograms').readlines()
     for i, ID in enumerate(stenogram_IDs):
         ID = ID.strip()
-        print "###########"
-        print "#### At ID: ", ID, ' - %d of %d'%(i, len(stenogram_IDs))
-        print "###########"
-        print "- downloading and parsing HTML data"
+        logging.info("At ID: %s - %d of %d." % (ID, i+1, len(stenogram_IDs)))
         parser = StenogramsHTMLParser()
         f = urlopen('http://www.parliament.bg/bg/plenaryst/ID/'+ID)
-        parser.feed(f.read().decode('utf-8'))
+        complete_stenogram_page = f.read().decode('utf-8')
+        parser.feed(complete_stenogram_page)
 
         date_string = parser.date.strftime('%d%m%y')
 
@@ -195,7 +196,6 @@ if __name__ == '__main__':
 #        by_name_temp.close()
 #        by_name_dict = parse_excel_by_name('data/temp_name.excel')
 
-        print "- downloading and parsing votes-by-party excel data"
         try:
             by_party_temp = open('data/temp_party.excel', 'wb')
             by_party_web = urlopen("http://www.parliament.bg/pub/StenD/gv%s.xls" % date_string)
@@ -203,9 +203,19 @@ if __name__ == '__main__':
             by_party_temp.close()
             reg_by_party_dict, sessions_dict = parse_excel_by_party('data/temp_party.excel')
         except Exception:
-            NA = u'\u041d\u044f\u043c\u0430 \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044f'
-            reg_by_party_dict = {NA: reg_stats_per_party_tuple(1, 1)}
-            sessions_dict = {NA: {NA: vote_stats_per_party_tuple(1, 1, 1, 1)}}
+            logging.warning("The party excel file was not found at expected URL for ID: %s. Trying fallback."%ID)
+            try:
+                filename = re.search(r"/pub/StenD/(\d*gv%s.xls)" % date_string, complete_stenogram_page).groups()[0]
+                by_party_temp = open('data/temp_party.excel', 'wb')
+                by_party_web = urlopen("http://www.parliament.bg/pub/StenD/%s" % filename)
+                by_party_temp.write(by_party_web.read())
+                by_party_temp.close()
+                reg_by_party_dict, sessions_dict = parse_excel_by_party('data/temp_party.excel')
+            except Exception:
+                logging.error("No party excel file was found for ID: %s."%ID)
+                NA = u'\u041d\u044f\u043c\u0430 \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044f'
+                reg_by_party_dict = {NA: reg_stats_per_party_tuple(1, 1)}
+                sessions_dict = {NA: {NA: vote_stats_per_party_tuple(1, 1, 1, 1)}}
 
         sessions = [session_tuple(description,
                                   None,

@@ -8,6 +8,9 @@ import numpy as np
 import os
 import cPickle
 
+import logging
+logging.basicConfig(filename="create_html_pages.log", level=logging.INFO)
+
 rcParams['font.family'] = 'sans-serif'
 rcParams['font.sans-serif'] = ['FreeSans']
 rcParams['font.size'] = 10
@@ -140,11 +143,12 @@ def absences_figures(date, reg_by_party_dict, sessions):
 
 per_stenogram_template = templates.get_template('stenogramN_template.html')
 for st in stenograms.values():
+    datestr = st.date.strftime('%Y%m%d')
+    logging.info("At date %s." % datestr)
     registration_figure(st.date, st.reg_by_party_dict)
     absences_figures(st.date, st.reg_by_party_dict, st.sessions)
     for i, session in enumerate(st.sessions):
         votes_by_party_figure(st.date, i, session.votes_by_party_dict, st.reg_by_party_dict)
-    datestr = st.date.strftime('%Y%m%d')
     with open('generated_html/stenogram%s.html'%datestr, 'w') as html_file:
         html_file.write(per_stenogram_template.render(stenogram=st))
 

@@ -1,4 +1,4 @@
-rm -rf data
+rm -rf data/*
 rm -rf generated_html
 rm -rf *.log
 mkdir data

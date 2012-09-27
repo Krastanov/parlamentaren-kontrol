@@ -1,13 +1,27 @@
-from urllib2 import urlopen
-from collections import namedtuple, OrderedDict
-import datetime
-from HTMLParser import HTMLParser
-import xlrd
-import re
+# -*- coding: utf-8 -*-
 import cPickle
-
+import datetime
 import logging
-logging.basicConfig(filename="log/stenograms_to_db.log", level=logging.INFO)
+import re
+import urllib2
+import warnings
+from collections import namedtuple, OrderedDict
+from HTMLParser import HTMLParser
+
+import xlrd
+
+##############################################################################
+# Setup logging.
+##############################################################################
+logging.basicConfig(filename="log/log", filemode='w',
+                    level=logging.INFO,
+                    format='%(name)-16s: %(levelname)-8s %(message)s')
+logging.captureWarnings(True)
+console = logging.StreamHandler()
+formatter = logging.Formatter('%(name)-16s: %(levelname)-8s %(message)s')
+console.setFormatter(formatter)
+logging.getLogger('').addHandler(console)
+warnings.formatwarning = lambda *args: re.sub("\n", "", args[0].message.strip())
 
 ##############################################################################
 # Data Containers
@@ -33,13 +47,13 @@ session_tuple = namedtuple('session_tuple', ['description',
 reg_stats_per_party_tuple = namedtuple('reg_stats_per_party_tuple', ['present', 'expected'])
 vote_stats_per_party_tuple = namedtuple('vote_stats_per_party_tuple', ['yes', 'no', 'abstained', 'total'])
 
+NA = u'Няма информация'
+
 
 ##############################################################################
 # HTML Parsing
 ##############################################################################
-how_many_have_voted_marker = u'\u0413\u043b\u0430\u0441\u0443\u0432\u0430\u043b[\u0438]?[ ]*\\d*[ ]*\u043d\u0430\u0440\u043e\u0434\u043d\u0438[ ]*\u043f\u0440\u0435\u0434\u0441\u0442\u0430\u0432\u0438\u0442\u0435\u043b\u0438:'
-# The above marker regex must permit a number of spelling errors that can be
-# pressent in the stenograms.
+logger_html = logging.getLogger('html_parser')
 
 class StenogramsHTMLParser(HTMLParser):
     def __init__(self):
@@ -76,6 +90,8 @@ class StenogramsHTMLParser(HTMLParser):
             self.in_dateclass = False
         elif self.in_markcontent:
             data = data.strip()
+            how_many_have_voted_marker = u'Гласувал[и]?[ ]*\d*[ ]*народни[ ]*представители:'
+            # The above marker regex must permit a number of spelling errors that can be present in the stenograms.
             if re.search(how_many_have_voted_marker, data):
                 self.votes_indices.append(len(self.data_list))
             self.data_list.append(data)
@@ -84,9 +100,17 @@ class StenogramsHTMLParser(HTMLParser):
 ##############################################################################
 # Excel Parsing
 ##############################################################################
-registration_marker = u'\u0420\u0415\u0413\u0418\u0421\u0422\u0420\u0410\u0426\u0418\u042f'
-vote_marker = u'\u0413\u041b\u0410\u0421\u0423\u0412\u0410\u041d\u0415'
+registration_marker = u'РЕГИСТРАЦИЯ'
+vote_marker = u'ГЛАСУВАНЕ'
 parties_count = 6
+
+logger_excel = logging.getLogger('excel_parser')
+class ExcelWarnings(object):
+    def write(self, string):
+        s = string.strip()
+        if s:
+            logger_excel.warning(s)
+excel_warnings = ExcelWarnings()
 
 def parse_excel_by_name(filename):
     """
@@ -103,7 +127,7 @@ def parse_excel_by_name(filename):
         - undefined number of fields containing stuff about how the
         representative voted.
     """
-    book = xlrd.open_workbook(filename)
+    book = xlrd.open_workbook(filename, logfile=excel_warnings)
     sheet = book.sheet_by_index(0)
     cols = sheet.ncols
     rows = sheet.nrows
@@ -135,9 +159,8 @@ def parse_excel_by_party(filename):
     only one registration per stenogram.
     - After this line, there are two lines we don't care about, and the next
     parties_count consecutive lines contain the vote/presence statistics by party.
-
     """
-    book = xlrd.open_workbook(filename)
+    book = xlrd.open_workbook(filename, logfile=excel_warnings)
     sheet = book.sheet_by_index(0)
     cols = sheet.ncols
     rows = sheet.nrows
@@ -174,54 +197,65 @@ def parse_excel_by_party(filename):
 
 
 ##############################################################################
+# Retry download
+##############################################################################
+def urlopen(url, retry=3):
+    for i in range(retry):
+        try:
+            return urllib2.urlopen(url)
+        except urllib2.HTTPError as e:
+            pass
+    raise e
+
+
+##############################################################################
 # Parse and save to disc.
 ##############################################################################
 if __name__ == '__main__':
+    logger_to_db = logging.getLogger('to_db')
     stenograms = OrderedDict()
     stenogram_IDs = open('data/IDs_plenary_stenograms').readlines()
     for i, ID in enumerate(stenogram_IDs):
         ID = ID.strip()
-        logging.info("At ID: %s - %d of %d." % (ID, i+1, len(stenogram_IDs)))
-        parser = StenogramsHTMLParser()
+        logger_to_db.info("Parsing stenogram %s - %d of %d." % (ID, i+1, len(stenogram_IDs)))
+
+        logger_to_db.debug("Downloading html text.")
         f = urlopen('http://www.parliament.bg/bg/plenaryst/ID/'+ID)
         complete_stenogram_page = f.read().decode('utf-8')
+
+        logger_to_db.debug("Parsing html text.")
+        parser = StenogramsHTMLParser()
         parser.feed(complete_stenogram_page)
 
         date_string = parser.date.strftime('%d%m%y')
 
-#        print "- downloading and parsing votes-by-name excel data"
+#        logger_to_db.debug("Downloading and parsing votes-by-name excel data.")
 #        by_name_temp = open('data/temp_name.excel', 'wb')
 #        by_name_web = urlopen("http://www.parliament.bg/pub/StenD/iv%s.xls" % date_string)
 #        by_name_temp.write(by_name_web.read())
 #        by_name_temp.close()
 #        by_name_dict = parse_excel_by_name('data/temp_name.excel')
 
+        logger_to_db.debug("Downloading and parsing votes-by-party excel data.")
         try:
+            filename = re.search(r"/pub/StenD/(\d*gv%s.xls)" % date_string, complete_stenogram_page).groups()[0]
             by_party_temp = open('data/temp_party.excel', 'wb')
-            by_party_web = urlopen("http://www.parliament.bg/pub/StenD/gv%s.xls" % date_string)
+            by_party_web = urlopen("http://www.parliament.bg/pub/StenD/%s" % filename)
             by_party_temp.write(by_party_web.read())
             by_party_temp.close()
             reg_by_party_dict, sessions_dict = parse_excel_by_party('data/temp_party.excel')
-        except Exception:
-            logging.warning("The party excel file was not found at expected URL for ID: %s. Trying fallback."%ID)
-            try:
-                filename = re.search(r"/pub/StenD/(\d*gv%s.xls)" % date_string, complete_stenogram_page).groups()[0]
-                by_party_temp = open('data/temp_party.excel', 'wb')
-                by_party_web = urlopen("http://www.parliament.bg/pub/StenD/%s" % filename)
-                by_party_temp.write(by_party_web.read())
-                by_party_temp.close()
-                reg_by_party_dict, sessions_dict = parse_excel_by_party('data/temp_party.excel')
-            except Exception:
-                logging.error("No party excel file was found for ID: %s."%ID)
-                NA = u'\u041d\u044f\u043c\u0430 \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044f'
-                reg_by_party_dict = {NA: reg_stats_per_party_tuple(1, 1)}
-                sessions_dict = {NA: {NA: vote_stats_per_party_tuple(1, 1, 1, 1)}}
+        except Exception as e:
+            logger_to_db.error("No party excel file was found for ID %s due to %s"%(ID,str(e)))
+            reg_by_party_dict = {NA: reg_stats_per_party_tuple(1, 1)}
+            sessions_dict = {NA: {NA: vote_stats_per_party_tuple(1, 1, 1, 1)}}
 
+        logger_to_db.debug("Building list of sessions for the stenogram.")
         sessions = [session_tuple(description,
                                   None,
                                   votes_by_party)
                     for (description, votes_by_party) in sessions_dict.items()]
 
+        logger_to_db.debug("Adding the complete stenogram object to the dictionary of stenograms.")
         stenograms[ID]=stgram_tuple(parser.date,
                                     parser.data_list,
                                     parser.votes_indices,
@@ -229,6 +263,7 @@ if __name__ == '__main__':
                                     reg_by_party_dict,
                                     sessions)
 
+    logger_to_db.info("Dumping the database to disk.")
     stenograms_dump = open('data/stenograms_dump', 'w')
     cPickle.dump(stenograms, stenograms_dump, 2)
     stenograms_dump.close()

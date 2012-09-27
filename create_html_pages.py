@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
+import cPickle
+import os
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib import rcParams, gridspec
+
 from mako.template import Template
 from mako.lookup import TemplateLookup
-from stenograms_to_db import *
-from matplotlib import rcParams, gridspec
-import matplotlib.pyplot as plt
-import numpy as np
-import os
-import cPickle
 
-import logging
-logging.basicConfig(filename="log/create_html_pages.log", level=logging.INFO)
+from stenograms_to_db import *
+
 
 rcParams['font.family'] = 'sans-serif'
 rcParams['font.sans-serif'] = ['FreeSans']
@@ -31,9 +32,14 @@ stenograms_dump = open('data/stenograms_dump', 'r')
 stenograms = cPickle.load(stenograms_dump)
 stenograms_dump.close()
 
+
 templates = TemplateLookup(directories=['mako_templates'],
                            input_encoding='utf-8',
                            output_encoding='utf-8')
+
+
+logger_html = logging.getLogger('static_html_gen')
+
 
 ##############################################################################
 # Per stenogram stuff
@@ -142,9 +148,9 @@ def absences_figures(date, reg_by_party_dict, sessions):
     plt.close()
 
 per_stenogram_template = templates.get_template('stenogramN_template.html')
-for st in stenograms.values():
+for i, st in enumerate(stenograms.values()):
     datestr = st.date.strftime('%Y%m%d')
-    logging.info("At date %s." % datestr)
+    logger_html.info("Generating HTML and plots for %s - %d of %d" % (datestr, i+1, len(stenograms)))
     registration_figure(st.date, st.reg_by_party_dict)
     absences_figures(st.date, st.reg_by_party_dict, st.sessions)
     for i, session in enumerate(st.sessions):
@@ -157,6 +163,7 @@ for st in stenograms.values():
 # All stenograms
 ##############################################################################
 
+logger_html.info("Generating html summary page of all stenograms.")
 all_stenograms_template = templates.get_template('stenograms_template.html')
 with open('generated_html/stenograms.html', 'w') as html_file:
     html_file.write(all_stenograms_template.render(stenograms=stenograms))
@@ -166,6 +173,7 @@ with open('generated_html/stenograms.html', 'w') as html_file:
 # MP emails
 ##############################################################################
 
+logger_html.info("Generating html page of MP mail addresses.")
 mails_per_party_dict = {}
 for f in ['data/mail_dump%d'%i for i in range(6)]:
     lines = open(f).readlines()
@@ -181,11 +189,13 @@ with open('generated_html/mails.html', 'w') as html_file:
 ##############################################################################
 
 # Index
+logger_html.info("Generating html index page.")
 index_template = templates.get_template('index_template.html')
 with open('generated_html/index.html', 'w') as html_file:
     html_file.write(index_template.render())
 
 # Contacts
+logger_html.info("Generating html contacts page.")
 contacts_template = templates.get_template('contacts_template.html')
 with open('generated_html/contacts.html', 'w') as html_file:
     html_file.write(contacts_template.render())

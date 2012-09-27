@@ -1,6 +1,23 @@
-In order to craw the parliament site and generate html reports run
+Quick Start
+===========
+
+ 1. Install the necessary packages.
+ 2. In order to craw the parliament site and generate html reports run
 `sh start_over.sh`.
 
+Requirements
+============
+
+ - python (tested 2.7.2)
+   - Mako (tested 0.7.2)
+   - matplotlib (tested 1.1.1)
+   - numpy (tested 1.6.2)
+   - xlrd (tested 0.8.0)
+   - xmltodict (tested 0.2)
+ - shell utilities (tested bash, zsh)
+   - curl
+   - grep
+   - coreutils
 
 
 
@@ -13,6 +30,8 @@ In order to craw the parliament site and generate html reports run
 
 
 
+Todo
+====
 
 http://www.parliament.bg/bg/plenarysittings дава достъп то три различни
 страници:

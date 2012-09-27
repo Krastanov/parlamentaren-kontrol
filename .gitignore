@@ -1,5 +1,4 @@
 *.pyc
 *.log
 .*
-data
 generated_html

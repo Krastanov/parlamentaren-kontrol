@@ -9,7 +9,7 @@ import os
 import cPickle
 
 import logging
-logging.basicConfig(filename="create_html_pages.log", level=logging.INFO)
+logging.basicConfig(filename="log/create_html_pages.log", level=logging.INFO)
 
 rcParams['font.family'] = 'sans-serif'
 rcParams['font.sans-serif'] = ['FreeSans']
@@ -21,11 +21,11 @@ rcParams['text.antialiased'] = True
 rcParams['patch.antialiased'] = True
 rcParams['lines.antialiased'] = True
 
-os.system('cp -r htmlkickstart/css generated_html/css')
-os.system('cp -r htmlkickstart/js generated_html/js')
-os.system('cp style.css generated_html/style.css')
-os.system('cp retina_dust/retina_dust.png generated_html/css/img/grid.png')
-os.system('cp google93d3e91ac1977e5b.html generated_html/google93d3e91ac1977e5b.html')
+os.system('cp -r raw_components/htmlkickstart/css generated_html/css')
+os.system('cp -r raw_components/htmlkickstart/js generated_html/js')
+os.system('cp raw_components/style.css generated_html/style.css')
+os.system('cp raw_components/retina_dust/retina_dust.png generated_html/css/img/grid.png')
+os.system('cp raw_components/google93d3e91ac1977e5b.html generated_html/google93d3e91ac1977e5b.html')
 
 stenograms_dump = open('data/stenograms_dump', 'r')
 stenograms = cPickle.load(stenograms_dump)

@@ -7,7 +7,7 @@ import re
 import cPickle
 
 import logging
-logging.basicConfig(filename="stenograms_to_db.log", level=logging.INFO)
+logging.basicConfig(filename="log/stenograms_to_db.log", level=logging.INFO)
 
 ##############################################################################
 # Data Containers

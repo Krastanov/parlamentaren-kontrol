@@ -25,6 +25,7 @@ rcParams['lines.antialiased'] = True
 os.system('cp -r raw_components/htmlkickstart/css generated_html/css')
 os.system('cp -r raw_components/htmlkickstart/js generated_html/js')
 os.system('cp raw_components/style.css generated_html/style.css')
+os.system('cp raw_components/286px-Coat_of_arms_of_Bulgaria.svg.wikicommons.png generated_html/logo.png')
 os.system('cp raw_components/retina_dust/retina_dust.png generated_html/css/img/grid.png')
 os.system('cp raw_components/google93d3e91ac1977e5b.html generated_html/google93d3e91ac1977e5b.html')
 

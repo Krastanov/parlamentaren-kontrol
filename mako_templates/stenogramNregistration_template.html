@@ -1,0 +1,79 @@
+<%include file="header.html" />
+
+
+<!-- ##################################################################### -->
+<!-- ##################################################################### -->
+<h1>Регистрация на Депутати на ${stenogram.date.strftime('%d/%m/%Y')}</h1>
+
+<div class="col_12">
+<a href="stenogram${stenogram.date.strftime('%Y%m%d')}.html">Обратно към стенограмата от деня.</a>
+</div>
+
+<hr class="alt1" />
+
+
+<!-- ##################################################################### -->
+<!-- ##################################################################### -->
+<h2>Обща Информация</h2>
+
+<div class="col_6">
+<table class="sortable">
+    <thead><tr>
+        <th>Партия</th>
+        <th>Присъстващи</th>
+        <th>Отсъстващи</th>
+        <th>Отсъстващи %</th>
+        <th>Общо Регистрирани</th>
+    </tr></thead>
+    
+    <tbody>
+    % for party, reg_stat in stenogram.reg_by_party_dict.items():
+        <tr>
+            <td>${party}</td>
+            <td>${reg_stat.present}</td>
+            <td>${reg_stat.expected-reg_stat.present}</td>
+            <td class="percentage">${int(100*float(reg_stat.expected-reg_stat.present)/reg_stat.expected)}</td>
+            <td>${reg_stat.expected}</td>
+        </tr>
+    % endfor
+    </tbody>
+</table>
+<% total = map(sum, zip(*stenogram.reg_by_party_dict.values())) %>
+<p><strong>Всички Партии</strong>: Присъстващи: ${total[0]}, Общо регистрирани: ${total[1]}</p>
+</div>
+
+<div class="col_6">
+    <img class="full-width" src="registration${stenogram.date.strftime('%Y%m%d')}.png" alt="Регистрирани и отсъстващи депутати."/>
+</div>
+
+<hr class="alt1" />
+
+
+<!-- ##################################################################### -->
+<!-- ##################################################################### -->
+<h2>Поименен Списък</h2>
+
+<div class="col_12">
+<table class="sortable tight striped">
+    <thead><tr>
+        <th>Депутат</th>
+        <th>Партия</th>
+        <th>Присъствал при регистрация</th>
+    </tr></thead>
+    
+    <tbody>
+    % for rep, registered in stenogram.reg_by_name_dict.items():
+        <tr>
+            <td>${rep.name}</td>
+            <td>${rep.party}</td>
+            <td>${registered}</td>
+        </tr>
+    % endfor
+    </tbody>
+</table>
+</div>
+
+<hr class="alt1" />
+
+
+<%include file="footer.html" />

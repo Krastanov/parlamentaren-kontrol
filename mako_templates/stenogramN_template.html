@@ -1,4 +1,4 @@
-<%include file="header.html" args="title='${title}'"/>
+<%include file="header.html" />
 
 
 <!-- ##################################################################### -->
@@ -11,6 +11,10 @@
 <!-- ##################################################################### -->
 <!-- ##################################################################### -->
 <h2>Регистрация</h2>
+
+<div class="col_12">
+<a href="stenogram${stenogram.date.strftime('%Y%m%d')}registration.html">Поимемен списък</a>
+</div>
 
 <div class="col_6">
 <table class="sortable">
@@ -69,6 +73,10 @@
 
     <h3 id="vote${i+1}"><a href="#vote${i+1}">Гласуване ${i+1}</a></h3>
 
+    <div class="col_12">
+    <a href="stenogram${stenogram.date.strftime('%Y%m%d')}vote${i+1}.html">Поимемен списък</a>
+    </div>
+
     <div class="col_6"><blockquote>${session.description}</blockquote></div>
     <div class="col_6"><img class="full-width" src="session${stenogram.date.strftime('%Y%m%d')}votes${i+1}.png" alt="Гласували и отсъстващи депутати."/></div>
 
@@ -76,7 +84,7 @@
         <button class="small" id="showSession${i+1}" onClick="toggle('session${i+1}','showSession${i+1}','Покажи таблица', 'Скрий');" >Покажи таблица</button>
         <a class="small" href="#votesInText${i+1}">Намери в текста</a>
     </div>
-    <div class="col_12 "id="session${i+1}" style="display: none;">
+    <div class="col_12" id="session${i+1}" style="display: none;">
 
     <table class="sortable">
         <thead><tr>

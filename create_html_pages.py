@@ -149,6 +149,8 @@ def absences_figures(date, reg_by_party_dict, sessions):
     plt.close()
 
 per_stenogram_template = templates.get_template('stenogramN_template.html')
+per_stenogram_reg_template = templates.get_template('stenogramNregistration_template.html')
+per_stenogram_vote_template = templates.get_template('stenogramNvoteI_template.html')
 for i, st in enumerate(stenograms.values()):
     datestr = st.date.strftime('%Y%m%d')
     logger_html.info("Generating HTML and plots for %s - %d of %d" % (datestr, i+1, len(stenograms)))
@@ -156,8 +158,13 @@ for i, st in enumerate(stenograms.values()):
     absences_figures(st.date, st.reg_by_party_dict, st.sessions)
     for i, session in enumerate(st.sessions):
         votes_by_party_figure(st.date, i, session.votes_by_party_dict, st.reg_by_party_dict)
+        with open('generated_html/stenogram%svote%d.html'%(datestr, i+1), 'w') as html_file:
+            html_file.write(per_stenogram_vote_template.render(vote_i=i, stenogram=st))
     with open('generated_html/stenogram%s.html'%datestr, 'w') as html_file:
         html_file.write(per_stenogram_template.render(stenogram=st))
+    with open('generated_html/stenogram%sregistration.html'%datestr, 'w') as html_file:
+        html_file.write(per_stenogram_reg_template.render(stenogram=st))
+
 
 
 ##############################################################################

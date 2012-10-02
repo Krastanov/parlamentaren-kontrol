@@ -1,7 +1,5 @@
 rm -rf data/*
 rm -rf generated_html
-rm -rf *.log
-mkdir data
 mkdir generated_html
 echo "Update all IDs of MPs"
 sh update_IDs_MPs.sh

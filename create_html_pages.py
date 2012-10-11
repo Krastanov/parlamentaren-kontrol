@@ -9,7 +9,8 @@ from matplotlib import rcParams, gridspec
 from mako.template import Template
 from mako.lookup import TemplateLookup
 
-from stenograms_to_db import *
+from pk_namedtuples import *
+from pk_logging import *
 
 
 rcParams['font.family'] = 'sans-serif'
@@ -29,9 +30,9 @@ os.system('cp raw_components/286px-Coat_of_arms_of_Bulgaria.svg.wikicommons.png 
 os.system('cp raw_components/retina_dust/retina_dust.png generated_html/css/img/grid.png')
 os.system('cp raw_components/google93d3e91ac1977e5b.html generated_html/google93d3e91ac1977e5b.html')
 
-stenograms_dump = open('data/stenograms_dump', 'r')
-stenograms = cPickle.load(stenograms_dump)
-stenograms_dump.close()
+#stenograms_dump = open('data/stenograms_dump', 'r')
+#stenograms = cPickle.load(stenograms_dump)
+#stenograms_dump.close()
 
 
 templates = TemplateLookup(directories=['mako_templates'],
@@ -42,17 +43,20 @@ templates = TemplateLookup(directories=['mako_templates'],
 logger_html = logging.getLogger('static_html_gen')
 
 
+import psycopg2
+db = psycopg2.connect(database="parlamentarenkontrol", user="parlamentarenkontrol")
+cur = db.cursor()
+subcur = db.cursor()
+
+
 ##############################################################################
 # Per stenogram stuff
 ##############################################################################
 
-def registration_figure(date, reg_by_party_dict):
+def registration_figure(date, names, reg_presences, reg_expected):
     datestr = date.strftime('%Y%m%d')
     datestr_human = date.strftime('%d/%m/%Y')
-    list_of_regs = sorted(reg_by_party_dict.items(), key=lambda x: x[0])
-    names = [x[0] for x in list_of_regs]
-    presences = np.array([x[1].present for x in list_of_regs])
-    expected = np.array([x[1].expected for x in list_of_regs])
+    presences, expected = reg_presences, reg_expected
     absences = expected - presences
 
     pos = np.arange(len(names))
@@ -110,23 +114,11 @@ def votes_by_party_figure(date, i, vote_by_party_dict, reg_by_party_dict):
     f.savefig('generated_html/session%svotes%s.png' % (datestr, i+1))
     plt.close()
 
-def absences_figures(date, reg_by_party_dict, sessions):
+def absences_figures(date, names, vote_absences, vote_absences_percent):
     datestr = date.strftime('%Y%m%d')
     datestr_human = date.strftime('%d/%m/%Y')
-    list_of_regs = sorted(reg_by_party_dict.items(), key=lambda x: x[0])
-    names = [x[0] for x in list_of_regs]
-    presences = np.array([x[1].present for x in list_of_regs])
-    expected = np.array([x[1].expected for x in list_of_regs])
-    reg_absences = expected - presences
-    all_absences = [reg_absences]
-    for vote_by_party_dict in [s.votes_by_party_dict for s in sessions]:
-        yes = np.array([vote_by_party_dict[n].yes for n in names])
-        no = np.array([vote_by_party_dict[n].no for n in names])
-        abstained = np.array([vote_by_party_dict[n].abstained for n in names])
-        all_absences.append(expected - yes - no - abstained)
-    all_absences_percent = [a*100/expected for a in all_absences]
-    all_absences = np.column_stack(all_absences).T
-    all_absences_percent = np.column_stack(all_absences_percent).T
+    all_absences = vote_absences
+    all_absences_percent = vote_absences_percent
 
     f = plt.figure()
     f.suptitle(u'Отсъствия по Време на Гласуване %s'%datestr_human)
@@ -151,21 +143,55 @@ def absences_figures(date, reg_by_party_dict, sessions):
 per_stenogram_template = templates.get_template('stenogramN_template.html')
 per_stenogram_reg_template = templates.get_template('stenogramNregistration_template.html')
 per_stenogram_vote_template = templates.get_template('stenogramNvoteI_template.html')
-for i, st in enumerate(stenograms.values()):
-    datestr = st.date.strftime('%Y%m%d')
-    logger_html.info("Generating HTML and plots for %s - %d of %d" % (datestr, i+1, len(stenograms)))
-    registration_figure(st.date, st.reg_by_party_dict)
-    absences_figures(st.date, st.reg_by_party_dict, st.sessions)
-    for i, session in enumerate(st.sessions):
-        votes_by_party_figure(st.date, i, session.votes_by_party_dict, st.reg_by_party_dict)
-        with open('generated_html/stenogram%svote%d.html'%(datestr, i+1), 'w') as html_file:
-            html_file.write(per_stenogram_vote_template.render(vote_i=i, stenogram=st))
-    with open('generated_html/stenogram%s.html'%datestr, 'w') as html_file:
-        html_file.write(per_stenogram_template.render(stenogram=st))
-    with open('generated_html/stenogram%sregistration.html'%datestr, 'w') as html_file:
-        html_file.write(per_stenogram_reg_template.render(stenogram=st))
 
+cur.execute("""SELECT COUNT(*)
+               FROM stenograms""")
+len_stenograms = cur.fetchone()[0]
+cur.execute("""SELECT stenogram_date, text, vote_line_nb, problem
+               FROM stenograms
+               ORDER BY stenogram_date""")
+for i, (stenogram_date, text, vote_line_nb, problem) in enumerate(cur):
+    if problem:
+        print "problem, skip"
+        continue
+    datestr = stenogram_date.strftime('%Y%m%d')
+    logger_html.info("Generating HTML and plots for %s - %d of %d" % (datestr, i+1, len_stenograms))
+    subcur.execute("""SELECT party_name, present, expected
+                      FROM party_reg
+                      WHERE party_reg.stenogram_date = %s
+                      ORDER BY party_name""",
+                      (stenogram_date,))
+    names, reg_presences, reg_expected = zip(*subcur)
+    names = [n.decode('UTF-8') for n in names]
+    reg_presences = np.array(reg_presences)
+    reg_expected = np.array(reg_expected)
+    registration_figure(stenogram_date, names, reg_presences, reg_expected)
+    vote_absences = []
+    vote_absences_percent = []
+    for j, n in enumerate(names):
+        subcur.execute("""SELECT yes, no, abstain, total
+                          FROM party_votes
+                          WHERE party_votes.stenogram_date = %s
+                          AND party_votes.party_name = %s
+                          ORDER BY session_number""",
+                          (stenogram_date, n))
+        yes, no, abstain, total = map(np.array, zip(*subcur))
+        absent_j = reg_expected[j] - total
+        vote_absences.append(absent_j)
+        vote_absences_percent.append(absent_j*100/reg_expected[j])
+    vote_absences = np.column_stack(vote_absences)
+    vote_absences_percent = np.column_stack(vote_absences_percent)
+    absences_figures(stenogram_date, names, vote_absences, vote_absences_percent)
+    #for i, session in enumerate(st.sessions):
+    #    votes_by_party_figure(st.date, i, session.votes_by_party_dict, st.reg_by_party_dict)
+    #    with open('generated_html/stenogram%svote%d.html'%(datestr, i+1), 'w') as html_file:
+    #        html_file.write(per_stenogram_vote_template.render(vote_i=i, stenogram=st))
+    #with open('generated_html/stenogram%s.html'%datestr, 'w') as html_file:
+    #    html_file.write(per_stenogram_template.render(stenogram=st))
+    #with open('generated_html/stenogram%sregistration.html'%datestr, 'w') as html_file:
+    #    html_file.write(per_stenogram_reg_template.render(stenogram=st))
 
+raise NotImplementedError
 
 ##############################################################################
 # All stenograms

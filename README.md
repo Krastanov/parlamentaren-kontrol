@@ -1,12 +1,13 @@
-Quick Start
-===========
+# Quick Start
 
  1. Install the necessary packages.
+   - For postgresql run `sudo sh create_db.sh` in order to have the user and
+     database installed. The `METHOD` fields of
+     `/etc/postgresql/9.1/main/pg_hba.conf` should be set to `trust`.
  2. In order to craw the parliament site and generate html reports run
 `sh start_over.sh`.
 
-Requirements
-============
+# Requirements
 
  - python (tested 2.7.2)
    - Mako (tested 0.7.2)
@@ -14,24 +15,42 @@ Requirements
    - numpy (tested 1.6.2)
    - xlrd (tested 0.8.0)
    - xmltodict (tested 0.2)
+   - PyGreSQL (tested 4.0)
  - shell utilities (tested bash, zsh)
    - curl
    - grep
    - coreutils
+ - postgresql (tested 9.1.5)
 
+# Notes
 
+## XML file with MP information 
 
+From http://www.parliament.bg/export.php/bg/xml/MP/xxIDxx 
 
+```
+{u'schema': {u'Bills': {u'Bill': '[---, ---]'},
+             u'ParliamentaryActivity': {u'ParliamentaryStructure': '[---, ---]'},
+             u'ParliamentaryControl': {u'Question': '[---, ---]'},
+             u'Profile': {u'Constituency': {u'@value': '---'},
+                          u'DateOfBirth': {u'@value': '---'},
+                          u'E-mail': {u'@value': '---'},
+                          u'Language': '---',
+                          u'MaritalStatus': {u'@value': '---'},
+                          u'MemberOfPreviosNA': '---',
+                          u'Names': {u'FamilyName': {u'@value': '---'},
+                                     u'FirstName': {u'@value': '---'},
+                                     u'SirName': {u'@value': '---'}},
+                          u'PlaceOfBirth': {u'@value': '---'},
+                          u'PoliticalForce': {u'@value': '---'},
+                          u'Profession': {u'Profession': {u'@id': '---',
+                                                          u'@value': '---'}},
+                          u'ScienceDegree': '---',
+                          u'Website': {u'@value': '---'}},
+             u'Speeches': '---'}}
+```
 
-
-
-
-
-
-
-
-Todo
-====
+## Todo
 
 http://www.parliament.bg/bg/plenarysittings дава достъп то три различни
 страници:

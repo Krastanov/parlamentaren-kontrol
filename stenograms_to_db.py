@@ -9,6 +9,7 @@ from collections import namedtuple, OrderedDict
 from HTMLParser import HTMLParser
 
 import xlrd
+from download_MP_mails import canonical_party_name
 
 
 ##############################################################################
@@ -129,6 +130,14 @@ def parse_excel_by_name(filename):
         - undefined number of fields containing stuff about how the
         representative voted.
     """
+    translate = {u'О':'absent', u'П':'present', u'Р':'wtf'}
+    def translate_v(a):
+        tr_dict = {'+':'yes', '-':'no', '=':'abstain', '0':'absent'}
+        try:
+            return tr_dict[a]
+        except KeyError:
+            logger_excel.error("Strange expression found in by_name excell file. The expression is %s"%repr(a))
+            return 'absent'
     book = xlrd.open_workbook(filename, logfile=excel_warnings)
     sheet = book.sheet_by_index(0)
     cols = sheet.ncols
@@ -136,13 +145,15 @@ def parse_excel_by_name(filename):
     init_row = 2
     by_name_dict_transposed = {}
     for row in range(init_row, rows):
-        name = sheet.cell_value(rowx=row, colx=0).strip().upper()
-        party = sheet.cell_value(rowx=row, colx=3).strip().upper()
+        raw = sheet.cell_value(rowx=row, colx=0).encode('UTF-8')
+        array = [n.strip().upper() for n in raw.split()]
+        name = ' '.join(array)
+        party = canonical_party_name(sheet.cell_value(rowx=row, colx=3).strip().upper())
         key = rep_tuple(name=name, party=party)
         value = []
         for col in range(4, cols):
             value.append(sheet.cell_value(rowx=row, colx=col))
-        by_name_dict_transposed[key] = value
+        by_name_dict_transposed[key] = [translate[value[0]]]+[translate_v(v) for v in value[1:]]
 
     reg_dict = {k:votes[0] for k,votes in by_name_dict_transposed.items()}
     keys, votes = by_name_dict_transposed.keys(), by_name_dict_transposed.values()
@@ -180,7 +191,7 @@ def parse_excel_by_party(filename):
             per_party_dict = {}
             for i in range(parties_count):
                 row += 1
-                party = sheet.cell_value(rowx=row, colx=0).strip().upper()
+                party = canonical_party_name(sheet.cell_value(rowx=row, colx=0).strip().upper())
                 present = int(sheet.cell_value(rowx=row, colx=1))
                 expected = int(sheet.cell_value(rowx=row, colx=2))
                 per_party_dict[party] = reg_stats_per_party_tuple(present, expected)
@@ -191,7 +202,7 @@ def parse_excel_by_party(filename):
             per_party_dict = {}
             for i in range(parties_count):
                 row += 1
-                party = sheet.cell_value(rowx=row, colx=0).strip().upper()
+                party = canonical_party_name(sheet.cell_value(rowx=row, colx=0).strip().upper())
                 yes = int(sheet.cell_value(rowx=row, colx=1))
                 no = int(sheet.cell_value(rowx=row, colx=2))
                 abstained = int(sheet.cell_value(rowx=row, colx=3))
@@ -218,10 +229,17 @@ def urlopen(url, retry=3):
 # Parse and save to disc.
 ##############################################################################
 if __name__ == '__main__':
+    import psycopg2
+    db = psycopg2.connect(database="parlamentarenkontrol", user="parlamentarenkontrol")
+    cur = db.cursor()
+
     logger_to_db = logging.getLogger('to_db')
+
     stenograms = OrderedDict()
     stenogram_IDs = open('data/IDs_plenary_stenograms').readlines()
     for i, ID in enumerate(stenogram_IDs):
+        problem_by_name = False
+        problem_by_party = False
         ID = ID.strip()
         logger_to_db.info("Parsing stenogram %s - %d of %d." % (ID, i+1, len(stenogram_IDs)))
 
@@ -247,6 +265,7 @@ if __name__ == '__main__':
             logger_to_db.error("No name excel file was found for ID %s due to %s"%(ID,str(e)))
             reg_by_name = {rep_tuple(NA, NA): '0'}
             list_of_vote_dict_by_name = [reg_by_name]
+            problem_by_name = True
 
         logger_to_db.debug("Downloading and parsing votes-by-party excel data.")
         try:
@@ -260,6 +279,7 @@ if __name__ == '__main__':
             logger_to_db.error("No party excel file was found for ID %s due to %s"%(ID,str(e)))
             reg_by_party_dict = {NA: reg_stats_per_party_tuple(1, 1)}
             sessions_dict = {NA: {NA: vote_stats_per_party_tuple(1, 1, 1, 1)}}
+            problem_by_party = True
 
         logger_to_db.debug("Building list of sessions for the stenogram.")
         sessions = [session_tuple(description,
@@ -275,6 +295,27 @@ if __name__ == '__main__':
                                     reg_by_name,
                                     reg_by_party_dict,
                                     sessions)
+
+        cur.execute("""INSERT INTO stenograms VALUES (%s, %s, %s)""",
+                    (parser.date, parser.data_list, parser.votes_indices))
+        if problem_by_name or problem_by_party:
+            pass
+        else:
+            cur.executemany("""INSERT INTO party_reg VALUES (%s, %s, %s, %s)""",
+                            ((k, parser.date, v.present, v.expected) for k,v in reg_by_party_dict.items()))
+            cur.executemany("""INSERT INTO vote_sessions VALUES (%s, %s, %s)""",
+                            ((parser.date, i, s.description) for i, s in enumerate(sessions)))
+            cur.executemany("""INSERT INTO party_votes VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+                            ((party, parser.date, i, votes.yes, votes.no, votes.abstained, votes.total)
+                                 for i, s in enumerate(sessions)
+                                 for party, votes in s.votes_by_party_dict.items()))
+            cur.executemany("""INSERT INTO mp_reg VALUES (%s, %s, %s, %s)""",
+                            ((k.name, k.party, parser.date, v) for k,v in reg_by_name.items()))
+            cur.executemany("""INSERT INTO mp_votes VALUES (%s, %s, %s, %s, %s)""",
+                            ((mp.name, mp.party, parser.date, i, v)
+                                 for i, s in enumerate(sessions)
+                                 for mp, v in s.votes_by_name_dict.items()))
+        db.commit()
 
     logger_to_db.info("Dumping the database to disk.")
     stenograms_dump = open('data/stenograms_dump', 'w')

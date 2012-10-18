@@ -96,46 +96,44 @@ def parse_excel_by_name(filename):
         - undefined number of fields containing stuff about how the
         representative voted.
     """
+    # Correct spelling errors in names of MPs.
     def MP_name_spellcheck(name):
-        """Correct spelling errors in names of MPs"""
         tr_dict = {u'МАРИЯНА ПЕТРОВА ИВАНОВА-НИКОЛОВА': u'МАРИАНА ПЕТРОВА ИВАНОВА-НИКОЛОВА'}
         if name in tr_dict:
             logger_excel.warning("Spelling error: %s" % name)
             return tr_dict[name]
         return name
 
-    def translate(reg_and_votes):
-        """translate the registration and vote markers"""
-        tr_reg = {u'О':'absent', u'П':'present', u'Р':'manually_registered'}
-        reg = tr_reg[reg_and_votes[0]]
-        votes = []
-        tr_vote = {'+':'yes', '-':'no', '=':'abstain', '0':'absent'}
-        for v in reg_and_votes[1:]:
-            try:
-                votes.append(tr_vote[v])
-            except KeyError:
-                logger_excel.warning("Strange expression found in by_name excell file. The expression is %s. We are dropping it."%repr(v))
-        return [reg,] + votes
+    # Translate the registration and vote markers.
+    tr_reg = {u'О':'absent', u'П':'present', u'Р':'manually_registered'}
+    tr_vote = {'+':'yes', '-':'no', '=':'abstain', '0':'absent'}
 
     book = xlrd.open_workbook(filename, logfile=excel_warnings)
     sheet = book.sheet_by_index(0)
     cols = sheet.ncols
     rows = sheet.nrows
-    init_row = 2
-    by_name_dict_transposed = {}
-    for row in range(init_row, rows):
-        raw = sheet.cell_value(rowx=row, colx=0).encode('UTF-8')
-        array = [n.strip().upper() for n in raw.split()]
-        name = MP_name_spellcheck(' '.join(array).decode('UTF-8'))
-        party = canonical_party_name(sheet.cell_value(rowx=row, colx=3).strip().upper())
-        key = rep_tuple(name=name, party=party)
-        value = [sheet.cell_value(rowx=row, colx=col) for col in range(4, cols)]
-        by_name_dict_transposed[key] = translate(value)
-    reg_dict = {k:reg_and_votes[0] for k,reg_and_votes in by_name_dict_transposed.items()}
-    keys, reg_and_votes = by_name_dict_transposed.keys(), by_name_dict_transposed.values()
-    vote_list_of_dicts = [dict(zip(keys, v)) for v in zip(*reg_and_votes)[1:]]
 
-    return reg_dict, vote_list_of_dicts
+    names = [MP_name_spellcheck(' '.join(sheet.cell_value(rowx=row, colx=0).upper().split()))
+             for row in range(2, rows)]
+    parties = [canonical_party_name(sheet.cell_value(rowx=row, colx=3).strip().upper())
+               for row in range(2, rows)]
+    reg_sessions = []
+    vote_sessions = []
+    for col in range(4, cols):
+        values = [sheet.cell_value(rowx=row, colx=col) for row in range(2, rows)]
+        if all(v in tr_reg.keys() for v in values):
+            reg_sessions.append([tr_reg[v] for v in values])
+        elif all(v in tr_vote.keys() for v in values):
+            vote_sessions.append([tr_vote[v] for v in values])
+        elif all(v=='' for v in values):
+            logger_excel.warning("Empty column found in the by_names excell file. Skipping it.")
+        else:
+            logger_excel.error("Strange column found in the by_names excell file. Skipping it.")
+
+    if len(reg_sessions) != 1:
+        logger_excel.warning("There are more than one registration for this stenogram.")
+
+    return names, parties, reg_sessions[0], vote_sessions
 
 
 def parse_excel_by_party(filename):
@@ -218,11 +216,9 @@ for i, ID in enumerate(stenogram_IDs):
         by_name_temp = open('data/temp.excel', 'wb')
         by_name_temp.write(by_name_web.read())
         by_name_temp.close()
-        reg_by_name, list_of_vote_dict_by_name = parse_excel_by_name('data/temp.excel')
+        mp_names, mp_parties, mp_reg_session, mp_vote_sessions = parse_excel_by_name('data/temp.excel')
     except Exception as e:
-        logger_to_db.error("No name excel file was found for ID %s due to %s"%(ID,str(e)))
-        reg_by_name = {rep_tuple(NA, NA): '0'}
-        list_of_vote_dict_by_name = [reg_by_name]
+        logger_to_db.error("No MP name excel file was found for ID %s due to %s"%(ID,str(e)))
         problem_by_name = True
 
 
@@ -235,23 +231,8 @@ for i, ID in enumerate(stenogram_IDs):
         reg_by_party_dict, sessions = parse_excel_by_party('data/temp.excel')
     except Exception as e:
         logger_to_db.error("No party excel file was found for ID %s due to %s"%(ID,str(e)))
-        reg_by_party_dict = {NA: reg_stats_per_party_tuple(1, 1)}
-        sessions_dict = {NA: {NA: vote_stats_per_party_tuple(1, 1, 1, 1)}}
         problem_by_party = True
 
-
-    sessions = [session_tuple(description,
-                              votes_by_name,
-                              votes_by_party_dict)
-                for (description, nothing, votes_by_party_dict), votes_by_name
-                    in zip(sessions, list_of_vote_dict_by_name)]
-
-    stenograms[ID]=stgram_tuple(parser.date,
-                                parser.data_list,
-                                parser.votes_indices,
-                                reg_by_name,
-                                reg_by_party_dict,
-                                sessions)
 
     if problem_by_name or problem_by_party:
         cur.execute("""INSERT INTO stenograms VALUES (%s, %s, %s, %s)""",
@@ -269,11 +250,11 @@ for i, ID in enumerate(stenogram_IDs):
                                  for i, s in enumerate(sessions)
                                  for party, votes in s.votes_by_party_dict.items()))
             cur.executemany("""INSERT INTO mp_reg VALUES (%s, %s, %s, %s)""",
-                            ((k.name, k.party, parser.date, v) for k,v in reg_by_name.items()))
+                            ((name, party, parser.date, reg) for name, party, reg in zip(mp_names, mp_parties, mp_reg_session)))
             cur.executemany("""INSERT INTO mp_votes VALUES (%s, %s, %s, %s, %s)""",
-                            ((mp.name, mp.party, parser.date, i, v)
-                                 for i, s in enumerate(sessions)
-                                 for mp, v in s.votes_by_name_dict.items()))
+                            ((name, party, parser.date, i, v)
+                                 for i, votes in enumerate(mp_vote_sessions)
+                                 for name, party, v in zip(mp_names, mp_parties, votes)))
         except Exception as e:
             logger_to_db.error("Writting to db failed on stenogram %s due to %s" % (ID, str(e)))
     db.commit()

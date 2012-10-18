@@ -13,7 +13,7 @@ echo "Update all IDs of plenary stenograms."
 sh update_IDs_plenary_stenograms_after_2011.sh
 echo "Download and parse the stenograms."
 python craw_stenograms.py
-#echo "Create the html pages."
-#python create_html_pages.py
-#echo "Optimize the png files."
-#sh optimize_png.sh
+echo "Create the html pages."
+python create_html_pages.py
+echo "Optimize the png files."
+sh optimize_png.sh

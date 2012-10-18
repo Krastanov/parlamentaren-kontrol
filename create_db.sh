@@ -41,7 +41,7 @@ CREATE TABLE mp_votes (
        FOREIGN KEY (stenogram_date, session_number) REFERENCES vote_sessions (stenogram_date, session_number)
 );
 
-CREATE TYPE mp_reg_enum AS ENUM ('present', 'absent', 'wtf');
+CREATE TYPE mp_reg_enum AS ENUM ('present', 'absent', 'manually_registered');
 CREATE TABLE mp_reg (
        mp_name         text REFERENCES mps (mp_name),
        with_party      text REFERENCES parties (party_name),

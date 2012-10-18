@@ -106,7 +106,7 @@ def parse_excel_by_name(filename):
 
     def translate(reg_and_votes):
         """translate the registration and vote markers"""
-        tr_reg = {u'О':'absent', u'П':'present', u'Р':'wtf'}
+        tr_reg = {u'О':'absent', u'П':'present', u'Р':'manually_registered'}
         reg = tr_reg[reg_and_votes[0]]
         votes = []
         tr_vote = {'+':'yes', '-':'no', '=':'abstain', '0':'absent'}
@@ -275,5 +275,5 @@ for i, ID in enumerate(stenogram_IDs):
                                  for i, s in enumerate(sessions)
                                  for mp, v in s.votes_by_name_dict.items()))
         except Exception as e:
-            logger_to_db.error("Writting to db failed on stenogram %s." % ID)
+            logger_to_db.error("Writting to db failed on stenogram %s due to %s" % (ID, str(e)))
     db.commit()

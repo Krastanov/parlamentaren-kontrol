@@ -31,17 +31,17 @@ for i in range(835, max(indices)+1):
         force = canonical_party_name(force).encode('UTF-8')
         mail = r['schema']['Profile']['E-mail']['@value'].encode('UTF-8').replace(';', ',').replace(':', ',').strip()
     except xml.parsers.expat.ExpatError:
-        logger_mps.warning("Parsing the xml file failed. Trying csv.")
+        logger_mps.warning("Parsing the xml file for MP %s failed. Trying csv."%i)
         try:
             csv_file = urlopen('http://www.parliament.bg/export.php/bg/csv/MP/%d'%i)
             data = [l.strip().replace('&quot;','"').split(';')[:-1] for l in csv_file.readlines()]
             name = ' '.join([d.strip() for d in data[0]])
             mail = ', '.join([d.strip() for d in data[9][1:]])
             mail = mail.replace(';', ',').replace(':', ',')
-            force = d[6][-1]
+            force = ' '.join(data[6][-1].decode('UTF-8').split(' ')[:-1])
             force = canonical_party_name(force).encode('UTF-8')
-        except Exception:
-            logger_mps.error("The csv file is unparsable as well.")
+        except Exception, e:
+            logger_mps.error("The csv file for MP %s is unparsable as well due to %s. Skipping this id."%(i, str(e)))
             continue
     names_list.append(name)
     forces_list.append(force)

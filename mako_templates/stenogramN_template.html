@@ -3,17 +3,25 @@
 
 <!-- ##################################################################### -->
 <!-- ##################################################################### -->
-<h1>Стенограма от ${stenogram.date.strftime('%d/%m/%Y')}</h1>
+<h1>Стенограма от ${stenogram_date.strftime('%d/%m/%Y')}</h1>
 
 <hr class="alt1" />
 
+% if problem:
+<div class="col_12">
+<p>Имаше проблем при обработката на данните за тази стенограма. Вероятно официалния сайт на парламента предоставя повредени или непълни данни причинявайки тази грешка.</p>
+</div>
+<%include file="footer.html" />
+<% return %>
+% else:
+    
 
 <!-- ##################################################################### -->
 <!-- ##################################################################### -->
 <h2>Регистрация</h2>
 
 <div class="col_12">
-<a href="stenogram${stenogram.date.strftime('%Y%m%d')}registration.html">Поимемен списък</a>
+<a href="stenogram${stenogram_date.strftime('%Y%m%d')}registration.html">Поимемен списък</a>
 </div>
 
 <div class="col_6">
@@ -27,23 +35,22 @@
     </tr></thead>
     
     <tbody>
-    % for party, reg_stat in stenogram.reg_by_party_dict.items():
+    % for party, present, expected in zip(party_names, reg_presences, reg_expected):
         <tr>
             <td>${party}</td>
-            <td>${reg_stat.present}</td>
-            <td>${reg_stat.expected-reg_stat.present}</td>
-            <td class="percentage">${int(100*float(reg_stat.expected-reg_stat.present)/reg_stat.expected)}</td>
-            <td>${reg_stat.expected}</td>
+            <td>${present}</td>
+            <td>${expected-present}</td>
+            <td class="percentage">${100*(expected-present)/expected}</td>
+            <td>${expected}</td>
         </tr>
     % endfor
     </tbody>
 </table>
-<% total = map(sum, zip(*stenogram.reg_by_party_dict.values())) %>
-<p><strong>Всички Партии</strong>: Присъстващи: ${total[0]}, Общо регистрирани: ${total[1]}</p>
+<p><strong>Всички Партии</strong>: Присъстващи: ${sum(reg_presences)}, Общо регистрирани: ${sum(reg_expected)}</p>
 </div>
 
 <div class="col_6">
-    <img class="full-width" src="registration${stenogram.date.strftime('%Y%m%d')}.png" alt="Регистрирани и отсъстващи депутати."/>
+    <img class="full-width" src="registration${stenogram_date.strftime('%Y%m%d')}.png" alt="Регистрирани и отсъстващи депутати."/>
 </div>
 
 <hr class="alt1" />
@@ -57,16 +64,16 @@
 <h3>Съдържание</h3>
     <p>
     Отиди директно на гласуване номер: <br />
-    ${', '.join(['<a href="#vote%d"><span class="tooltip-bottom" title="%s">%d</span></a>'%(i+1, s.description, i+1) for i, s in enumerate(stenogram.sessions)])}
+    ${', '.join(['<a href="#vote%d"><span class="tooltip-bottom" title="%s">%d</span></a>'%(i+1, description, i+1) for i, description in enumerate(vote_descriptions)])}
     </p>
 </div>
 <div class="col_6">
-<img class="full-width" src="absences${stenogram.date.strftime('%Y%m%d')}.png" alt="Отсъствия на депутати."/>
+<img class="full-width" src="absences${stenogram_date.strftime('%Y%m%d')}.png" alt="Отсъствия на депутати."/>
 </div>
 
 <div class="col_12 "id="sessions">
 
-% for i, session in enumerate(stenogram.sessions):
+% for i, (description, votes_by_type_party) in enumerate(zip(vote_descriptions, votes_by_session_type_party)):
     % if i:
         <hr />
     % endif
@@ -74,11 +81,11 @@
     <h3 id="vote${i+1}"><a href="#vote${i+1}">Гласуване ${i+1}</a></h3>
 
     <div class="col_12">
-    <a href="stenogram${stenogram.date.strftime('%Y%m%d')}vote${i+1}.html">Поимемен списък</a>
+    <a href="stenogram${stenogram_date.strftime('%Y%m%d')}vote${i+1}.html">Поимемен списък</a>
     </div>
 
-    <div class="col_6"><blockquote>${session.description}</blockquote></div>
-    <div class="col_6"><img class="full-width" src="session${stenogram.date.strftime('%Y%m%d')}votes${i+1}.png" alt="Гласували и отсъстващи депутати."/></div>
+    <div class="col_6"><blockquote>${description}</blockquote></div>
+    <div class="col_6"><img class="full-width" src="session${stenogram_date.strftime('%Y%m%d')}votes${i+1}.png" alt="Гласували и отсъстващи депутати."/></div>
 
     <div class="col_12">
         <button class="small" id="showSession${i+1}" onClick="toggle('session${i+1}','showSession${i+1}','Покажи таблица', 'Скрий');" >Покажи таблица</button>
@@ -97,21 +104,21 @@
         </tr></thead>
 
         <tbody>
-        % for party, vote_stat in session.votes_by_party_dict.items():
+        % for party, (yes, no, abstained, absences) in zip(party_names, zip(*votes_by_type_party)):
             <tr>
                 <td>${party}</td>
-                <td>${vote_stat.yes}</td>
-                <td>${vote_stat.no}</td>
-                <td>${vote_stat.abstained}</td>
-                <td>${vote_stat.total}</td>
-                <td>${stenogram.reg_by_party_dict[party].expected - (vote_stat.yes + vote_stat.no + vote_stat.abstained)}</td>
+                <td>${yes}</td>
+                <td>${no}</td>
+                <td>${abstained}</td>
+                <td>${yes+no+abstained}</td>
+                <td>${absences}</td>
             </tr>
         % endfor
         </tbody>
     </table>
 
-    <% total = map(sum, zip(*session.votes_by_party_dict.values())) %>
-    <p><strong>Всички Партии</strong>: За: ${total[0]}, Против: ${total[1]}, Въздържали се: ${total[2]}, Общо Гласували: ${total[3]}</p>
+    <% total = map(sum, votes_by_type_party) %>
+    <p><strong>Всички Партии</strong>: За: ${total[0]}, Против: ${total[1]}, Въздържали се: ${total[2]}, Общо Гласували: ${sum(total[:-1])}</p>
     </div>
 
 % endfor
@@ -119,15 +126,15 @@
 
 <hr class="alt1" />
 
-
+% endif
 <!-- ##################################################################### -->
 <!-- ##################################################################### -->
 <h2>Пълен Текст</h2>
 
 <p>
 <% count = 1 %>
-% for i, line in enumerate(stenogram.text_lines):
-    % if i in stenogram.in_text_votes:
+% for i, line in enumerate(text):
+    % if i in vote_line_nb:
         <strong id="votesInText${count}">${line}</strong>
         <% count += 1 %>
     % else:

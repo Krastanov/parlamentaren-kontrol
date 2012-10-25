@@ -1,14 +1,12 @@
 <%include file="header.html" />
 
-<% session = stenogram.sessions[vote_i] %>
-
 
 <!-- ##################################################################### -->
 <!-- ##################################################################### -->
-<h1>Гласуване ${vote_i+1} на ${stenogram.date.strftime('%d/%m/%Y')}</h1>
+<h1>Гласуване ${session_i+1} на ${stenogram_date.strftime('%d/%m/%Y')}</h1>
 
 <div class="col_12">
-<a href="stenogram${stenogram.date.strftime('%Y%m%d')}.html#vote${vote_i+1}">Обратно към стенограмата от деня.</a>
+<a href="stenogram${stenogram_date.strftime('%Y%m%d')}.html#vote${session_i+1}">Обратно към стенограмата от деня.</a>
 </div>
 
 <hr class="alt1" />
@@ -18,8 +16,8 @@
 <!-- ##################################################################### -->
 <h2>Обща Информация</h2>
 
-<div class="col_6"><blockquote>${session.description}</blockquote></div>
-<div class="col_6"><img class="full-width" src="session${stenogram.date.strftime('%Y%m%d')}votes${vote_i+1}.png" alt="Гласували и отсъстващи депутати."/></div>
+<div class="col_6"><blockquote>${description}</blockquote></div>
+<div class="col_6"><img class="full-width" src="session${stenogram_date.strftime('%Y%m%d')}votes${session_i+1}.png" alt="Гласували и отсъстващи депутати."/></div>
 
 <div class="col_12">
 <table class="sortable">
@@ -33,21 +31,21 @@
     </tr></thead>
 
     <tbody>
-    % for party, vote_stat in session.votes_by_party_dict.items():
+    % for party, y, n, abst, absent in zip(party_names, yes, no, abstain, absences):
         <tr>
             <td>${party}</td>
-            <td>${vote_stat.yes}</td>
-            <td>${vote_stat.no}</td>
-            <td>${vote_stat.abstained}</td>
-            <td>${vote_stat.total}</td>
-            <td>${stenogram.reg_by_party_dict[party].expected - (vote_stat.yes + vote_stat.no + vote_stat.abstained)}</td>
+            <td>${y}</td>
+            <td>${n}</td>
+            <td>${abst}</td>
+            <td>${y+n+abst}</td>
+            <td>${absent}</td>
         </tr>
     % endfor
     </tbody>
 </table>
 
-<% total = map(sum, zip(*session.votes_by_party_dict.values())) %>
-<p><strong>Всички Партии</strong>: За: ${total[0]}, Против: ${total[1]}, Въздържали се: ${total[2]}, Общо Гласували: ${total[3]}</p>
+<% total = map(sum, [yes, no, abstain]) %>
+<p><strong>Всички Партии</strong>: За: ${total[0]}, Против: ${total[1]}, Въздържали се: ${total[2]}, Общо Гласували: ${sum(total)}</p>
 </div>
 
 <hr class="alt1" />
@@ -66,10 +64,10 @@
     </tr></thead>
     
     <tbody>
-    % for rep, voted in session.votes_by_name_dict.items():
+    % for rep, party, voted in votes_by_name:
         <tr>
-            <td>${rep.name}</td>
-            <td>${rep.party}</td>
+            <td>${rep}</td>
+            <td>${party}</td>
             <td>${voted}</td>
         </tr>
     % endfor

@@ -15,12 +15,17 @@
    - numpy (tested 1.6.2)
    - xlrd (tested 0.8.0)
    - xmltodict (tested 0.2)
-   - PyGreSQL (tested 4.0)
+   - psycopg2 (tested 2.4.5)
  - shell utilities (tested bash, zsh)
    - curl
    - grep
    - coreutils
  - postgresql (tested 9.1.5)
+
+# Logging conventions
+ - `warning` for stuff that must be corrected by the `parliament.bg` team, but
+   which we can work around
+ - `error` for stuff that is visible to our end users
 
 # Notes
 

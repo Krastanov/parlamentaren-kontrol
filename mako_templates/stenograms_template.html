@@ -7,8 +7,8 @@
 
 <hr class="alt1" />
 
-<% years = sorted(list({s.date.year for s in stenograms.values()})) %>
-<% stenogram_yeargroups = [[s for s in stenograms.values() if s.date.year == y] for y in years] %>
+<% years = sorted(list({date.year for date in stenograms.keys()})) %>
+<% stenogram_yeargroups = [[date for date in stenograms.keys() if date.year == y] for y in years] %>
 
 <ul class="tabs left">
     % for y in years:
@@ -17,11 +17,11 @@
     <li><a href="#yeartaball">Всички години</a></li>
 </ul>
 
-% for y, stenogram_ygroup in zip(years + ["all"], stenogram_yeargroups + [stenograms.values()]):
+% for y, stenogram_ygroup in zip(years + ["all"], stenogram_yeargroups + [stenograms.keys()]):
 <div id="yeartab${y}" class="tab-content">
-    <% months = sorted(list({s.date.month for s in stenogram_ygroup})) %>
+    <% months = sorted(list({date.month for date in stenogram_ygroup})) %>
     <% month_names = [u'Януари', u'Февруари', u'Март', u'Април', u'Май', u'Юни', u'Юли', u'Август', u'Септември', u'Октомври', u'Ноември', u'Декември'] %>
-    <% stenogram_monthgroups = [[s for s in stenogram_ygroup if s.date.month == m] for m in months] %>
+    <% stenogram_monthgroups = [[date for date in stenogram_ygroup if date.month == m] for m in months] %>
 
     <ul class="tabs left">
         % for m in months:
@@ -38,16 +38,16 @@
             <col width="90%">
             <thead><tr>
                 <th>Дата</th>
-                <% array_str = "['"+"', '".join(['sessionDescription%s%s'%(y,m)+s.date.strftime('%Y%m%d') for s in stenogram_mgroup])+"']" %>
+                <% array_str = "['"+"', '".join(['sessionDescription%s%s'%(y,m)+date.strftime('%Y%m%d') for date in stenogram_mgroup])+"']" %>
                 <th>Гласувания <button class="small" id="showMoreInfo${y}${m}" onClick="toggle_array(${array_str}, 'showMoreInfo${y}${m}', 'покажи', 'скрий')">покажи</button></th>
             </tr></thead>
             <tbody>
-                % for st in stenogram_mgroup:
+                % for date in stenogram_mgroup:
                 <tr>
-                <th valign="top"><a href="stenogram${st.date.strftime('%Y%m%d')}.html">${st.date.strftime('%d/%m/%Y')}</a></th>
-                <td><div id="sessionDescription${y}${m}${st.date.strftime('%Y%m%d')}" style="display: none;"><ul class="alt">
-                    % for session in st.sessions:
-                    <li>${session.description.split(u'по тема ')[-1]}</li>
+                <th valign="top"><a href="stenogram${date.strftime('%Y%m%d')}.html">${date.strftime('%d/%m/%Y')}</a></th>
+                <td><div id="sessionDescription${y}${m}${date.strftime('%Y%m%d')}" style="display: none;"><ul class="alt">
+                    % for description in stenograms[date]:
+                    <li>${description.split(u'по тема ')[-1]}</li>
                     % endfor
                 </ul></div></td>
                 </tr>

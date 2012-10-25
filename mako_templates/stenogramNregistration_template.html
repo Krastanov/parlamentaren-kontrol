@@ -3,10 +3,10 @@
 
 <!-- ##################################################################### -->
 <!-- ##################################################################### -->
-<h1>Регистрация на Депутати на ${stenogram.date.strftime('%d/%m/%Y')}</h1>
+<h1>Регистрация на Депутати на ${stenogram_date.strftime('%d/%m/%Y')}</h1>
 
 <div class="col_12">
-<a href="stenogram${stenogram.date.strftime('%Y%m%d')}.html">Обратно към стенограмата от деня.</a>
+<a href="stenogram${stenogram_date.strftime('%Y%m%d')}.html">Обратно към стенограмата от деня.</a>
 </div>
 
 <hr class="alt1" />
@@ -27,23 +27,22 @@
     </tr></thead>
     
     <tbody>
-    % for party, reg_stat in stenogram.reg_by_party_dict.items():
+    % for party, present, expected in zip(party_names, reg_presences, reg_expected):
         <tr>
             <td>${party}</td>
-            <td>${reg_stat.present}</td>
-            <td>${reg_stat.expected-reg_stat.present}</td>
-            <td class="percentage">${int(100*float(reg_stat.expected-reg_stat.present)/reg_stat.expected)}</td>
-            <td>${reg_stat.expected}</td>
+            <td>${present}</td>
+            <td>${expected-present}</td>
+            <td class="percentage">${100*(expected-present)/expected}</td>
+            <td>${expected}</td>
         </tr>
     % endfor
     </tbody>
 </table>
-<% total = map(sum, zip(*stenogram.reg_by_party_dict.values())) %>
-<p><strong>Всички Партии</strong>: Присъстващи: ${total[0]}, Общо регистрирани: ${total[1]}</p>
+<p><strong>Всички Партии</strong>: Присъстващи: ${sum(reg_presences)}, Общо регистрирани: ${sum(reg_expected)}</p>
 </div>
 
 <div class="col_6">
-    <img class="full-width" src="registration${stenogram.date.strftime('%Y%m%d')}.png" alt="Регистрирани и отсъстващи депутати."/>
+    <img class="full-width" src="registration${stenogram_date.strftime('%Y%m%d')}.png" alt="Регистрирани и отсъстващи депутати."/>
 </div>
 
 <hr class="alt1" />
@@ -62,10 +61,10 @@
     </tr></thead>
     
     <tbody>
-    % for rep, registered in stenogram.reg_by_name_dict.items():
+    % for rep, party, registered in reg_by_name:
         <tr>
-            <td>${rep.name}</td>
-            <td>${rep.party}</td>
+            <td>${rep}</td>
+            <td>${party}</td>
             <td>${registered}</td>
         </tr>
     % endfor

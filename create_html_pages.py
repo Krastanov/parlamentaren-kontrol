@@ -1,27 +1,19 @@
 # -*- coding: utf-8 -*-
-import cPickle
 import os
-
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import rcParams, gridspec
 
 from mako.template import Template
 from mako.lookup import TemplateLookup
 
-from stenograms_to_db import *
+import numpy as np
+
+from pk_db import db, cur, subcur
+from pk_logging import logging
+from pk_plots import *
 
 
-rcParams['font.family'] = 'sans-serif'
-rcParams['font.sans-serif'] = ['FreeSans']
-rcParams['font.size'] = 10
-rcParams['figure.figsize'] = (5., 3)
-rcParams['savefig.dpi'] = 90
-rcParams['legend.fontsize'] = 'small'
-rcParams['text.antialiased'] = True
-rcParams['patch.antialiased'] = True
-rcParams['lines.antialiased'] = True
-
+##############################################################################
+# Copy static files.
+##############################################################################
 os.system('cp -r raw_components/htmlkickstart/css generated_html/css')
 os.system('cp -r raw_components/htmlkickstart/js generated_html/js')
 os.system('cp raw_components/style.css generated_html/style.css')
@@ -29,148 +21,226 @@ os.system('cp raw_components/286px-Coat_of_arms_of_Bulgaria.svg.wikicommons.png 
 os.system('cp raw_components/retina_dust/retina_dust.png generated_html/css/img/grid.png')
 os.system('cp raw_components/google93d3e91ac1977e5b.html generated_html/google93d3e91ac1977e5b.html')
 
-stenograms_dump = open('data/stenograms_dump', 'r')
-stenograms = cPickle.load(stenograms_dump)
-stenograms_dump.close()
 
-
+##############################################################################
+# Load templates.
+##############################################################################
 templates = TemplateLookup(directories=['mako_templates'],
                            input_encoding='utf-8',
-                           output_encoding='utf-8')
+                           output_encoding='utf-8',
+                           strict_undefined=True)
 
 
+##############################################################################
+# Prepare loggers.
+##############################################################################
 logger_html = logging.getLogger('static_html_gen')
 
 
 ##############################################################################
-# Per stenogram stuff
+# Per stenogram stuff.
 ##############################################################################
-
-def registration_figure(date, reg_by_party_dict):
-    datestr = date.strftime('%Y%m%d')
-    datestr_human = date.strftime('%d/%m/%Y')
-    list_of_regs = sorted(reg_by_party_dict.items(), key=lambda x: x[0])
-    names = [x[0] for x in list_of_regs]
-    presences = np.array([x[1].present for x in list_of_regs])
-    expected = np.array([x[1].expected for x in list_of_regs])
-    absences = expected - presences
-
-    pos = np.arange(len(names))
-    width = 0.35
-    f = plt.figure()
-    f.suptitle(u'Регистрирани Депутати %s'%datestr_human)
-    gs = gridspec.GridSpec(3,5)
-    main = f.add_subplot(gs[:,0:-1])
-    p1 = main.bar(pos, presences, width, color='g')
-    p2 = main.bar(pos, absences, width, color='r', bottom=presences)
-    main.set_ylabel(u'Брой Депутати')
-    main.set_xticks(pos+width/2.)
-    main.set_xticklabels(names)
-    main.tick_params(axis='x', length=0)
-    main.set_xlim(-0.5*width, pos[-1]+1.5*width)
-    main.legend((p1[0], p2[0]), (u'Присъстващи', u'Отсъстващи'), loc='upper left', bbox_to_anchor=(1,1))
-    summ = f.add_subplot(gs[-1,-1])
-    pie_array = [np.sum(presences), np.sum(absences)]
-    summ.pie(pie_array, colors=['g', 'r'])
-    summ.set_title(u'Общо')
-    f.savefig('generated_html/registration%s.png' % datestr)
-    plt.close()
-
-def votes_by_party_figure(date, i, vote_by_party_dict, reg_by_party_dict):
-    datestr = date.strftime('%Y%m%d')
-    datestr_human = date.strftime('%d/%m/%Y')
-    list_of_votes = sorted(vote_by_party_dict.items(), key=lambda x: x[0])
-    names = [x[0] for x in list_of_votes]
-    expected = np.array([reg_by_party_dict[n].expected for n in names])
-    yes = np.array([x[1].yes for x in list_of_votes])
-    no = np.array([x[1].no for x in list_of_votes])
-    abstained = np.array([x[1].abstained for x in list_of_votes])
-    absences = expected - yes - no - abstained
-
-    pos = np.arange(len(names))
-    width = 0.35
-    f = plt.figure()
-    f.suptitle(u'Гласували Депутати %s гл.%d' % (datestr_human, i+1))
-    gs = gridspec.GridSpec(3,5)
-    main = f.add_subplot(gs[:,0:-1])
-    p1 = main.bar(pos, yes, width, color='g')
-    p2 = main.bar(pos, no, width, color='r', bottom=yes)
-    p3 = main.bar(pos, abstained, width, color='c', bottom=yes+no)
-    p4 = main.bar(pos, absences, width, color='k', bottom=yes+no+abstained)
-    main.set_ylabel(u'Брой Депутати')
-    main.set_xticks(pos+width/2.)
-    main.set_xticklabels(names)
-    main.tick_params(axis='x', length=0)
-    main.set_xlim(-0.5*width, pos[-1]+1.5*width)
-    main.legend((p1[0], p2[0], p3[0], p4[0]), (u'За', u'Против', u'Въздържали се', u'Отсъстващи'), loc='upper left', bbox_to_anchor=(1,1))
-    summ = f.add_subplot(gs[-1,-1])
-    pie_array = [np.sum(yes), np.sum(no), np.sum(abstained), np.sum(absences)]
-    summ.pie(pie_array, colors=['g', 'r', 'c', 'k'])
-    summ.set_title(u'Общо')
-    f.savefig('generated_html/session%svotes%s.png' % (datestr, i+1))
-    plt.close()
-
-def absences_figures(date, reg_by_party_dict, sessions):
-    datestr = date.strftime('%Y%m%d')
-    datestr_human = date.strftime('%d/%m/%Y')
-    list_of_regs = sorted(reg_by_party_dict.items(), key=lambda x: x[0])
-    names = [x[0] for x in list_of_regs]
-    presences = np.array([x[1].present for x in list_of_regs])
-    expected = np.array([x[1].expected for x in list_of_regs])
-    reg_absences = expected - presences
-    all_absences = [reg_absences]
-    for vote_by_party_dict in [s.votes_by_party_dict for s in sessions]:
-        yes = np.array([vote_by_party_dict[n].yes for n in names])
-        no = np.array([vote_by_party_dict[n].no for n in names])
-        abstained = np.array([vote_by_party_dict[n].abstained for n in names])
-        all_absences.append(expected - yes - no - abstained)
-    all_absences_percent = [a*100/expected for a in all_absences]
-    all_absences = np.column_stack(all_absences).T
-    all_absences_percent = np.column_stack(all_absences_percent).T
-
-    f = plt.figure()
-    f.suptitle(u'Отсъствия по Време на Гласуване %s'%datestr_human)
-    gs = gridspec.GridSpec(2,5)
-    su = f.add_subplot(gs[0,:-1])
-    su.plot(all_absences, alpha=0.8)
-    su.set_ylabel(u'Брой Депутати')
-    su.set_ylim(0)
-    su.set_xticks([])
-    su.legend(names, loc='upper left', bbox_to_anchor=(1,1))
-    sd = f.add_subplot(gs[1,:-1], sharex=su)
-    sd.plot(all_absences_percent, alpha=0.8)
-    sd.set_ylabel(u'% от Партията')
-    sd.set_xlabel(u'хронологичен ред на гласуванията')
-    sd.set_ylim(0, 100)
-    sd.set_xticks([])
-    sd.set_yticks([25, 50, 75])
-    f.autofmt_xdate()
-    f.savefig('generated_html/absences%s.png' % datestr)
-    plt.close()
-
+# Load templates.
 per_stenogram_template = templates.get_template('stenogramN_template.html')
 per_stenogram_reg_template = templates.get_template('stenogramNregistration_template.html')
 per_stenogram_vote_template = templates.get_template('stenogramNvoteI_template.html')
-for i, st in enumerate(stenograms.values()):
-    datestr = st.date.strftime('%Y%m%d')
-    logger_html.info("Generating HTML and plots for %s - %d of %d" % (datestr, i+1, len(stenograms)))
-    registration_figure(st.date, st.reg_by_party_dict)
-    absences_figures(st.date, st.reg_by_party_dict, st.sessions)
-    for i, session in enumerate(st.sessions):
-        votes_by_party_figure(st.date, i, session.votes_by_party_dict, st.reg_by_party_dict)
-        with open('generated_html/stenogram%svote%d.html'%(datestr, i+1), 'w') as html_file:
-            html_file.write(per_stenogram_vote_template.render(vote_i=i, stenogram=st))
-    with open('generated_html/stenogram%s.html'%datestr, 'w') as html_file:
-        html_file.write(per_stenogram_template.render(stenogram=st))
+
+# Get all stenograms into an iterator.
+cur.execute("""SELECT COUNT(*) FROM stenograms""")
+len_stenograms = cur.fetchone()[0]
+cur.execute("""SELECT stenogram_date, text, vote_line_nb, problem
+               FROM stenograms
+               ORDER BY stenogram_date""")
+
+for st_i, (stenogram_date, text, vote_line_nb, problem) in enumerate(cur):
+
+    datestr = stenogram_date.strftime('%Y%m%d')
+    logger_html.info("Generating HTML and plots for %s - %d of %d" % (datestr, st_i+1, len_stenograms))
+
+    if problem:
+        logger_html.error("The database reports problems with stenogram %s. Skipping." % datestr)
+        # Generate the main page for the current stenogram.
+        with open('generated_html/stenogram%s.html'%datestr, 'w') as html_file:
+            html_file.write(per_stenogram_template.render(stenogram_date=stenogram_date,
+                                                          problem=True,
+                                                          vote_descriptions=None,
+                                                          party_names=None,
+                                                          votes_by_session_type_party=None,
+                                                          reg_presences=None,
+                                                          reg_expected=None,
+                                                          text=text,
+                                                          vote_line_nb=vote_line_nb))
+        continue
+
+    ################################
+    # Registration data per party. #
+    ################################
+
+    # Load all party registration data for the current stenogram.
+    subcur.execute("""SELECT party_name, present, expected
+                      FROM party_reg
+                      WHERE stenogram_date = %s
+                      ORDER BY party_name""",
+                      (stenogram_date,))
+    party_names, reg_presences, reg_expected = zip(*subcur.fetchall())
+    party_names = [n for n in party_names]
+    reg_presences = np.array(reg_presences)
+    reg_expected = np.array(reg_expected)
+
+    # Plot registration data.
+    registration_figure(stenogram_date, party_names, reg_presences, reg_expected)
+
+
+    ################################
+    # Registration data per party. #
+    ################################
+
+    # Load the registration-by-name data.
+    subcur.execute("""SELECT mp_name, with_party, reg
+                      FROM mp_reg
+                      WHERE stenogram_date = %s
+                      ORDER BY mp_name""",
+                      (stenogram_date,))
+    reg_by_name = subcur.fetchall()
+
+    # Generate registration summary for the current stenogram.
     with open('generated_html/stenogram%sregistration.html'%datestr, 'w') as html_file:
-        html_file.write(per_stenogram_reg_template.render(stenogram=st))
+        html_file.write(per_stenogram_reg_template.render(stenogram_date=stenogram_date,
+                                                          party_names=party_names,
+                                                          reg_presences=reg_presences,
+                                                          reg_expected=reg_expected,
+                                                          reg_by_name=reg_by_name))
 
+
+    #########################
+    # Voting sessions data. #
+    #########################
+
+    # Check whether there were any voting sessions at all.
+    subcur.execute("""SELECT COUNT(*) FROM vote_sessions WHERE stenogram_date = %s""", (stenogram_date,))
+    len_sessions = subcur.fetchone()[0]
+
+    if len_sessions:
+
+        ###########
+        # LOADING #
+        ###########
+
+        # Load all party absence and vote data for all sessions of the current stenogram.
+        # list format: vote_* is [party1_votes, ...], party*_votes is [session1_vote, ...], session*_vote is int
+        votes_yes = []
+        votes_no = []
+        votes_abstain = []
+        votes_total = []
+        votes_absences = []
+        votes_absences_percent = []
+        for party_i, n in enumerate(party_names):
+            subcur.execute("""SELECT yes, no, abstain, total
+                              FROM party_votes
+                              WHERE stenogram_date = %s
+                              AND party_name = %s
+                              ORDER BY session_number""",
+                              (stenogram_date, n))
+            yes, no, abstain, total = map(np.array, zip(*subcur))
+            votes_yes.append(yes)
+            votes_no.append(no)
+            votes_abstain.append(abstain)
+            votes_total.append(total)
+            absent_party = reg_expected[party_i] - total
+            votes_absences.append(absent_party)
+            votes_absences_percent.append(absent_party*100/reg_expected[party_i])
+        votes_by_session_type_party = np.array([votes_yes, votes_no, votes_abstain, votes_absences
+                                               ]).transpose(2,0,1)
+
+        # Load all session descriptions for the current stenogram.
+        subcur.execute("""SELECT description
+                          FROM vote_sessions
+                          WHERE stenogram_date = %s
+                          ORDER BY session_number""",
+                          (stenogram_date,))
+        vote_descriptions = [d[0] for d in subcur]
+
+        # Load the list-by-mp-name vote for each session.
+        votes_by_session_by_name = []
+        for session_i in range(len_sessions):
+            subcur.execute("""SELECT mp_name, with_party, vote
+                              FROM mp_votes
+                              WHERE session_number = %s
+                              AND stenogram_date = %s
+                              ORDER BY mp_name""",
+                              (session_i, stenogram_date))
+            votes_by_session_by_name.append(subcur.fetchall())
+
+        ##############
+        # PRESENTING #
+        ##############
+
+        # Plot absences timeseries.
+        absences_figures(stenogram_date, party_names, votes_absences, votes_absences_percent)
+
+        # Generate plots and html dedicated to a single session.
+        for session_i, (description, votes_by_name, (yes, no, abstain, absences))\
+            in enumerate(zip(vote_descriptions, votes_by_session_by_name, votes_by_session_type_party)):
+            # Plot per-session vote data.
+            votes_by_party_figure(stenogram_date, session_i, party_names, yes, no, abstain, absences)
+            # Generate per-session html summary.
+            with open('generated_html/stenogram%svote%d.html'%(datestr, session_i+1), 'w') as html_file:
+                html_file.write(per_stenogram_vote_template.render(stenogram_date=stenogram_date,
+                                                                   session_i=session_i,
+                                                                   description=description,
+                                                                   party_names=party_names,
+                                                                   yes=yes, no=no, abstain=abstain,
+                                                                   absences=absences,
+                                                                   votes_by_name=votes_by_name))
+
+        #######################################################
+        # Big summary page in case there are voting sessions. #
+        #######################################################
+        # Generate the main page for the current stenogram.
+        with open('generated_html/stenogram%s.html'%datestr, 'w') as html_file:
+            html_file.write(per_stenogram_template.render(stenogram_date=stenogram_date,
+                                                          problem=False,
+                                                          vote_descriptions=vote_descriptions,
+                                                          party_names=party_names,
+                                                          votes_by_session_type_party=votes_by_session_type_party,
+                                                          reg_presences=reg_presences,
+                                                          reg_expected=reg_expected,
+                                                          text=text,
+                                                          vote_line_nb=vote_line_nb))
+
+    ##########################################################
+    # Big summary page in case there are no voting sessions. #
+    ##########################################################
+    # Generate the main page for the current stenogram.
+    with open('generated_html/stenogram%s.html'%datestr, 'w') as html_file:
+        html_file.write(per_stenogram_template.render(stenogram_date=stenogram_date,
+                                                      problem=False,
+                                                      vote_descriptions=None,
+                                                      party_names=party_names,
+                                                      votes_by_session_type_party=None,
+                                                      reg_presences=reg_presences,
+                                                      reg_expected=reg_expected,
+                                                      text=text,
+                                                      vote_line_nb=vote_line_nb))
 
 
 ##############################################################################
-# All stenograms
+# All stenograms.
 ##############################################################################
+# Get all stenogram dates and session info into a dict.
+cur.execute("""SELECT stenogram_date
+               FROM stenograms
+               ORDER BY stenogram_date""")
+stenograms = {}
+for (date, ) in cur:
+    subcur.execute("""SELECT description
+                      FROM vote_sessions
+                      WHERE stenogram_date = %s
+                      ORDER BY session_number""",
+                      (date,))
+    stenograms[date] = [v[0] for v in subcur]
 
+# Generate the summary page for all stenograms.
 logger_html.info("Generating html summary page of all stenograms.")
 all_stenograms_template = templates.get_template('stenograms_template.html')
 with open('generated_html/stenograms.html', 'w') as html_file:
@@ -180,13 +250,22 @@ with open('generated_html/stenograms.html', 'w') as html_file:
 ##############################################################################
 # MP emails
 ##############################################################################
-
-logger_html.info("Generating html page of MP mail addresses.")
+# Get all mails into a dict.
+cur.execute("""SELECT party_name
+               FROM parties
+               ORDER BY party_name""")
 mails_per_party_dict = {}
-for f in ['data/mail_dump%d'%i for i in range(6)]:
-    lines = open(f).readlines()
-    mails_per_party_dict[lines[0].decode('UTF-8')] = lines[1].decode('UTF-8')
+for (party, ) in cur:
+    subcur.execute("""SELECT email
+                      FROM mps
+                      WHERE orig_party_name = %s""",
+                      (party,))
+    mails = [m[0] for m in subcur]
+    if mails:
+        mails_per_party_dict[party] = ', '.join([m for m in mails if m])
 
+#Generate the webpage with the mails.
+logger_html.info("Generating html page of MP mail addresses.")
 mails_template = templates.get_template('mails_template.html')
 with open('generated_html/mails.html', 'w') as html_file:
     html_file.write(mails_template.render(mails_per_party_dict=mails_per_party_dict))

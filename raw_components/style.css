@@ -106,6 +106,21 @@ td.percentage:after
       content: " %";
 }
 
+#nav {
+    text-align: left;
+    position: relative;
+    top: 0px;
+    left: 0px;
+}
+
+#nav form {
+    position: absolute;
+    top: 20%;
+    right: 8px;
+    left: auto;
+    z-index: 700;
+}
+
 #slogan {
     font-size: 1.3em;
     color: rgb(0, 0, 0);

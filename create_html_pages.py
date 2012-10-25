@@ -53,8 +53,10 @@ cur.execute("""SELECT stenogram_date, text, vote_line_nb, problem
                ORDER BY stenogram_date""")
 
 for st_i, (stenogram_date, text, vote_line_nb, problem) in enumerate(cur):
+
     datestr = stenogram_date.strftime('%Y%m%d')
     logger_html.info("Generating HTML and plots for %s - %d of %d" % (datestr, st_i+1, len_stenograms))
+
     if problem:
         logger_html.error("The database reports problems with stenogram %s. Skipping." % datestr)
         # Generate the main page for the current stenogram.
@@ -64,11 +66,15 @@ for st_i, (stenogram_date, text, vote_line_nb, problem) in enumerate(cur):
                                                           vote_descriptions=None,
                                                           party_names=None,
                                                           votes_by_session_type_party=None,
-                                                          reg_presences=reg_presences,
-                                                          reg_expected=reg_expected,
+                                                          reg_presences=None,
+                                                          reg_expected=None,
                                                           text=text,
                                                           vote_line_nb=vote_line_nb))
         continue
+
+    ################################
+    # Registration data per party. #
+    ################################
 
     # Load all party registration data for the current stenogram.
     subcur.execute("""SELECT party_name, present, expected
@@ -76,10 +82,18 @@ for st_i, (stenogram_date, text, vote_line_nb, problem) in enumerate(cur):
                       WHERE stenogram_date = %s
                       ORDER BY party_name""",
                       (stenogram_date,))
-    party_names, reg_presences, reg_expected = zip(*subcur)
+    party_names, reg_presences, reg_expected = zip(*subcur.fetchall())
     party_names = [n for n in party_names]
     reg_presences = np.array(reg_presences)
     reg_expected = np.array(reg_expected)
+
+    # Plot registration data.
+    registration_figure(stenogram_date, party_names, reg_presences, reg_expected)
+
+
+    ################################
+    # Registration data per party. #
+    ################################
 
     # Load the registration-by-name data.
     subcur.execute("""SELECT mp_name, with_party, reg
@@ -87,12 +101,31 @@ for st_i, (stenogram_date, text, vote_line_nb, problem) in enumerate(cur):
                       WHERE stenogram_date = %s
                       ORDER BY mp_name""",
                       (stenogram_date,))
-    reg_by_name = list(subcur)
+    reg_by_name = subcur.fetchall()
 
-    # Load vote session data.
+    # Generate registration summary for the current stenogram.
+    with open('generated_html/stenogram%sregistration.html'%datestr, 'w') as html_file:
+        html_file.write(per_stenogram_reg_template.render(stenogram_date=stenogram_date,
+                                                          party_names=party_names,
+                                                          reg_presences=reg_presences,
+                                                          reg_expected=reg_expected,
+                                                          reg_by_name=reg_by_name))
+
+
+    #########################
+    # Voting sessions data. #
+    #########################
+
+    # Check whether there were any voting sessions at all.
     subcur.execute("""SELECT COUNT(*) FROM vote_sessions WHERE stenogram_date = %s""", (stenogram_date,))
     len_sessions = subcur.fetchone()[0]
+
     if len_sessions:
+
+        ###########
+        # LOADING #
+        ###########
+
         # Load all party absence and vote data for all sessions of the current stenogram.
         # list format: vote_* is [party1_votes, ...], party*_votes is [session1_vote, ...], session*_vote is int
         votes_yes = []
@@ -138,14 +171,13 @@ for st_i, (stenogram_date, text, vote_line_nb, problem) in enumerate(cur):
                               (session_i, stenogram_date))
             votes_by_session_by_name.append(subcur.fetchall())
 
+        ##############
+        # PRESENTING #
+        ##############
 
-    # Plot registration data.
-    registration_figure(stenogram_date, party_names, reg_presences, reg_expected)
-
-    # Generate per-session summaries.
-    if len_sessions:
         # Plot absences timeseries.
         absences_figures(stenogram_date, party_names, votes_absences, votes_absences_percent)
+
         # Generate plots and html dedicated to a single session.
         for session_i, (description, votes_by_name, (yes, no, abstain, absences))\
             in enumerate(zip(vote_descriptions, votes_by_session_by_name, votes_by_session_type_party)):
@@ -160,21 +192,32 @@ for st_i, (stenogram_date, text, vote_line_nb, problem) in enumerate(cur):
                                                                    yes=yes, no=no, abstain=abstain,
                                                                    absences=absences,
                                                                    votes_by_name=votes_by_name))
-    # Generate registration summary for the current stenogram.
-    with open('generated_html/stenogram%sregistration.html'%datestr, 'w') as html_file:
-        html_file.write(per_stenogram_reg_template.render(stenogram_date=stenogram_date,
+
+        #######################################################
+        # Big summary page in case there are voting sessions. #
+        #######################################################
+        # Generate the main page for the current stenogram.
+        with open('generated_html/stenogram%s.html'%datestr, 'w') as html_file:
+            html_file.write(per_stenogram_template.render(stenogram_date=stenogram_date,
+                                                          problem=False,
+                                                          vote_descriptions=vote_descriptions,
                                                           party_names=party_names,
+                                                          votes_by_session_type_party=votes_by_session_type_party,
                                                           reg_presences=reg_presences,
                                                           reg_expected=reg_expected,
-                                                          reg_by_name=reg_by_name))
+                                                          text=text,
+                                                          vote_line_nb=vote_line_nb))
 
+    ##########################################################
+    # Big summary page in case there are no voting sessions. #
+    ##########################################################
     # Generate the main page for the current stenogram.
     with open('generated_html/stenogram%s.html'%datestr, 'w') as html_file:
         html_file.write(per_stenogram_template.render(stenogram_date=stenogram_date,
                                                       problem=False,
-                                                      vote_descriptions=vote_descriptions,
+                                                      vote_descriptions=None,
                                                       party_names=party_names,
-                                                      votes_by_session_type_party=votes_by_session_type_party,
+                                                      votes_by_session_type_party=None,
                                                       reg_presences=reg_presences,
                                                       reg_expected=reg_expected,
                                                       text=text,
@@ -182,7 +225,7 @@ for st_i, (stenogram_date, text, vote_line_nb, problem) in enumerate(cur):
 
 
 ##############################################################################
-# All stenograms
+# All stenograms.
 ##############################################################################
 # Get all stenogram dates and session info into a dict.
 cur.execute("""SELECT stenogram_date

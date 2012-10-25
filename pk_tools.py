@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import urllib2
+import unidecode as _unidecode
 
 
 def urlopen(url, retry=3):
@@ -25,3 +26,8 @@ def canonical_party_name(name):
         u'НЕЗ': u'независим',
     }
     return party_dict.get(name, name)
+
+
+def unidecode(string):
+    """Transliterate unicode to latin."""
+    return _unidecode.unidecode(string.replace(u'ъ',u'а').replace(u'ь',u'й'))

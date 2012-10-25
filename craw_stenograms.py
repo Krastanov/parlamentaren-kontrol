@@ -130,8 +130,10 @@ def parse_excel_by_name(filename):
         else:
             logger_excel.error("Strange column found in the by_names excell file. Skipping it.")
 
-    if len(reg_sessions) != 1:
+    if len(reg_sessions) > 1:
         logger_excel.warning("There are more than one registration for this stenogram.")
+    elif len(reg_sessions) != 1:
+        raise ValueError('No registrations detected in the by-names file.')
 
     return names, parties, reg_sessions[0], vote_sessions
 
@@ -197,6 +199,7 @@ logger_to_db = logging.getLogger('to_db')
 stenograms = {}
 stenogram_IDs = open('data/IDs_plenary_stenograms').readlines()
 for i, ID in enumerate(stenogram_IDs):
+    ID = '2766'
     problem_by_name = False
     problem_by_party = False
     ID = ID.strip()
@@ -216,7 +219,11 @@ for i, ID in enumerate(stenogram_IDs):
         by_name_temp = open('data/temp.excel', 'wb')
         by_name_temp.write(by_name_web.read())
         by_name_temp.close()
-        mp_names, mp_parties, mp_reg_session, mp_vote_sessions = parse_excel_by_name('data/temp.excel')
+        if ID == '2766': # XXX Workaround malformated excel file.
+            logger_to_db.warning('Using the workaround for ID 2766.')
+            mp_names, mp_parties, mp_reg_session, mp_vote_sessions = parse_excel_by_name('workarounds/iv050712_ID2766_line32-33_workaround.xls')
+        else:
+            mp_names, mp_parties, mp_reg_session, mp_vote_sessions = parse_excel_by_name('data/temp.excel')
     except Exception as e:
         logger_to_db.error("No MP name excel file was found for ID %s due to %s"%(ID,str(e)))
         problem_by_name = True

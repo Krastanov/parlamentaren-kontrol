@@ -13,9 +13,10 @@
    - Mako (tested 0.7.2)
    - matplotlib (tested 1.1.1)
    - numpy (tested 1.6.2)
+   - psycopg2 (tested 2.4.5)
+   - Unidecode (tested 0.04.9)
    - xlrd (tested 0.8.0)
    - xmltodict (tested 0.2)
-   - psycopg2 (tested 2.4.5)
  - shell utilities (tested bash, zsh)
    - curl
    - grep

@@ -97,7 +97,7 @@ def parse_excel_by_name(filename):
         representative voted.
     """
     # Correct spelling errors in names of MPs.
-    def MP_name_spellcheck(name):
+    def MP_name_spellcheck(name): # XXX Workaround
         tr_dict = {u'МАРИЯНА ПЕТРОВА ИВАНОВА-НИКОЛОВА': u'МАРИАНА ПЕТРОВА ИВАНОВА-НИКОЛОВА'}
         if name in tr_dict:
             logger_excel.warning("Spelling error: %s" % name)
@@ -216,14 +216,14 @@ for i, ID in enumerate(stenogram_IDs):
     try:
         filename = re.search(r"/pub/StenD/(\d*iv%s.xls)" % date_string, complete_stenogram_page).groups()[0]
         by_name_web = urlopen("http://www.parliament.bg/pub/StenD/%s" % filename)
-        by_name_temp = open('data/temp.excel', 'wb')
+        by_name_temp = open('/tmp/temp.excel', 'wb')
         by_name_temp.write(by_name_web.read())
         by_name_temp.close()
         if ID == '2766': # XXX Workaround malformated excel file.
             logger_to_db.warning('Using the workaround for ID 2766.')
             mp_names, mp_parties, mp_reg_session, mp_vote_sessions = parse_excel_by_name('workarounds/iv050712_ID2766_line32-33_workaround.xls')
         else:
-            mp_names, mp_parties, mp_reg_session, mp_vote_sessions = parse_excel_by_name('data/temp.excel')
+            mp_names, mp_parties, mp_reg_session, mp_vote_sessions = parse_excel_by_name('/tmp/temp.excel')
     except Exception as e:
         logger_to_db.error("No MP name excel file was found for ID %s due to %s"%(ID,str(e)))
         problem_by_name = True
@@ -232,10 +232,10 @@ for i, ID in enumerate(stenogram_IDs):
     try:
         filename = re.search(r"/pub/StenD/(\d*gv%s.xls)" % date_string, complete_stenogram_page).groups()[0]
         by_party_web = urlopen("http://www.parliament.bg/pub/StenD/%s" % filename)
-        by_party_temp = open('data/temp.excel', 'wb')
+        by_party_temp = open('/tmp/temp.excel', 'wb')
         by_party_temp.write(by_party_web.read())
         by_party_temp.close()
-        reg_by_party_dict, sessions = parse_excel_by_party('data/temp.excel')
+        reg_by_party_dict, sessions = parse_excel_by_party('/tmp/temp.excel')
     except Exception as e:
         logger_to_db.error("No party excel file was found for ID %s due to %s"%(ID,str(e)))
         problem_by_party = True

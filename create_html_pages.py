@@ -1,18 +1,11 @@
 # -*- coding: utf-8 -*-
 import os
 
-from mako.template import Template
 from mako.lookup import TemplateLookup
-from mako import exceptions
-# mako exceptions:
-#try:
-#    ...
-#except:
-#    print exceptions.text_error_template().render()
 
 import numpy as np
 
-from pk_db import db, cur, subcur
+from pk_db import cur, subcur
 from pk_logging import logging
 from pk_plots import *
 

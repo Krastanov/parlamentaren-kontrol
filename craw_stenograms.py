@@ -156,14 +156,12 @@ def parse_excel_by_party(filename):
     """
     book = xlrd.open_workbook(filename, logfile=excel_warnings)
     sheet = book.sheet_by_index(0)
-    cols = sheet.ncols
     rows = sheet.nrows
     sessions = []
     row = 0
     while row < rows:
         first = sheet.cell_value(rowx=row, colx=0)
         if registration_marker in first:
-            details_str = first.split(registration_marker)[-1].strip()
             row += 2
             per_party_dict = {}
             for i in range(parties_count):

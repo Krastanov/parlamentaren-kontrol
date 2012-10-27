@@ -119,6 +119,29 @@ with open('generated_html/mails.html', 'w') as html_file:
 
 
 ##############################################################################
+# All stenograms summary page.
+##############################################################################
+logger_html.info("Generating html summary page of all stenograms.")
+# Get all stenogram dates and session info into a dict.
+cur.execute("""SELECT stenogram_date
+               FROM stenograms
+               ORDER BY stenogram_date""")
+stenograms = {}
+for (date, ) in cur:
+    subcur.execute("""SELECT description
+                      FROM vote_sessions
+                      WHERE stenogram_date = %s
+                      ORDER BY session_number""",
+                      (date,))
+    stenograms[date] = [v[0] for v in subcur]
+
+# Generate the summary page for all stenograms.
+all_stenograms_template = templates.get_template('stenograms_template.html')
+with open('generated_html/stenograms.html', 'w') as html_file:
+    html_file.write(all_stenograms_template.render(stenograms=stenograms))
+
+
+##############################################################################
 # Per stenogram stuff.
 ##############################################################################
 # Load templates.
@@ -303,26 +326,3 @@ for st_i, (stenogram_date, text, vote_line_nb, problem) in enumerate(cur):
                                                       reg_expected=reg_expected,
                                                       text=text,
                                                       vote_line_nb=vote_line_nb))
-
-
-##############################################################################
-# All stenograms.
-##############################################################################
-logger_html.info("Generating html summary page of all stenograms.")
-# Get all stenogram dates and session info into a dict.
-cur.execute("""SELECT stenogram_date
-               FROM stenograms
-               ORDER BY stenogram_date""")
-stenograms = {}
-for (date, ) in cur:
-    subcur.execute("""SELECT description
-                      FROM vote_sessions
-                      WHERE stenogram_date = %s
-                      ORDER BY session_number""",
-                      (date,))
-    stenograms[date] = [v[0] for v in subcur]
-
-# Generate the summary page for all stenograms.
-all_stenograms_template = templates.get_template('stenograms_template.html')
-with open('generated_html/stenograms.html', 'w') as html_file:
-    html_file.write(all_stenograms_template.render(stenograms=stenograms))

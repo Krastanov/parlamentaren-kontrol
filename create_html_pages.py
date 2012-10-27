@@ -12,17 +12,6 @@ from pk_plots import (registration_figure, absences_figure,
 
 
 ##############################################################################
-# Copy static files.
-##############################################################################
-os.system('cp -r raw_components/htmlkickstart/css generated_html/css')
-os.system('cp -r raw_components/htmlkickstart/js generated_html/js')
-os.system('cp raw_components/style.css generated_html/style.css')
-os.system('cp raw_components/286px-Coat_of_arms_of_Bulgaria.svg.wikicommons.png generated_html/logo.png')
-os.system('cp raw_components/retina_dust/retina_dust.png generated_html/css/img/grid.png')
-os.system('cp raw_components/google93d3e91ac1977e5b.html generated_html/google93d3e91ac1977e5b.html')
-
-
-##############################################################################
 # Load templates.
 ##############################################################################
 templates = TemplateLookup(directories=['mako_templates'],
@@ -38,9 +27,27 @@ logger_html = logging.getLogger('static_html_gen')
 
 
 ##############################################################################
+# Copy static files.
+##############################################################################
+logger_html.info("Copy the static files.")
+os.system('cp -r raw_components/htmlkickstart/css generated_html/css')
+os.system('cp -r raw_components/htmlkickstart/js generated_html/js')
+os.system('cp raw_components/style.css generated_html/style.css')
+os.system('cp raw_components/286px-Coat_of_arms_of_Bulgaria.svg.wikicommons.png generated_html/logo.png')
+os.system('cp raw_components/retina_dust/retina_dust.png generated_html/css/img/grid.png')
+os.system('cp raw_components/google93d3e91ac1977e5b.html generated_html/google93d3e91ac1977e5b.html')
+
+
+##############################################################################
+# Prepare the SQL dump.
+##############################################################################
+logger_html.info("Prepare the SQL dump.")
+os.system('pg_dump parlamentarenkontrol -U parlamentarenkontrol | gzip > generated_html/parlamentaren_kontrol_SQL_dump.gz')
+
+
+##############################################################################
 # Static pages
 ##############################################################################
-
 # Index
 logger_html.info("Generating html index page.")
 index_template = templates.get_template('index_template.html')
@@ -57,6 +64,7 @@ with open('generated_html/contacts.html', 'w') as html_file:
 ##############################################################################
 # Per MP stuff.
 ##############################################################################
+logger_html.info("Generating summary html page with MP details.")
 # Load the information.
 cur.execute("""SELECT mp_name,
                       orig_party_name,
@@ -81,7 +89,6 @@ votes = np.sum(votes, 0)
 alltime_votes(*votes)
 
 # HTML
-logger_html.info("Generating summary html page with MP details.")
 per_mp_template = templates.get_template('mps_template.html')
 with open('generated_html/mps.html', 'w') as html_file:
     html_file.write(per_mp_template.render(name_orig_with_regs_votes=name_orig_with_regs_votes))
@@ -301,6 +308,7 @@ for st_i, (stenogram_date, text, vote_line_nb, problem) in enumerate(cur):
 ##############################################################################
 # All stenograms.
 ##############################################################################
+logger_html.info("Generating html summary page of all stenograms.")
 # Get all stenogram dates and session info into a dict.
 cur.execute("""SELECT stenogram_date
                FROM stenograms
@@ -315,7 +323,6 @@ for (date, ) in cur:
     stenograms[date] = [v[0] for v in subcur]
 
 # Generate the summary page for all stenograms.
-logger_html.info("Generating html summary page of all stenograms.")
 all_stenograms_template = templates.get_template('stenograms_template.html')
 with open('generated_html/stenograms.html', 'w') as html_file:
     html_file.write(all_stenograms_template.render(stenograms=stenograms))

@@ -7,7 +7,8 @@ import numpy as np
 
 from pk_db import cur, subcur
 from pk_logging import logging
-from pk_plots import *
+from pk_plots import (registration_figure, absences_figure,
+        session_votes_by_party_figure, alltime_regs, alltime_votes)
 
 
 ##############################################################################
@@ -37,6 +38,23 @@ logger_html = logging.getLogger('static_html_gen')
 
 
 ##############################################################################
+# Static pages
+##############################################################################
+
+# Index
+logger_html.info("Generating html index page.")
+index_template = templates.get_template('index_template.html')
+with open('generated_html/index.html', 'w') as html_file:
+    html_file.write(index_template.render())
+
+# Contacts
+logger_html.info("Generating html contacts page.")
+contacts_template = templates.get_template('contacts_template.html')
+with open('generated_html/contacts.html', 'w') as html_file:
+    html_file.write(contacts_template.render())
+
+
+##############################################################################
 # Per MP stuff.
 ##############################################################################
 # Load the information.
@@ -53,13 +71,44 @@ cur.execute("""SELECT mp_name,
                FROM mps
                ORDER BY mp_name""")
 name_orig_with_regs_votes = cur.fetchall()
+
 # Plots
+regs = np.array([v[3:6] for v in name_orig_with_regs_votes])
+regs = np.sum(regs, 0)
+alltime_regs(*regs)
+votes = np.array([v[6:] for v in name_orig_with_regs_votes])
+votes = np.sum(votes, 0)
+alltime_votes(*votes)
 
 # HTML
 logger_html.info("Generating summary html page with MP details.")
 per_mp_template = templates.get_template('mps_template.html')
 with open('generated_html/mps.html', 'w') as html_file:
     html_file.write(per_mp_template.render(name_orig_with_regs_votes=name_orig_with_regs_votes))
+
+
+##############################################################################
+# MP emails
+##############################################################################
+# Get all mails into a dict.
+cur.execute("""SELECT party_name
+               FROM parties
+               ORDER BY party_name""")
+mails_per_party_dict = {}
+for (party, ) in cur:
+    subcur.execute("""SELECT email
+                      FROM mps
+                      WHERE orig_party_name = %s""",
+                      (party,))
+    mails = [m[0] for m in subcur]
+    if mails:
+        mails_per_party_dict[party] = ', '.join([m for m in mails if m])
+
+#Generate the webpage with the mails.
+logger_html.info("Generating html page of MP mail addresses.")
+mails_template = templates.get_template('mails_template.html')
+with open('generated_html/mails.html', 'w') as html_file:
+    html_file.write(mails_template.render(mails_per_party_dict=mails_per_party_dict))
 
 
 ##############################################################################
@@ -201,13 +250,13 @@ for st_i, (stenogram_date, text, vote_line_nb, problem) in enumerate(cur):
         ##############
 
         # Plot absences timeseries.
-        absences_figures(stenogram_date, party_names, votes_absences, votes_absences_percent)
+        absences_figure(stenogram_date, party_names, votes_absences, votes_absences_percent)
 
         # Generate plots and html dedicated to a single session.
         for session_i, (description, votes_by_name, (yes, no, abstain, absences))\
             in enumerate(zip(vote_descriptions, votes_by_session_by_name, votes_by_session_type_party)):
             # Plot per-session vote data.
-            votes_by_party_figure(stenogram_date, session_i, party_names, yes, no, abstain, absences)
+            session_votes_by_party_figure(stenogram_date, session_i, party_names, yes, no, abstain, absences)
             # Generate per-session html summary.
             with open('generated_html/stenogram%svote%d.html'%(datestr, session_i+1), 'w') as html_file:
                 html_file.write(per_stenogram_vote_template.render(stenogram_date=stenogram_date,
@@ -270,45 +319,3 @@ logger_html.info("Generating html summary page of all stenograms.")
 all_stenograms_template = templates.get_template('stenograms_template.html')
 with open('generated_html/stenograms.html', 'w') as html_file:
     html_file.write(all_stenograms_template.render(stenograms=stenograms))
-
-
-##############################################################################
-# MP emails
-##############################################################################
-# Get all mails into a dict.
-cur.execute("""SELECT party_name
-               FROM parties
-               ORDER BY party_name""")
-mails_per_party_dict = {}
-for (party, ) in cur:
-    subcur.execute("""SELECT email
-                      FROM mps
-                      WHERE orig_party_name = %s""",
-                      (party,))
-    mails = [m[0] for m in subcur]
-    if mails:
-        mails_per_party_dict[party] = ', '.join([m for m in mails if m])
-
-#Generate the webpage with the mails.
-logger_html.info("Generating html page of MP mail addresses.")
-mails_template = templates.get_template('mails_template.html')
-with open('generated_html/mails.html', 'w') as html_file:
-    html_file.write(mails_template.render(mails_per_party_dict=mails_per_party_dict))
-
-
-##############################################################################
-# Static pages
-##############################################################################
-
-# Index
-logger_html.info("Generating html index page.")
-index_template = templates.get_template('index_template.html')
-with open('generated_html/index.html', 'w') as html_file:
-    html_file.write(index_template.render())
-
-# Contacts
-logger_html.info("Generating html contacts page.")
-contacts_template = templates.get_template('contacts_template.html')
-with open('generated_html/contacts.html', 'w') as html_file:
-    html_file.write(contacts_template.render())
-

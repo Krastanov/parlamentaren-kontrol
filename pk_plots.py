@@ -10,7 +10,8 @@ from matplotlib import rcParams, gridspec
 rcParams['font.family'] = 'sans-serif'
 rcParams['font.sans-serif'] = ['FreeSans']
 rcParams['font.size'] = 10
-rcParams['figure.figsize'] = (5., 3)
+rcParams['figure.figsize'] = (5, 3)
+figsize_square = (5, 5)
 rcParams['savefig.dpi'] = 90
 rcParams['legend.fontsize'] = 'small'
 rcParams['text.antialiased'] = True
@@ -48,7 +49,7 @@ def registration_figure(date, names, reg_presences, reg_expected):
     f.savefig('generated_html/registration%s.png' % datestr)
     plt.close()
 
-def absences_figures(date, names, vote_absences, vote_absences_percent):
+def absences_figure(date, names, vote_absences, vote_absences_percent):
     """Time series chart: x:session nb vs y:absences, color:name"""
     datestr = date.strftime('%Y%m%d')
     datestr_human = date.strftime('%d/%m/%Y')
@@ -79,7 +80,7 @@ def absences_figures(date, names, vote_absences, vote_absences_percent):
 ##############################################################################
 # Per stenogram session plots.
 ##############################################################################
-def votes_by_party_figure(date, i, party_names, yes, no, abstain, absences):
+def session_votes_by_party_figure(date, i, party_names, yes, no, abstain, absences):
     datestr = date.strftime('%Y%m%d')
     datestr_human = date.strftime('%d/%m/%Y')
 
@@ -104,4 +105,26 @@ def votes_by_party_figure(date, i, party_names, yes, no, abstain, absences):
     summ.pie(pie_array, colors=['g', 'r', 'c', 'k'])
     summ.set_title(u'Общо')
     f.savefig('generated_html/session%svotes%s.png' % (datestr, i+1))
+    plt.close()
+
+
+##############################################################################
+# Alltime plots.
+##############################################################################
+def alltime_regs(present, absent, manual):
+    f = plt.figure(figsize=figsize_square)
+    f.suptitle(u'Обобщение на Всички Регистрации.')
+    s = f.add_subplot(1,1,1)
+    pie_array = [present, absent, manual]
+    s.pie(pie_array, colors=['g', 'r', 'c'], labels=[u'Присъствия', u'Отсъствия', u'Ръчно\nзаписани'])
+    f.savefig('generated_html/alltimeregs.png')
+    plt.close()
+
+def alltime_votes(y, n, abst, absent):
+    f = plt.figure(figsize=figsize_square)
+    f.suptitle(u'Обобщение на Всички Гласове.')
+    s = f.add_subplot(1,1,1)
+    pie_array = [y, n, abst, absent]
+    s.pie(pie_array, colors=['g', 'r', 'c', 'k'], labels=[u'За', u'Против', u'Въздържали се', u'Отсъстващи'])
+    f.savefig('generated_html/alltimevotes.png')
     plt.close()

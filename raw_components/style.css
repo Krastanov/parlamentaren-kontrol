@@ -20,6 +20,7 @@ font-family: "Trebuchet Ms", arial, verdana, sans-serif;
 thead th,
 tbody th{
 font-family: "Trebuchet Ms", arial, verdana, sans-serif;
+padding: 
 }
 
 button,
@@ -51,7 +52,7 @@ text-shadow: 0px 0px 1px transparent; /* google font pixelation fix */
 }
 
 #wrap{
-width:1100px;
+width:1200px;
 background:#fff;
 margin:30px auto 30px auto;
 padding:0;
@@ -103,7 +104,20 @@ border-radius:3px;
 -----------------------------------*/
 td.percentage:after
 {
-      content: " %";
+    content: " %";
+}
+
+.box_rotate {
+    float: left; 
+    position: relative;
+    width: 160px;
+          transform: matrix(0, 1, -1, 0, -40, 0); 
+     -moz-transform: matrix(0, 1, -1, 0, -40, 0);  /* FF3.5+ */
+       -o-transform: matrix(0, 1, -1, 0, -40, 0);  /* Opera 10.5 */
+  -webkit-transform: matrix(0, 1, -1, 0, -40, 0);  /* Saf3.1+, Chrome */
+      -ms-transform: matrix(0, 1, -1, 0, -40, 0);  /* IE 9 */
+             filter:  progid:DXImageTransform.Microsoft.BasicImage(rotation=1);  /* IE6,IE7 */
+         -ms-filter: "progid:DXImageTransform.Microsoft.BasicImage(rotation=1)"; /* IE8 */
 }
 
 #nav {

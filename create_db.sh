@@ -70,4 +70,7 @@ CREATE TABLE party_reg (
        PRIMARY KEY (party_name, stenogram_date)
 );
 
+
+ CREATE EXTENSION first_last_agg;
+
 SQL

@@ -21,7 +21,10 @@
    - curl
    - grep
    - coreutils
- - postgresql (tested 9.1.5)
+ - SQL
+   - postgresql (tested 9.1.5)
+   - pgxnclient (tested 1.0.3)
+     - first_last_agg (tested 0.1.2) (via `pgxnclient install first_last_agg --testing`)
 
 # Logging conventions
  - `warning` for stuff that must be corrected by the `parliament.bg` team, but

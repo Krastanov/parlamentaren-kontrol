@@ -3,6 +3,12 @@ import os
 
 from mako.template import Template
 from mako.lookup import TemplateLookup
+from mako import exceptions
+# mako exceptions:
+#try:
+#    ...
+#except:
+#    print exceptions.text_error_template().render()
 
 import numpy as np
 
@@ -35,6 +41,32 @@ templates = TemplateLookup(directories=['mako_templates'],
 # Prepare loggers.
 ##############################################################################
 logger_html = logging.getLogger('static_html_gen')
+
+
+##############################################################################
+# Per MP stuff.
+##############################################################################
+# Load the information.
+cur.execute("""SELECT mp_name,
+                      orig_party_name,
+                      (SELECT LAST(with_party ORDER BY mp_reg.stenogram_date) FROM mp_reg where mp_reg.mp_name = mps.mp_name),
+                      (SELECT COUNT(*) FROM mp_reg   where mps.mp_name = mp_reg.mp_name   AND mp_reg.reg = 'present'),
+                      (SELECT COUNT(*) FROM mp_reg   where mps.mp_name = mp_reg.mp_name   AND mp_reg.reg = 'absent'),
+                      (SELECT COUNT(*) FROM mp_reg   where mps.mp_name = mp_reg.mp_name   AND mp_reg.reg = 'manually_registered'),
+                      (SELECT COUNT(*) FROM mp_votes where mps.mp_name = mp_votes.mp_name AND mp_votes.vote = 'yes'),
+                      (SELECT COUNT(*) FROM mp_votes where mps.mp_name = mp_votes.mp_name AND mp_votes.vote = 'no'),
+                      (SELECT COUNT(*) FROM mp_votes where mps.mp_name = mp_votes.mp_name AND mp_votes.vote = 'abstain'),
+                      (SELECT COUNT(*) FROM mp_votes where mps.mp_name = mp_votes.mp_name AND mp_votes.vote = 'absent')
+               FROM mps
+               ORDER BY mp_name""")
+name_orig_with_regs_votes = cur.fetchall()
+# Plots
+
+# HTML
+logger_html.info("Generating summary html page with MP details.")
+per_mp_template = templates.get_template('mps_template.html')
+with open('generated_html/mps.html', 'w') as html_file:
+    html_file.write(per_mp_template.render(name_orig_with_regs_votes=name_orig_with_regs_votes))
 
 
 ##############################################################################

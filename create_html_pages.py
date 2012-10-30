@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import collections
 import os
 
 from mako.lookup import TemplateLookup
@@ -126,7 +127,7 @@ logger_html.info("Generating html summary page of all stenograms.")
 cur.execute("""SELECT stenogram_date
                FROM stenograms
                ORDER BY stenogram_date""")
-stenograms = {}
+stenograms = collections.OrderedDict()
 for (date, ) in cur:
     subcur.execute("""SELECT description
                       FROM vote_sessions

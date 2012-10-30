@@ -312,18 +312,18 @@ for st_i, (stenogram_date, text, vote_line_nb, problem) in enumerate(cur):
                                                           reg_expected=reg_expected,
                                                           text=text,
                                                           vote_line_nb=vote_line_nb))
-
-    ##########################################################
-    # Big summary page in case there are no voting sessions. #
-    ##########################################################
-    # Generate the main page for the current stenogram.
-    with open('generated_html/stenogram%s.html'%datestr, 'w') as html_file:
-        html_file.write(per_stenogram_template.render(stenogram_date=stenogram_date,
-                                                      problem=False,
-                                                      vote_descriptions=None,
-                                                      party_names=party_names,
-                                                      votes_by_session_type_party=None,
-                                                      reg_presences=reg_presences,
-                                                      reg_expected=reg_expected,
-                                                      text=text,
-                                                      vote_line_nb=vote_line_nb))
+    else:
+        ##########################################################
+        # Big summary page in case there are no voting sessions. #
+        ##########################################################
+        # Generate the main page for the current stenogram.
+        with open('generated_html/stenogram%s.html'%datestr, 'w') as html_file:
+            html_file.write(per_stenogram_template.render(stenogram_date=stenogram_date,
+                                                          problem=False,
+                                                          vote_descriptions=None,
+                                                          party_names=party_names,
+                                                          votes_by_session_type_party=None,
+                                                          reg_presences=reg_presences,
+                                                          reg_expected=reg_expected,
+                                                          text=text,
+                                                          vote_line_nb=vote_line_nb))

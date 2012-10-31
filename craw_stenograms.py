@@ -129,13 +129,24 @@ def parse_excel_by_name(filename):
             logger_excel.warning("Empty column found in the by_names excell file. Skipping it.")
         else:
             logger_excel.error("Strange column found in the by_names excell file. Skipping it.")
+    vote_sessions = zip(*vote_sessions)
 
     if len(reg_sessions) > 1:
         logger_excel.warning("There are more than one registration for this stenogram.")
     elif len(reg_sessions) != 1:
         raise ValueError('No registrations detected in the by-names file.')
 
-    return names, parties, reg_sessions[0], vote_sessions
+    # Remove unregistered MPs.
+    def filter_names(*args): # XXX Workaround
+        to_filter_out = [u'МИХАИЛ ВЛАДИМИРОВ ВЛАДОВ', u'НИКОЛАЙ НАНКОВ НАНКОВ']
+        zip_args = zip(*args)
+        filtered = filter(lambda a: a[0] not in to_filter_out, zip_args)
+        if len(filtered) != len(zip_args):
+            logger_excel.warning("An MP was filtered out of the by-names list, because they are not registered as an MP.")
+            return zip(*filtered)
+        return args
+
+    return filter_names(names, parties, reg_sessions[-1], vote_sessions)
 
 
 def parse_excel_by_party(filename):
@@ -197,7 +208,6 @@ logger_to_db = logging.getLogger('to_db')
 stenograms = {}
 stenogram_IDs = open('data/IDs_plenary_stenograms').readlines()
 for i, ID in enumerate(stenogram_IDs):
-    ID = '2766'
     problem_by_name = False
     problem_by_party = False
     ID = ID.strip()
@@ -258,8 +268,8 @@ for i, ID in enumerate(stenogram_IDs):
                             ((name, party, parser.date, reg) for name, party, reg in zip(mp_names, mp_parties, mp_reg_session)))
             cur.executemany("""INSERT INTO mp_votes VALUES (%s, %s, %s, %s, %s)""",
                             ((name, party, parser.date, i, v)
-                                 for i, votes in enumerate(mp_vote_sessions)
-                                 for name, party, v in zip(mp_names, mp_parties, votes)))
+                                 for name, party, votes in zip(mp_names, mp_parties, mp_vote_sessions)
+                                 for i, v in enumerate(votes)))
         except Exception as e:
             logger_to_db.error("Writting to db failed on stenogram %s due to %s" % (ID, str(e)))
     db.commit()

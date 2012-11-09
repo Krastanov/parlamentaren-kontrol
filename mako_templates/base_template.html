@@ -3,19 +3,20 @@
 <head>
     <title>Парламентарен Контрол</title>
 
-
     <meta charset="UTF-8" />
     <meta name="description" content="Независима Организация за Парламентарен Контрол" />
 
-
+    <!-- HTML KICKSTART (includes jquery) -->
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
     <!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
     <script type="text/javascript" src="js/prettify.js"></script>
     <script type="text/javascript" src="js/kickstart.js"></script>
     <link rel="stylesheet" type="text/css" href="css/kickstart.css" media="all" />
-    <link rel="stylesheet" type="text/css" href="style.css" media="all" /><!-- CUSTOM STYLES -->
 
+    <!-- CUSTOM STYLES -->
+    <link rel="stylesheet" type="text/css" href="style.css" media="all" />
 
+    <!-- TOGGLING THE VISIBILITY OF DIVs -->
     <script language="javascript"> 
     function toggle(showHideDiv, switchTextDiv, showText, hideText) {
         var ele = document.getElementById(showHideDiv);
@@ -29,9 +30,6 @@
             text.innerHTML = hideText;
         }
     } 
-    </script>
-
-    <script language="javascript"> 
     function toggle_array(contents, switchTextDiv, showText, hideText) {
         for(i=0; i < contents.length; i++) {
             toggle(contents[i], switchTextDiv, showText, hideText);
@@ -39,50 +37,66 @@
     }
     </script>
 
-
+    <!-- GOOGLE ANALYTICS -->
     <script type="text/javascript">
-
       var _gaq = _gaq || [];
       _gaq.push(['_setAccount', 'UA-34843609-1']);
       _gaq.push(['_setDomainName', 'parlamentaren-kontrol.com']);
       _gaq.push(['_trackPageview']);
-
       (function() {
         var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
         ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
         var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
       })();
-
     </script>
-
 </head>
-
-
 <body>
     <a id="top-of-page"></a>
     <p>Данни от началото на 2011 до днес.</p>
-<!--
-    <div id="header">
+
+    <!--<div id="header">
     <h1>Парламентарен Контрол</h1>
     <h2>Независима Организация за Парламентарен Контрол</h2>
     <a id="logo" href="http://www.parlamentaren-kontrol.com"><img src="logo.png" alt="Парламентарен Контрол" height="240" width="286"></a>
     <p id="slogan">Време е да се заинтересуваме какво става в парламента!</p>
-    </div>
--->
+    </div>-->
+
     <div id="wrap" class="clearfix">
+        <div id="nav">
+            <ul class="menu">
+                <li><a href="http://www.parlamentaren-kontrol.com">Начало</a></li>
+                <li><a href="stenograms.html">Стенограми</a></li>
+                <li><a href="mps.html">Народни Представители</a></li>
+                <li><a href="mails.html">Контакти с Народни Представители</a></li>
+                <li><a href="http://blog.parlamentaren-kontrol.com">Блог</a></li>
+            </ul>
+            <form action="http://www.google.com/cse">
+                <input style="width: 227px; min-width: 227px;" id="search" type="text" name="q" placeholder="Търсене: пиши и натисни Enter" />
+                <input type="hidden" name="cx" value="010292560853932977821:w-c1g2strro" />
+            </form>
+        </div>
 
-    <div id="nav">
-    <ul class="menu">
-        <li><a href="http://www.parlamentaren-kontrol.com">Начало</a></li>
-        <li><a href="stenograms.html">Стенограми</a></li>
-        <li><a href="mps.html">Народни Представители</a></li>
-        <li><a href="mails.html">Контакти с Народни Представители</a></li>
-        <li><a href="http://blog.parlamentaren-kontrol.com">Блог</a></li>
-    </ul>
-    <form action="http://www.google.com/cse">
-        <input style="width: 227px; min-width: 227px;" id="search" type="text" name="q" placeholder="Търсене: пиши и натисни Enter" />
-        <input type="hidden" name="cx" value="010292560853932977821:w-c1g2strro" />
-    </form>
+        <!-- THE ACTUAL CONTENT -->
+        <div class="col_12">
+            ${self.body()}
+        </div>
+
+        <div class="clear"></div>
+        <div id="footer">
+            <strong>Независима Организация за Парламентарен Контрол</strong><br/>
+            <a href="contacts.html">Свържете се с Нас с Предложения, Въпроси и Поръчки</a>
+             | 
+            <a href="https://github.com/parlamentaren-kontrol/parlamentaren-kontrol/issues/new">Предложения, Оплаквания и Бъгове в GitHub</a>
+             | 
+            <a href="https://github.com/parlamentaren-kontrol/parlamentaren-kontrol">Source Code</a>
+            <br/>
+            <a href="parlamentaren_kontrol_SQL_dump.gz">SQL Dump</a>
+             | 
+            <a href="http://opendata.yurukov.net/">Посестрими Проекти "Отворени данни"</a>
+             | 
+            <a href="http://parliament.bg/">Официален Сайт на Парламента</a>
+            <a id="link-top" href="#top-of-page">Нагоре</a>
+        </div>
     </div>
-
-    <div class="col_12">
+</body>
+</html>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Парламентарен Контрол</title>
+    <title><%block name="title">Парламентарен Контрол</%block></title>
 
     <meta charset="UTF-8" />
     <meta name="description" content="Независима Организация за Парламентарен Контрол" />
@@ -78,6 +78,8 @@
 
         <!-- THE ACTUAL CONTENT -->
         <div class="col_12">
+            <h1>${self.title()}</h1>
+            <hr class="alt1" />
             ${self.body()}
         </div>
 

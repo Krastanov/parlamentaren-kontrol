@@ -1,11 +1,5 @@
 <%inherit file="base_template.html" />
-
-
-<!-- ##################################################################### -->
-<!-- ##################################################################### -->
-<h1>Стенограми на Народните Събрания</h1>
-
-<hr class="alt1" />
+<%block name="title">Стенограми на Народните Събрания</%block>
 
 <% years = sorted(list({date.year for date in stenograms.keys()})) %>
 <% stenogram_yeargroups = [[date for date in stenograms.keys() if date.year == y] for y in years] %>

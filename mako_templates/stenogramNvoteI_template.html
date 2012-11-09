@@ -1,15 +1,7 @@
 <%inherit file="base_template.html" />
+<%block name="title">Гласуване ${session_i+1} на ${stenogram_date.strftime('%d/%m/%Y')}</%block>
 
-
-<!-- ##################################################################### -->
-<!-- ##################################################################### -->
-<h1>Гласуване ${session_i+1} на ${stenogram_date.strftime('%d/%m/%Y')}</h1>
-
-<div class="col_12">
 <a href="stenogram${stenogram_date.strftime('%Y%m%d')}.html#vote${session_i+1}">Обратно към стенограмата от деня.</a>
-</div>
-
-<hr class="alt1" />
 
 
 <!-- ##################################################################### -->

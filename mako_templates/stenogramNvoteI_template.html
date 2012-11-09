@@ -1,68 +1,76 @@
 <%inherit file="base_template.html" />
+<%namespace name="lay" file="layout_components.html"/>
 <%block name="title">Гласуване ${session_i+1} на ${stenogram_date.strftime('%d/%m/%Y')}</%block>
+
 
 <a href="stenogram${stenogram_date.strftime('%Y%m%d')}.html#vote${session_i+1}">Обратно към стенограмата от деня.</a>
 
 
-<!-- ##################################################################### -->
-<!-- ##################################################################### -->
-<h2>Обща Информация</h2>
+<%lay:section>
+    <%def name="header()">
+        Обща Информация
+    </%def>
+    <%def name="content()">
+        <div class="col_6"><blockquote>${description}</blockquote></div>
+        <div class="col_6"><img class="full-width" src="session${stenogram_date.strftime('%Y%m%d')}votes${session_i+1}.png" alt="Гласували и отсъстващи депутати."/></div>
 
-<div class="col_6"><blockquote>${description}</blockquote></div>
-<div class="col_6"><img class="full-width" src="session${stenogram_date.strftime('%Y%m%d')}votes${session_i+1}.png" alt="Гласували и отсъстващи депутати."/></div>
+        <div class="col_12">
+        <table class="sortable">
+            <thead><tr>
+                <th>Партия</th>
+                <th>За</th>
+                <th>Против</th>
+                <th>Въздържали се</th>
+                <th>Общо Гласували</th>
+                <th>Не Гласували</th>
+            </tr></thead>
 
-<div class="col_12">
-<table class="sortable">
-    <thead><tr>
-        <th>Партия</th>
-        <th>За</th>
-        <th>Против</th>
-        <th>Въздържали се</th>
-        <th>Общо Гласували</th>
-        <th>Не Гласували</th>
-    </tr></thead>
+            <tbody>
+            % for party, y, n, abst, absent in zip(party_names, yes, no, abstain, absences):
+                <tr>
+                    <td>${party}</td>
+                    <td>${y}</td>
+                    <td>${n}</td>
+                    <td>${abst}</td>
+                    <td>${y+n+abst}</td>
+                    <td>${absent}</td>
+                </tr>
+            % endfor
+            </tbody>
+        </table>
 
-    <tbody>
-    % for party, y, n, abst, absent in zip(party_names, yes, no, abstain, absences):
-        <tr>
-            <td>${party}</td>
-            <td>${y}</td>
-            <td>${n}</td>
-            <td>${abst}</td>
-            <td>${y+n+abst}</td>
-            <td>${absent}</td>
-        </tr>
-    % endfor
-    </tbody>
-</table>
+        <% total = map(sum, [yes, no, abstain]) %>
+        <p><strong>Всички Партии</strong>: За: ${total[0]}, Против: ${total[1]}, Въздържали се: ${total[2]}, Общо Гласували: ${sum(total)}</p>
+        </div>
 
-<% total = map(sum, [yes, no, abstain]) %>
-<p><strong>Всички Партии</strong>: За: ${total[0]}, Против: ${total[1]}, Въздържали се: ${total[2]}, Общо Гласували: ${sum(total)}</p>
-</div>
-
-<hr class="alt1" />
+    </%def>
+</%lay:section>
 
 
-<!-- ##################################################################### -->
-<!-- ##################################################################### -->
-<h2>Поименен Списък</h2>
+<%lay:section>
+    <%def name="header()">
+        Поименен Списък
+    </%def>
+    <%def name="content()">
+        <div class="col_12">
+        <table class="sortable tight striped">
+            <thead><tr>
+                <th>Депутат</th>
+                <th>Партия</th>
+                <th>Глас</th>
+            </tr></thead>
+            
+            <tbody>
+            % for rep, party, voted in votes_by_name:
+                <tr>
+                    <td>${rep}</td>
+                    <td>${party}</td>
+                    <td>${voted}</td>
+                </tr>
+            % endfor
+            </tbody>
+        </table>
+        </div>
+    </%def>
+</%lay:section>
 
-<div class="col_12">
-<table class="sortable tight striped">
-    <thead><tr>
-        <th>Депутат</th>
-        <th>Партия</th>
-        <th>Глас</th>
-    </tr></thead>
-    
-    <tbody>
-    % for rep, party, voted in votes_by_name:
-        <tr>
-            <td>${rep}</td>
-            <td>${party}</td>
-            <td>${voted}</td>
-        </tr>
-    % endfor
-    </tbody>
-</table>
-</div>

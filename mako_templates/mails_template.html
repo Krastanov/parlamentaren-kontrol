@@ -1,6 +1,7 @@
 <%inherit file="base_template.html" />
 <%block name="title">Адреси за контракт с народните представители</%block>
 
+
 % for party, mails in mails_per_party_dict.items():
     <h2>${party}</h2>
     <blockquote>${mails}</blockquote>

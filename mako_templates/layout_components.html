@@ -1,0 +1,35 @@
+<%def name="section()">
+    <h2>${caller.header()}</h2>
+    ${caller.content()}
+    <hr class="alt1" />
+</%def>
+
+
+<%def name="stenogram_registration()">
+    <div class="col_6">
+        <table class="sortable">
+            <thead><tr>
+                <th>Партия</th>
+                <th>Присъстващи</th>
+                <th>Отсъстващи</th>
+                <th>Отсъстващи %</th>
+                <th>Общо Регистрирани</th>
+            </tr></thead>
+            <tbody>
+            % for party, present, expected in zip(party_names, reg_presences, reg_expected):
+                <tr>
+                    <td>${party}</td>
+                    <td>${present}</td>
+                    <td>${expected-present}</td>
+                    <td class="percentage">${100*(expected-present)/expected}</td>
+                    <td>${expected}</td>
+                </tr>
+            % endfor
+            </tbody>
+        </table>
+        <p><strong>Всички Партии</strong>: Присъстващи: ${sum(reg_presences)}, Общо регистрирани: ${sum(reg_expected)}</p>
+    </div>
+    <div class="col_6">
+        <img class="full-width" src="registration${stenogram_date.strftime('%Y%m%d')}.png" alt="Регистрирани и отсъстващи депутати."/>
+    </div>
+</%def>

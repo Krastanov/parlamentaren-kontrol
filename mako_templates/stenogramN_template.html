@@ -1,5 +1,7 @@
 <%inherit file="base_template.html" />
+<%namespace name="lay" file="layout_components.html"/>
 <%block name="title">Стенограма от ${stenogram_date.strftime('%d/%m/%Y')}</%block>
+
 
 % if problem:
     <p>Имаше проблем при обработката на данните за тази стенограма. Вероятно
@@ -8,135 +10,107 @@
     <% return %>
 % endif
 
-<!-- ##################################################################### -->
-<!-- ##################################################################### -->
-<h2>Регистрация</h2>
 
-<div class="col_12">
-<a href="stenogram${stenogram_date.strftime('%Y%m%d')}registration.html">Поимемен списък</a>
-</div>
-
-<div class="col_6">
-<table class="sortable">
-    <thead><tr>
-        <th>Партия</th>
-        <th>Присъстващи</th>
-        <th>Отсъстващи</th>
-        <th>Отсъстващи %</th>
-        <th>Общо Регистрирани</th>
-    </tr></thead>
-    
-    <tbody>
-    % for party, present, expected in zip(party_names, reg_presences, reg_expected):
-        <tr>
-            <td>${party}</td>
-            <td>${present}</td>
-            <td>${expected-present}</td>
-            <td class="percentage">${100*(expected-present)/expected}</td>
-            <td>${expected}</td>
-        </tr>
-    % endfor
-    </tbody>
-</table>
-<p><strong>Всички Партии</strong>: Присъстващи: ${sum(reg_presences)}, Общо регистрирани: ${sum(reg_expected)}</p>
-</div>
-
-<div class="col_6">
-    <img class="full-width" src="registration${stenogram_date.strftime('%Y%m%d')}.png" alt="Регистрирани и отсъстващи депутати."/>
-</div>
-
-<hr class="alt1" />
+<%lay:section>
+    <%def name="header()">
+        Регистрация
+    </%def>
+    <%def name="content()">
+        <div class="col_12"><a href="stenogram${stenogram_date.strftime('%Y%m%d')}registration.html">Поимемен списък</a></div>
+        ${lay.stenogram_registration()}
+    </%def>
+</%lay:section>
 
 
-<!-- ##################################################################### -->
-<!-- ##################################################################### -->
-<h2>Гласувания</h2>
+<%lay:section>
+    <%def name="header()">
+        Гласувания
+    </%def>
+    <%def name="content()">
+        % if votes_by_session_type_party is not None:
+            <div class="col_6">
+            <h3>Съдържание</h3>
+                <p>
+                Отиди директно на гласуване номер: <br />
+                ${', '.join(['<a href="#vote%d"><span class="tooltip-bottom" title="%s">%d</span></a>'%(i+1, description, i+1) for i, description in enumerate(vote_descriptions)])}
+                </p>
+            </div>
+            <div class="col_6">
+            <img class="full-width" src="absences${stenogram_date.strftime('%Y%m%d')}.png" alt="Отсъствия на депутати."/>
+            </div>
 
-% if votes_by_session_type_party is not None:
-<div class="col_6">
-<h3>Съдържание</h3>
-    <p>
-    Отиди директно на гласуване номер: <br />
-    ${', '.join(['<a href="#vote%d"><span class="tooltip-bottom" title="%s">%d</span></a>'%(i+1, description, i+1) for i, description in enumerate(vote_descriptions)])}
-    </p>
-</div>
-<div class="col_6">
-<img class="full-width" src="absences${stenogram_date.strftime('%Y%m%d')}.png" alt="Отсъствия на депутати."/>
-</div>
+            <div class="col_12 " id="sessions">
+            % for i, (description, votes_by_type_party) in enumerate(zip(vote_descriptions, votes_by_session_type_party)):
+                % if i:
+                    <hr />
+                % endif
 
-<div class="col_12 "id="sessions">
+                <h3 id="vote${i+1}"><a href="#vote${i+1}">Гласуване ${i+1}</a></h3>
 
-% for i, (description, votes_by_type_party) in enumerate(zip(vote_descriptions, votes_by_session_type_party)):
-    % if i:
-        <hr />
-    % endif
+                <div class="col_12">
+                <a href="stenogram${stenogram_date.strftime('%Y%m%d')}vote${i+1}.html">Поимемен списък</a>
+                </div>
 
-    <h3 id="vote${i+1}"><a href="#vote${i+1}">Гласуване ${i+1}</a></h3>
+                <div class="col_6"><blockquote>${description}</blockquote></div>
+                <div class="col_6"><img class="full-width" src="session${stenogram_date.strftime('%Y%m%d')}votes${i+1}.png" alt="Гласували и отсъстващи депутати."/></div>
 
-    <div class="col_12">
-    <a href="stenogram${stenogram_date.strftime('%Y%m%d')}vote${i+1}.html">Поимемен списък</a>
-    </div>
+                <div class="col_12">
+                    <button class="small" id="showSession${i+1}" onClick="toggle('session${i+1}','showSession${i+1}','Покажи таблица', 'Скрий');" >Покажи таблица</button>
+                    <a class="small" href="#votesInText${i+1}">Намери в текста</a>
+                </div>
 
-    <div class="col_6"><blockquote>${description}</blockquote></div>
-    <div class="col_6"><img class="full-width" src="session${stenogram_date.strftime('%Y%m%d')}votes${i+1}.png" alt="Гласували и отсъстващи депутати."/></div>
+                <div class="col_12" id="session${i+1}" style="display: none;">
+                <table class="sortable">
+                    <thead><tr>
+                        <th>Партия</th>
+                        <th>За</th>
+                        <th>Против</th>
+                        <th>Въздържали се</th>
+                        <th>Общо Гласували</th>
+                        <th>Не Гласували</th>
+                    </tr></thead>
+                    <tbody>
+                    % for party, (yes, no, abstained, absences) in zip(party_names, zip(*votes_by_type_party)):
+                        <tr>
+                            <td>${party}</td>
+                            <td>${yes}</td>
+                            <td>${no}</td>
+                            <td>${abstained}</td>
+                            <td>${yes+no+abstained}</td>
+                            <td>${absences}</td>
+                        </tr>
+                    % endfor
+                    </tbody>
+                </table>
 
-    <div class="col_12">
-        <button class="small" id="showSession${i+1}" onClick="toggle('session${i+1}','showSession${i+1}','Покажи таблица', 'Скрий');" >Покажи таблица</button>
-        <a class="small" href="#votesInText${i+1}">Намери в текста</a>
-    </div>
-    <div class="col_12" id="session${i+1}" style="display: none;">
+                <% total = map(sum, votes_by_type_party) %>
+                <p><strong>Всички Партии</strong>: За: ${total[0]}, Против: ${total[1]}, Въздържали се: ${total[2]}, Общо Гласували: ${sum(total[:-1])}</p>
+                </div>
+            % endfor
+            </div>
+        % else:
+            <div class="col_12"> <p>На тази дата не е имало гласувания.</p></div>
+        % endif
+    </%def>
+</%lay:section>
 
-    <table class="sortable">
-        <thead><tr>
-            <th>Партия</th>
-            <th>За</th>
-            <th>Против</th>
-            <th>Въздържали се</th>
-            <th>Общо Гласували</th>
-            <th>Не Гласували</th>
-        </tr></thead>
 
-        <tbody>
-        % for party, (yes, no, abstained, absences) in zip(party_names, zip(*votes_by_type_party)):
-            <tr>
-                <td>${party}</td>
-                <td>${yes}</td>
-                <td>${no}</td>
-                <td>${abstained}</td>
-                <td>${yes+no+abstained}</td>
-                <td>${absences}</td>
-            </tr>
+<%lay:section>
+    <%def name="header()">
+        Пълен Текст
+    </%def>
+    <%def name="content()">
+        <p>
+        <% count = 1 %>
+        % for i, line in enumerate(text):
+            % if i in vote_line_nb:
+                <strong id="votesInText${count}">${line}</strong>
+                <% count += 1 %>
+            % else:
+                ${line}
+            % endif
+            <br />
         % endfor
-        </tbody>
-    </table>
-
-    <% total = map(sum, votes_by_type_party) %>
-    <p><strong>Всички Партии</strong>: За: ${total[0]}, Против: ${total[1]}, Въздържали се: ${total[2]}, Общо Гласували: ${sum(total[:-1])}</p>
-    </div>
-
-% endfor
-</div>
-% else:
-<div class="col_12">
-<p>На тази дата не е имало гласувания.</p>
-</div>
-% endif
-
-<hr class="alt1" />
-
-<!-- ##################################################################### -->
-<!-- ##################################################################### -->
-<h2>Пълен Текст</h2>
-
-<p>
-<% count = 1 %>
-% for i, line in enumerate(text):
-    % if i in vote_line_nb:
-        <strong id="votesInText${count}">${line}</strong>
-        <% count += 1 %>
-    % else:
-        ${line}
-    % endif
-    <br />
-% endfor
-</p>
+        </p>
+    </%def>
+</%lay:section>

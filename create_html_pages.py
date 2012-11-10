@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import itertools
+import json
 import collections
 import os
 
@@ -10,6 +12,7 @@ from pk_db import cur, subcur
 from pk_logging import logging
 from pk_plots import (registration_figure, absences_figure,
         session_votes_by_party_figure, alltime_regs, alltime_votes)
+from pk_tools import unidecode
 
 
 ##############################################################################
@@ -33,7 +36,7 @@ logger_html = logging.getLogger('static_html_gen')
 logger_html.info("Copy the static files.")
 os.system('cp -r raw_components/htmlkickstart/css generated_html/css')
 os.system('cp -r raw_components/htmlkickstart/js generated_html/js')
-os.system('cp raw_components/style.css generated_html/style.css')
+os.system('cp css/style.css generated_html/style.css')
 os.system('cp raw_components/286px-Coat_of_arms_of_Bulgaria.svg.wikicommons.png generated_html/logo.png')
 os.system('cp raw_components/retina_dust/retina_dust.png generated_html/css/img/grid.png')
 os.system('cp raw_components/google93d3e91ac1977e5b.html generated_html/google93d3e91ac1977e5b.html')
@@ -63,20 +66,96 @@ with open('generated_html/contacts.html', 'w') as html_file:
 
 
 ##############################################################################
+# Graph visualizations.
+##############################################################################
+logger_html.info("Generating the graph visualizations.")
+# Load the information.
+cur.execute("""SELECT mp_name, orig_party_name
+               FROM mps
+               WHERE (SELECT COUNT(*) FROM mp_reg WHERE mps.mp_name = mp_reg.mp_name) > 150""")
+name_party_dict = dict(cur.fetchall())
+parties = sorted(list(set(name_party_dict.values())))
+name = sorted(name_party_dict.keys())
+n_index_dict = dict(zip(name, range(len(name))))
+
+cur.execute("""SELECT stenogram_date, session_number
+               FROM vote_sessions
+               ORDER BY stenogram_date, session_number""")
+date_session = cur.fetchall()
+ds_index_dict = dict(zip(date_session, range(len(date_session))))
+
+is_yes_no_abst_absent  = np.zeros((len(name), len(date_session), 4), np.float)
+cur.execute("""SELECT mp_name, stenogram_date, session_number, vote
+               FROM mp_votes""")
+for n, d, s, v in cur:
+    i_n = n_index_dict.get(n)
+    if i_n is None:
+        continue
+    i_ds = ds_index_dict[(d, s)]
+    i = {'yes':0, 'no':1, 'abstain':2, 'absent':3}[v]
+    is_yes_no_abst_absent[i_n, i_ds, i] = 1
+
+# Prepare the graph matrix.
+M = np.tensordot(is_yes_no_abst_absent[:,:,:2], is_yes_no_abst_absent[:,:,:2],
+                 axes=([1,2],[1,2]))
+M -= np.tensordot(is_yes_no_abst_absent[:,:,0], is_yes_no_abst_absent[:,:,1],
+                  axes=([1],[1]))
+is_present = np.sum(is_yes_no_abst_absent[:,:,:3], axis=2)
+M /= np.tensordot(is_present, is_present,
+                  axes=([1],[1]))+0.001
+M = M*np.abs(M)**3
+M = 5*M/np.max(M)
+del is_yes_no_abst_absent
+
+# Make the JSON dumps.
+json_dict = {}
+json_dict['nodes'] = [{'name':'%s - %s'%(n, name_party_dict[n]),
+                       'group':parties.index(name_party_dict[n])}
+                      for n in name]
+json_dict['links'] = [{'source':j, 'target':i, 'value':int(M[i,j])}
+                      for j in range(len(name))
+                      for i in range(j)
+                      if int(M[i,j])!=0]
+with open('generated_html/graph_all.json','w') as f:
+    f.write(json.dumps(json_dict))
+for p in parties:
+    asciiname = unidecode(p)
+    json_dict = {}
+    restricted_name = [n for n in name if name_party_dict[n]==p]
+    json_dict['nodes'] = [{'name':n, 'group':0}
+                          for n in restricted_name]
+    json_dict['links'] = [{'source':j, 'target':i, 'value':int(M[n_index_dict[restricted_name[i]],n_index_dict[restricted_name[j]]])}
+                          for j in range(len(restricted_name))
+                          for i in range(j)
+                          if int(M[i,j])!=0 and name_party_dict[n]==p]
+    with open('generated_html/graph_%s.json'%asciiname,'w') as f:
+        f.write(json.dumps(json_dict))
+
+# HTML
+os.system('cp css/force.css generated_html/css/force.css')
+os.system('cp js/force.js generated_html/js/force.js')
+graph_template = templates.get_template('forcegraph_template.html')
+bg_en_party_names = zip(parties, map(unidecode, parties)) + [(u'всички партии', 'all')]
+for bg_name, en_name in bg_en_party_names:
+    with open('generated_html/forcegraph_%s.html'%en_name, 'w') as html_file:
+        html_file.write(graph_template.render(bg_name=bg_name, en_name=en_name, bg_en_party_names=bg_en_party_names))
+
+
+##############################################################################
 # Per MP stuff.
 ##############################################################################
 logger_html.info("Generating summary html page with MP details.")
 # Load the information.
 cur.execute("""SELECT mp_name,
                       orig_party_name,
-                      (SELECT LAST(with_party ORDER BY mp_reg.stenogram_date) FROM mp_reg where mp_reg.mp_name = mps.mp_name),
-                      (SELECT COUNT(*) FROM mp_reg   where mps.mp_name = mp_reg.mp_name   AND mp_reg.reg = 'present'),
-                      (SELECT COUNT(*) FROM mp_reg   where mps.mp_name = mp_reg.mp_name   AND mp_reg.reg = 'absent'),
-                      (SELECT COUNT(*) FROM mp_reg   where mps.mp_name = mp_reg.mp_name   AND mp_reg.reg = 'manually_registered'),
-                      (SELECT COUNT(*) FROM mp_votes where mps.mp_name = mp_votes.mp_name AND mp_votes.vote = 'yes'),
-                      (SELECT COUNT(*) FROM mp_votes where mps.mp_name = mp_votes.mp_name AND mp_votes.vote = 'no'),
-                      (SELECT COUNT(*) FROM mp_votes where mps.mp_name = mp_votes.mp_name AND mp_votes.vote = 'abstain'),
-                      (SELECT COUNT(*) FROM mp_votes where mps.mp_name = mp_votes.mp_name AND mp_votes.vote = 'absent')
+                      (SELECT LAST(with_party ORDER BY mp_reg.stenogram_date) FROM mp_reg WHERE mp_reg.mp_name = mps.mp_name),
+                      (SELECT COUNT(*) FROM mp_reg   WHERE mps.mp_name = mp_reg.mp_name   AND mp_reg.reg = 'present'),
+                      (SELECT COUNT(*) FROM mp_reg   WHERE mps.mp_name = mp_reg.mp_name   AND mp_reg.reg = 'absent'),
+                      (SELECT COUNT(*) FROM mp_reg   WHERE mps.mp_name = mp_reg.mp_name   AND mp_reg.reg = 'manually_registered'),
+                      (SELECT COUNT(*) FROM mp_votes WHERE mps.mp_name = mp_votes.mp_name AND mp_votes.vote = 'yes'),
+                      (SELECT COUNT(*) FROM mp_votes WHERE mps.mp_name = mp_votes.mp_name AND mp_votes.vote = 'no'),
+                      (SELECT COUNT(*) FROM mp_votes WHERE mps.mp_name = mp_votes.mp_name AND mp_votes.vote = 'abstain'),
+                      (SELECT COUNT(*) FROM mp_votes WHERE mps.mp_name = mp_votes.mp_name AND mp_votes.vote = 'absent')
                FROM mps
                ORDER BY mp_name""")
 name_orig_with_regs_votes = cur.fetchall()

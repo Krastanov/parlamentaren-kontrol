@@ -1,0 +1,25 @@
+<%inherit file="base_template.html" />
+<%block name="title">Граф на Сходността в Гласуванията на Депутати</%block>
+
+<p>Визуализациите по-долу показват до колко стила на гласуване на различни
+депутати си съвпада. Колкото по-често двама депутата гласуват по сходен начин,
+толкова по-силна е връзката в диаграмата и обратно, колко по-често гласовете им
+си противоречат, толкова по-слаба е връзката.</p>
+
+<ul class="button-bar">
+    %for b, e in bg_en_party_names:
+        %if e == en_name:
+            <li class="inset"><a href="forcegraph_${e}.html">${b}</a></li>
+        %else:
+            <li><a href="forcegraph_${e}.html">${b}</a></li>
+        %endif
+    %endfor
+</ul>
+
+<div id='chart'></div>
+<link href='css/force.css' rel='stylesheet' type='text/css' />
+<script src="http://d3js.org/d3.v2.js"></script>
+<script src='js/force.js' type='text/javascript'></script>
+<script type='text/javascript'>draw_force_graph("graph_${en_name}.json");</script>
+
+<p>Формулата по която се смята силата на връзката е ((съгласия-несъгласия)/(съгласия+несъгласия))^4</p>

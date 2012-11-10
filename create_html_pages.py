@@ -96,21 +96,26 @@ for n, d, s, v in cur:
     is_yes_no_abst_absent[i_n, i_ds, i] = 1
 
 # Prepare the graph matrix.
-M = np.tensordot(is_yes_no_abst_absent[:,:,:2], is_yes_no_abst_absent[:,:,:2],
-                 axes=([1,2],[1,2]))
-M -= np.tensordot(is_yes_no_abst_absent[:,:,0], is_yes_no_abst_absent[:,:,1],
-                  axes=([1],[1]))
-is_present = np.sum(is_yes_no_abst_absent[:,:,:3], axis=2)
-M /= np.tensordot(is_present, is_present,
-                  axes=([1],[1]))+0.001
-M = M*np.abs(M)**3
+M_same = np.tensordot(is_yes_no_abst_absent[:,:,:2], is_yes_no_abst_absent[:,:,:2],
+                      axes=([1,2],[1,2]))
+M_diff = np.tensordot(is_yes_no_abst_absent[:,:,0], is_yes_no_abst_absent[:,:,1],
+                      axes=([1],[1]))
+M_same_abst = np.tensordot(is_yes_no_abst_absent[:,:,2], is_yes_no_abst_absent[:,:,2],
+                           axes=([1],[1]))
+M_diff_abst = np.tensordot(np.sum(is_yes_no_abst_absent[:,:,:2], axis=2), is_yes_no_abst_absent[:,:,2],
+                           axes=([1],[1]))
+fudge = 0.3
+M = (M_same - M_diff + fudge*(M_same_abst - M_diff_abst))/((M_same + M_diff + fudge*(M_same_abst + M_diff_abst))+0.001)
+M = np.clip(M, 0, 1)
+M = M**7
 M = 5*M/np.max(M)
 del is_yes_no_abst_absent
 
 # Make the JSON dumps.
 json_dict = {}
 json_dict['nodes'] = [{'name':'%s - %s'%(n, name_party_dict[n]),
-                       'group':parties.index(name_party_dict[n])}
+                       'group':parties.index(name_party_dict[n]),
+                       'datalegend':name_party_dict[n]}
                       for n in name]
 json_dict['links'] = [{'source':j, 'target':i, 'value':int(M[i,j])}
                       for j in range(len(name))
@@ -122,7 +127,7 @@ for p in parties:
     asciiname = unidecode(p)
     json_dict = {}
     restricted_name = [n for n in name if name_party_dict[n]==p]
-    json_dict['nodes'] = [{'name':n, 'group':0}
+    json_dict['nodes'] = [{'name':n, 'group':0, 'datalegend':p}
                           for n in restricted_name]
     json_dict['links'] = [{'source':j, 'target':i, 'value':int(M[n_index_dict[restricted_name[i]],n_index_dict[restricted_name[j]]])}
                           for j in range(len(restricted_name))
@@ -134,6 +139,7 @@ for p in parties:
 # HTML
 os.system('cp css/force.css generated_html/css/force.css')
 os.system('cp js/force.js generated_html/js/force.js')
+os.system('cp js/d3.legend.js generated_html/js/d3.legend.js')
 graph_template = templates.get_template('forcegraph_template.html')
 bg_en_party_names = zip(parties, map(unidecode, parties)) + [(u'всички партии', 'all')]
 for bg_name, en_name in bg_en_party_names:

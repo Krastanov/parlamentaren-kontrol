@@ -16,10 +16,14 @@
     %endfor
 </ul>
 
-<div id='chart'></div>
-<link href='css/force.css' rel='stylesheet' type='text/css' />
+<div id="chart"></div>
+<link href="css/force.css" rel="stylesheet" type="text/css" />
+<link href="css/legend.css" rel="stylesheet" type="text/css" />
 <script src="http://d3js.org/d3.v2.js"></script>
-<script src='js/force.js' type='text/javascript'></script>
-<script type='text/javascript'>draw_force_graph("graph_${en_name}.json");</script>
+<script src="js/d3.legend.js"></script>
+<script src="js/force.js" type="text/javascript"></script>
+<script type="text/javascript">draw_force_graph("graph_${en_name}.json");</script>
 
-<p>Формулата по която се смята силата на връзката е ((съгласия-несъгласия)/(съгласия+несъгласия))^4</p>
+<p>Формулата по която се смята силата на връзката е
+((съгласия-несъгласия)/(съгласия+несъгласия))^7. Степента беше избрана на око
+за по-добра визуализация.</p>

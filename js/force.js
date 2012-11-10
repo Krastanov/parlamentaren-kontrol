@@ -37,6 +37,8 @@ d3.json(json_file_name, function(json) {
   node.append("title")
       .text(function(d) { return d.name; });
 
+  node.attr("data-legend", function(d) { return d.datalegend; });
+
   force.on("tick", function() {
     link.attr("x1", function(d) { return d.source.x; })
         .attr("y1", function(d) { return d.source.y; })
@@ -47,4 +49,19 @@ d3.json(json_file_name, function(json) {
         .attr("cy", function(d) { return d.y; });
   });
 });
+
+
+global=svg
+function try_to_draw_legend() {
+    if (svg.selectAll("[data-legend]")[0].length<2){
+        setTimeout(try_to_draw_legend,1000)
+    }else{
+        var legend = svg.append("g")
+          .attr("class","legend")
+          .attr("transform","translate(50,30)")
+          .style("font-size","12px")
+          .call(d3.legend);
+    }
+}
+try_to_draw_legend();
 }

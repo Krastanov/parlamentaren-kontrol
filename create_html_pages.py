@@ -34,8 +34,8 @@ logger_html = logging.getLogger('static_html_gen')
 # Copy static files.
 ##############################################################################
 logger_html.info("Copy the static files.")
-os.system('cp -r raw_components/htmlkickstart/css generated_html/css')
-os.system('cp -r raw_components/htmlkickstart/js generated_html/js')
+os.system('cp -rT raw_components/htmlkickstart/css generated_html/css')
+os.system('cp -rT raw_components/htmlkickstart/js generated_html/js')
 os.system('cp css/style.css generated_html/style.css')
 os.system('cp raw_components/286px-Coat_of_arms_of_Bulgaria.svg.wikicommons.png generated_html/logo.png')
 os.system('cp raw_components/retina_dust/retina_dust.png generated_html/css/img/grid.png')
@@ -107,8 +107,9 @@ M_diff_abst = np.tensordot(np.sum(is_yes_no_abst_absent[:,:,:2], axis=2), is_yes
 fudge = 0.3
 M = (M_same - M_diff + fudge*(M_same_abst - M_diff_abst))/((M_same + M_diff + fudge*(M_same_abst + M_diff_abst))+0.001)
 M = np.clip(M, 0, 1)
-M = M**7
-M = 5*M/np.max(M)
+M = M**8
+M = M/np.max(M)
+cut = 0.5
 del is_yes_no_abst_absent
 
 # Make the JSON dumps.
@@ -117,10 +118,10 @@ json_dict['nodes'] = [{'name':'%s - %s'%(n, name_party_dict[n]),
                        'group':parties.index(name_party_dict[n]),
                        'datalegend':name_party_dict[n]}
                       for n in name]
-json_dict['links'] = [{'source':j, 'target':i, 'value':int(M[i,j])}
+json_dict['links'] = [{'source':j, 'target':i, 'value':float(M[i,j])}
                       for j in range(len(name))
                       for i in range(j)
-                      if int(M[i,j])!=0]
+                      if M[i,j]>cut]
 with open('generated_html/graph_all.json','w') as f:
     f.write(json.dumps(json_dict))
 for p in parties:
@@ -129,10 +130,10 @@ for p in parties:
     restricted_name = [n for n in name if name_party_dict[n]==p]
     json_dict['nodes'] = [{'name':n, 'group':0, 'datalegend':p}
                           for n in restricted_name]
-    json_dict['links'] = [{'source':j, 'target':i, 'value':int(M[n_index_dict[restricted_name[i]],n_index_dict[restricted_name[j]]])}
+    json_dict['links'] = [{'source':j, 'target':i, 'value':float(M[n_index_dict[restricted_name[i]],n_index_dict[restricted_name[j]]])}
                           for j in range(len(restricted_name))
                           for i in range(j)
-                          if int(M[i,j])!=0 and name_party_dict[n]==p]
+                          if M[n_index_dict[restricted_name[i]],n_index_dict[restricted_name[j]]]>cut and name_party_dict[n]==p]
     with open('generated_html/graph_%s.json'%asciiname,'w') as f:
         f.write(json.dumps(json_dict))
 

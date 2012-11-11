@@ -6,9 +6,14 @@ var width = 960,
 var color = d3.scale.category20();
 
 var force = d3.layout.force()
-    .charge(-120)
-    .linkDistance(30)
-    .size([width, height]);
+    .charge(-350)
+    .linkDistance(40)
+    .size([width, height])
+    .gravity(0.2)
+    .friction(0.2)
+    .theta(1)
+    .linkStrength(function(l) {return l.value*2-1; });
+
 
 var svg = d3.select("#chart").append("svg")
     .attr("width", width)
@@ -24,7 +29,7 @@ d3.json(json_file_name, function(json) {
       .data(json.links)
     .enter().append("line")
       .attr("class", "link")
-      .style("stroke-width", function(d) { return Math.sqrt(d.value); });
+      .style("stroke-width", function(d) { return Math.floor(3*(d.value*2-1))+1; });
 
   var node = svg.selectAll("circle.node")
       .data(json.nodes)
@@ -51,7 +56,6 @@ d3.json(json_file_name, function(json) {
 });
 
 
-global=svg
 function try_to_draw_legend() {
     if (svg.selectAll("[data-legend]")[0].length<2){
         setTimeout(try_to_draw_legend,1000)

@@ -9,7 +9,6 @@
     <!-- HTML KICKSTART (includes jquery) -->
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
     <!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
-    <script type="text/javascript" src="js/prettify.js"></script>
     <script type="text/javascript" src="js/kickstart.js"></script>
     <link rel="stylesheet" type="text/css" href="css/kickstart.css" media="all" />
 
@@ -17,7 +16,7 @@
     <link rel="stylesheet" type="text/css" href="style.css" media="all" />
 
     <!-- TOGGLING THE VISIBILITY OF DIVs -->
-    <script language="javascript"> 
+    <script type="text/javascript"> 
     function toggle(showHideDiv, switchTextDiv, showText, hideText) {
         var ele = document.getElementById(showHideDiv);
         var text = document.getElementById(switchTextDiv);
@@ -50,7 +49,7 @@
       })();
     </script>
 </head>
-<body>
+<body itemscope <%block name="webpageschema">itemtype="http://schema.org/WebPage"</%block>>
     <a id="top-of-page"></a>
     <p>Данни от началото на 2011 до днес.</p>
 
@@ -62,14 +61,14 @@
     </div>-->
 
     <div id="wrap" class="clearfix">
-        <div id="nav">
+        <div id="nav" itemscope itemtype="http://schema.org/SiteNavigationElement">
             <ul class="menu">
                 <li><a href="http://www.parlamentaren-kontrol.com">Начало</a></li>
                 <li><a href="stenograms.html">Стенограми</a></li>
                 <li><a href="mps.html">Народни Представители</a></li>
                 <li><a href="mails.html">Контакти с Народни Представители</a></li>
                 <li><a href="forcegraph_all.html">Граф на Гласуванията</a></li>
-                <li><a href="http://blog.parlamentaren-kontrol.com">Блог</a></li>
+                <li itemscope itemtype="http://schema.org/Blog"><a href="http://blog.parlamentaren-kontrol.com" itemprop="url">Блог</a></li>
             </ul>
             <form action="http://www.google.com/cse">
                 <input style="width: 227px; min-width: 227px;" id="search" type="text" name="q" placeholder="Търсене: пиши и натисни Enter" />
@@ -79,25 +78,28 @@
 
         <!-- THE ACTUAL CONTENT -->
         <div class="col_12">
-            <h1>${self.title()}</h1>
+            <h1 itemprop="name">${self.title()}</h1>
             <hr class="alt1" />
+            <div itemprop="mainContentOfPage" itemscope itemtype="http://schema.org/WebPageElement">
             ${self.body()}
+            </div>
         </div>
 
         <div class="clear"></div>
-        <div id="footer">
-            <strong>Независима Организация за Парламентарен Контрол</strong><br/>
-            <a href="contacts.html">Свържете се с Нас с Предложения, Въпроси и Поръчки</a>
+        <div id="footer" itemscope itemtype="http://schema.org/WPFooter">
+            <div itemscope itemtype="http://schema.org/NGO">
+            <strong><a href="http://www.parlamentaren-kontrol.org" itemprop="url">Независима Организация за <span itemprop="name">Парламентарен Контрол</span></a></strong><br/>
+            <span itemprop="contactPoint" itemscope itemtype="http://schema.org/contactPoint"><a href="contacts.html" itemprop="url">Свържете се с Нас с Предложения, Въпроси и Поръчки</a></span>
              | 
             <a href="https://github.com/parlamentaren-kontrol/parlamentaren-kontrol/issues/new">Предложения, Оплаквания и Бъгове в GitHub</a>
              | 
             <a href="https://github.com/parlamentaren-kontrol/parlamentaren-kontrol">Source Code</a>
-            <br/>
+            </div>
             <a href="parlamentaren_kontrol_SQL_dump.gz">SQL Dump</a>
              | 
-            <a href="http://opendata.yurukov.net/">Посестрими Проекти "Отворени данни"</a>
+            <span itemscope itemtype="http://schema.org/NGO"><a href="http://opendata.yurukov.net/" itemprop="url">Посестрими Проекти "<span itemprop="name">Отворени данни</span>"</a>
              | 
-            <a href="http://parliament.bg/">Официален Сайт на Парламента</a>
+            <span itemscope itemtype="http://schema.org/GovernmentOrganization"><a href="http://parliament.bg/" itemprop="url">Официален Сайт на <span itemprop="name">Българиския Парламент</span></a>
             <a id="link-top" href="#top-of-page">Нагоре</a>
         </div>
     </div>

@@ -66,6 +66,30 @@ with open('generated_html/contacts.html', 'w') as html_file:
 
 
 ##############################################################################
+# MP emails
+##############################################################################
+# Get all mails into a dict.
+cur.execute("""SELECT party_name
+               FROM parties
+               ORDER BY party_name""")
+mails_per_party_dict = {}
+for (party, ) in cur:
+    subcur.execute("""SELECT email
+                      FROM mps
+                      WHERE orig_party_name = %s""",
+                      (party,))
+    mails = [m[0] for m in subcur]
+    if mails:
+        mails_per_party_dict[party] = ', '.join([m for m in mails if m])
+
+#Generate the webpage with the mails.
+logger_html.info("Generating html page of MP mail addresses.")
+mails_template = templates.get_template('mails_template.html')
+with open('generated_html/mails.html', 'w') as html_file:
+    html_file.write(mails_template.render(mails_per_party_dict=mails_per_party_dict))
+
+
+##############################################################################
 # Graph visualizations.
 ##############################################################################
 logger_html.info("Generating the graph visualizations.")
@@ -179,30 +203,6 @@ alltime_votes(*votes)
 per_mp_template = templates.get_template('mps_template.html')
 with open('generated_html/mps.html', 'w') as html_file:
     html_file.write(per_mp_template.render(name_orig_with_regs_votes=name_orig_with_regs_votes))
-
-
-##############################################################################
-# MP emails
-##############################################################################
-# Get all mails into a dict.
-cur.execute("""SELECT party_name
-               FROM parties
-               ORDER BY party_name""")
-mails_per_party_dict = {}
-for (party, ) in cur:
-    subcur.execute("""SELECT email
-                      FROM mps
-                      WHERE orig_party_name = %s""",
-                      (party,))
-    mails = [m[0] for m in subcur]
-    if mails:
-        mails_per_party_dict[party] = ', '.join([m for m in mails if m])
-
-#Generate the webpage with the mails.
-logger_html.info("Generating html page of MP mail addresses.")
-mails_template = templates.get_template('mails_template.html')
-with open('generated_html/mails.html', 'w') as html_file:
-    html_file.write(mails_template.render(mails_per_party_dict=mails_per_party_dict))
 
 
 ##############################################################################

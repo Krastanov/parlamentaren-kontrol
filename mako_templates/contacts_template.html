@@ -1,10 +1,15 @@
 <%inherit file="base_template.html" />
 <%block name="title">Контакти</%block>
+<%block name="webpageschema">itemtype="http://schema.org/ContactPage"</%block>
                                              
 
 <p>Този сайт се поддържа от доброволци. Ако желаете да помогнете можете да
-се свържете с нас по e-mail.
+се свържете с нас по e-mail.</p>
 <ul>
-<li>Александър Макелов: amakelov@college.harvard.edu</li>
-<li>Стефан Кръстанов: krastanov.stefan@gmail.com</li>
-</p>
+<li itemscope itemtype="http://schema.org/Person">
+    <span itemprop="name">Александър Макелов</span>:
+    <a href="mailto:amakelov@college.harvard.edu" itemprop="email">amakelov@college.harvard.edu</a></li>
+<li itemscope itemtype="http://schema.org/Person">
+    <span itemprop="name">Стефан Кръстанов</span>:
+    <a href="mailto:krastanov.stefan@gmail.com" itemprop="email">krastanov.stefan@gmail.com</a></li>
+</ul>

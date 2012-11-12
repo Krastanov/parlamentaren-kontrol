@@ -3,6 +3,8 @@
 
 
 % for party, mails in mails_per_party_dict.items():
-    <h2>${party}</h2>
-    <blockquote>${mails}</blockquote>
+    <div class="col_12" itemscope itemtype="http://schema.org/GovernmentOrganization">
+        <h2><span itemprop="name">${party}</span></h2>
+        <blockquote itemprop="email">${mails}</blockquote>
+    </div>
 % endfor

@@ -162,9 +162,6 @@ for p in parties:
         f.write(json.dumps(json_dict))
 
 # HTML
-os.system('cp css/force.css generated_html/css/force.css')
-os.system('cp js/force.js generated_html/js/force.js')
-os.system('cp js/d3.legend.js generated_html/js/d3.legend.js')
 graph_template = templates.get_template('forcegraph_template.html')
 bg_en_party_names = zip(parties, map(unidecode, parties)) + [(u'всички партии', 'all')]
 for bg_name, en_name in bg_en_party_names:

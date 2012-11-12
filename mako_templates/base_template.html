@@ -6,37 +6,16 @@
     <meta charset="UTF-8" />
     <meta name="description" content="Независима Организация за Парламентарен Контрол" />
 
-    <!-- HTML KICKSTART (includes jquery) -->
+    ## HTML KICKSTART (includes jquery)
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
     <!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
     <script type="text/javascript" src="js/kickstart.js"></script>
     <link rel="stylesheet" type="text/css" href="css/kickstart.css" media="all" />
 
-    <!-- CUSTOM STYLES -->
+    ## CUSTOM STYLES
     <link rel="stylesheet" type="text/css" href="style.css" media="all" />
 
-    <!-- TOGGLING THE VISIBILITY OF DIVs -->
-    <script type="text/javascript"> 
-    function toggle(showHideDiv, switchTextDiv, showText, hideText) {
-        var ele = document.getElementById(showHideDiv);
-        var text = document.getElementById(switchTextDiv);
-        if(ele.style.display == "block") {
-                ele.style.display = "none";
-            text.innerHTML = showText;
-        }
-        else {
-            ele.style.display = "block";
-            text.innerHTML = hideText;
-        }
-    } 
-    function toggle_array(contents, switchTextDiv, showText, hideText) {
-        for(i=0; i < contents.length; i++) {
-            toggle(contents[i], switchTextDiv, showText, hideText);
-        }
-    }
-    </script>
-
-    <!-- GOOGLE ANALYTICS -->
+    ## GOOGLE ANALYTICS
     <script type="text/javascript">
       var _gaq = _gaq || [];
       _gaq.push(['_setAccount', 'UA-34843609-1']);
@@ -53,12 +32,12 @@
     <a id="top-of-page"></a>
     <p>Данни от началото на 2011 до днес.</p>
 
-    <!--<div id="header">
-    <h1>Парламентарен Контрол</h1>
-    <h2>Независима Организация за Парламентарен Контрол</h2>
-    <a id="logo" href="http://www.parlamentaren-kontrol.com"><img src="logo.png" alt="Парламентарен Контрол" height="240" width="286"></a>
-    <p id="slogan">Време е да се заинтересуваме какво става в парламента!</p>
-    </div>-->
+    ##<div id="header">
+    ##<h1>Парламентарен Контрол</h1>
+    ##<h2>Независима Организация за Парламентарен Контрол</h2>
+    ##<a id="logo" href="http://www.parlamentaren-kontrol.com"><img src="logo.png" alt="Парламентарен Контрол" height="240" width="286"></a>
+    ##<p id="slogan">Време е да се заинтересуваме какво става в парламента!</p>
+    ##</div>
 
     <div id="wrap" class="clearfix">
         <div id="nav" itemscope itemtype="http://schema.org/SiteNavigationElement">
@@ -76,7 +55,7 @@
             </form>
         </div>
 
-        <!-- THE ACTUAL CONTENT -->
+        ## THE ACTUAL CONTENT
         <div class="col_12">
             <h1 itemprop="name">${self.title()}</h1>
             <hr class="alt1" />

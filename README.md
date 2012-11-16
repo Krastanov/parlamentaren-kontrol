@@ -5,14 +5,15 @@
      database installed. The `METHOD` fields of
      `/etc/postgresql/9.1/main/pg_hba.conf` should be set to `trust`, because
      the database connections in the scripts are usually started by a user
-     different than `postgre` (basically, you should have the following line:
+     different than `postgres` (basically, you should have the following line:
      `local   all             all                                     trust`)
- 2. In order to craw the parliament site and generate html reports run
-`sh start_over.sh`.
+ 2. In order to craw the parliament site and generate html reports run `sh
+    start_over.sh`.
 
 # Requirements
 
  - python (tested 2.7.2)
+   - beautifulsoup4 (tested 4.1.3)
    - Mako (tested 0.7.2)
    - matplotlib (tested 1.1.1)
    - numpy (tested 1.6.2)
@@ -30,8 +31,9 @@
      - first_last_agg (tested 0.1.2) (via `pgxnclient install first_last_agg --testing`)
 
 # Logging conventions
- - `warning` for stuff that must be corrected by the `parliament.bg` team, but
-   which we can work around
+
+ - `warning` for stuff that could be corrected by the `parliament.bg` team, but
+   which we can also work around
  - `error` for stuff that is visible to our end users
 
 # Notes
@@ -39,28 +41,28 @@
 ## Workarounds
 
 *   The votes-by-name list for stenogram ID 2766 contains strange formatting.
-Currently we use a manually modified excel file instead of the one on the
-parliament website. Below is a copy of the explanation given by the
-parliamentary infocenter (in Bulgarian):
+    Currently we use a manually modified excel file instead of the one on the
+    parliament website. Below is a copy of the explanation given by the
+    parliamentary infocenter (in Bulgarian):
 
     > За г-жа ВАНЯ ЧАВДАРОВА ДОБРЕВА беше допусната грешка при първоначлното
 въвеждане на данни за нея и след поправяне на грешката системата дава следващ
 идентификационен номер.
 
 *   The MPs with names 'МИХАИЛ ВЛАДИМИРОВ ВЛАДОВ' and 'НИКОЛАЙ НАНКОВ НАНКОВ'
-have never been present in a voting session, however are registered for a
-number of them. At the same time they are not in the MPs list, so trying to
-import their absences in the data base gives a foreign key violation. We just
-skip them. Below is a copy of the explanation given by the parliamentary
-infocenter (in Bulgarian):
+    have never been present in a voting session, however are registered for a
+    number of them. At the same time they are not in the MPs list, so trying to
+    import their absences in the data base gives a foreign key violation. We
+    just skip them. Below is a copy of the explanation given by the
+    parliamentary infocenter (in Bulgarian):
 
     > За г-жа ВАНЯ ЧАВДАРОВА ДОБРЕВА беше допусната грешка при първоначлното
 въвеждане на данни за нея и след поправяне на грешката системата дава следващ
 идентификационен номер.
 
 *   The MP name "МАРИЯНА ПЕТРОВА ИВАНОВА-НИКОЛОВА" is a misspell of "МАРИАНА
-ПЕТРОВА ИВАНОВА-НИКОЛОВА". Below is a copy of the explanation given by the
-parliamentary infocenter (in Bulgarian):
+    ПЕТРОВА ИВАНОВА-НИКОЛОВА". Below is a copy of the explanation given by the
+    parliamentary infocenter (in Bulgarian):
 
     > Госпожа Мариана Иванова – Николова е избрана за народен представител с >
 решение на Централната избирателна комисия №2041-НС, съобщено в пленарна > зала

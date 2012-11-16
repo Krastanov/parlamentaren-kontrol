@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import datetime
 import re
-from HTMLParser import HTMLParser
 
+import bs4
 import xlrd
 
 from pk_db import db, cur
@@ -20,46 +20,20 @@ NA = u'Няма информация'
 logger_html = logging.getLogger('html_parser')
 
 
-class StenogramsHTMLParser(HTMLParser):
-    def __init__(self):
-        HTMLParser.__init__(self)
-        self.in_marktitle = 0
-        self.in_markcontent = False
-        self.in_dateclass = False
-        self.in_a = False
-        self.in_ul = False
-        self.data_list = []
-        self.date = None
+class StenogramsHTMLParser(bs4.BeautifulSoup):
+    def __init__(self, text):
+        super(StenogramsHTMLParser, self).__init__(text)
+
+        self.date = datetime.datetime.strptime(self.find('div', class_='dateclass').string.strip(), '%d/%m/%Y')
+
+        data_list = list(self.find('div', class_='markcontent').stripped_strings)
+
         self.votes_indices = []
-
-    def handle_starttag(self, tag, attrs):
-        if tag == 'div':
-            if self.in_marktitle:
-                self.in_marktitle += 1
-            if ('class', 'marktitle') in attrs:
-                self.in_marktitle = 1
-            elif ('class', 'markcontent') in attrs:
-                self.in_markcontent = True
-            elif ('class', 'dateclass') in attrs:
-                self.in_dateclass = True
-
-    def handle_endtag(self, tag):
-        if tag == 'div' and self.in_marktitle:
-            self.in_marktitle -= 1
-        elif tag == 'div' and self.in_markcontent:
-            self.in_markcontent = False
-
-    def handle_data(self, data):
-        if self.in_dateclass:
-            self.date = datetime.datetime.strptime(data.strip(), '%d/%m/%Y')
-            self.in_dateclass = False
-        elif self.in_markcontent:
-            data = data.strip()
-            how_many_have_voted_marker = u'Гласувал[и]?[ ]*\d*[ ]*народни[ ]*представители:'
-            # The above marker regex must permit a number of spelling errors that can be present in the stenograms.
-            if re.search(how_many_have_voted_marker, data):
-                self.votes_indices.append(len(self.data_list))
-            self.data_list.append(data)
+        how_many_have_voted_marker = u'Гласувал[и]?[ ]*\d*[ ]*народни[ ]*представители:'
+        # The above marker regex must permit a number of spelling errors that can be present in the stenograms.
+        for i, l in enumerate(data_list):
+            if re.search(how_many_have_voted_marker, l):
+                self.votes_indices.append(i)
 
 
 ##############################################################################
@@ -216,8 +190,7 @@ for i, ID in enumerate(stenogram_IDs):
     f = urlopen('http://www.parliament.bg/bg/plenaryst/ID/'+ID)
     complete_stenogram_page = f.read().decode('utf-8')
 
-    parser = StenogramsHTMLParser()
-    parser.feed(complete_stenogram_page)
+    parser = StenogramsHTMLParser(complete_stenogram_page)
     date_string = parser.date.strftime('%d%m%y')
 
 

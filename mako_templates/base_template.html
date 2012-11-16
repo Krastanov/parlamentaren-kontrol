@@ -1,20 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title><%block name="title">Парламентарен Контрол</%block></title>
-
     <meta charset="UTF-8" />
     <meta name="description" content="Независима Организация за Парламентарен Контрол" />
-
+    <title><%block name="title">Парламентарен Контрол</%block></title>
     ## HTML KICKSTART (includes jquery)
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
     <!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
     <script type="text/javascript" src="js/kickstart.js"></script>
     <link rel="stylesheet" type="text/css" href="css/kickstart.css" media="all" />
-
     ## CUSTOM STYLES
     <link rel="stylesheet" type="text/css" href="style.css" media="all" />
-
     ## GOOGLE ANALYTICS
     <script type="text/javascript">
       var _gaq = _gaq || [];
@@ -42,7 +38,7 @@
     <div id="wrap" class="clearfix">
         <div id="nav" itemscope itemtype="http://schema.org/SiteNavigationElement">
             <ul class="menu">
-                <li><a href="http://www.parlamentaren-kontrol.com">Начало</a></li>
+                <li itemscope itemtype="http://schema.org/AboutPage"><a href="http://www.parlamentaren-kontrol.com" itemprop="url">Начало</a></li>
                 <li><a href="stenograms.html">Стенограми</a></li>
                 <li><a href="mps.html">Народни Представители</a></li>
                 <li><a href="mails.html">Контакти с Народни Представители</a></li>

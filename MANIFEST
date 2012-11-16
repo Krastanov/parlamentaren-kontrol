@@ -1,0 +1,18 @@
+Besides the original code for "Parlamentaren Kontrol" a number of packages and
+files were used that originated elsewhere. We do not use any standard packaging
+systems, hence the need for this human readable file.
+
+One to one
+==========
+
+raw_components/htmlkickstart - the HTML Kickstart framework
+raw_components/retina_dust - png pattern
+js/d3.legend.js - MIT Licensed code for providing legends to d3 graphics
+
+
+Modified
+========
+
+raw_components/coat_of_arms.png - based on the svg Bulgarian coat of arms from wikipedia.
+js/force.js - based on the d3.js example of the same name
+css/style.css - based on HTML KickStart by Joshua Gatcke

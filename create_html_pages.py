@@ -40,6 +40,7 @@ os.system('cp css/style.css generated_html/style.css')
 os.system('cp raw_components/coat_of_arms.png generated_html/logo.png')
 os.system('cp raw_components/retina_dust/retina_dust.png generated_html/css/img/grid.png')
 os.system('cp raw_components/google93d3e91ac1977e5b.html generated_html/google93d3e91ac1977e5b.html')
+os.system('cp raw_components/BingSiteAuth.xml generated_html/BingSiteAuth.xml')
 
 
 ##############################################################################

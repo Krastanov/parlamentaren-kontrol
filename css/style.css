@@ -109,8 +109,6 @@ td.percentage:after
        -o-transform: matrix(0, 1, -1, 0, -40, 0);  /* Opera 10.5 */
   -webkit-transform: matrix(0, 1, -1, 0, -40, 0);  /* Saf3.1+, Chrome */
       -ms-transform: matrix(0, 1, -1, 0, -40, 0);  /* IE 9 */
-             filter:  progid:DXImageTransform.Microsoft.BasicImage(rotation=1);  /* IE6,IE7 */
-         -ms-filter: "progid:DXImageTransform.Microsoft.BasicImage(rotation=1)"; /* IE8 */
 }
 
 #nav {

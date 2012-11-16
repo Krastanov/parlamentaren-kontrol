@@ -2,10 +2,11 @@ rm -rf data/*
 rm -rf log/*
 rm -rf generated_html
 mkdir generated_html
-echo "Creating empty database (you should have already ran \`sudo sh create_db.sh\`)"
+echo "Creating empty database"
+sh create_db.sh
 echo "Update all IDs of MPs"
 sh update_IDs_MPs.sh
-echo "Download MPs emails"
+echo "Download MPs details"
 python craw_mps_data.py
 echo "Update all periods for which there is a record."
 sh update_all_periods.sh

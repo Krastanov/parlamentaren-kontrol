@@ -1,9 +1,5 @@
-su postgres <<SU
-dropdb parlamentarenkontrol
-dropuser parlamentarenkontrol
-createuser parlamentarenkontrol -s
-createdb parlamentarenkontrol
-SU
+dropdb parlamentarenkontrol -U parlamentarenkontrol
+createdb parlamentarenkontrol -U parlamentarenkontrol
 
 psql parlamentarenkontrol -U parlamentarenkontrol <<SQL
 CREATE TABLE stenograms (

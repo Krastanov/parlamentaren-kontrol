@@ -26,12 +26,12 @@ class StenogramsHTMLParser(bs4.BeautifulSoup):
 
         self.date = datetime.datetime.strptime(self.find('div', class_='dateclass').string.strip(), '%d/%m/%Y')
 
-        data_list = list(self.find('div', class_='markcontent').stripped_strings)
+        self.data_list = list(self.find('div', class_='markcontent').stripped_strings)
 
         self.votes_indices = []
         how_many_have_voted_marker = u'Гласувал[и]?[ ]*\d*[ ]*народни[ ]*представители:'
         # The above marker regex must permit a number of spelling errors that can be present in the stenograms.
-        for i, l in enumerate(data_list):
+        for i, l in enumerate(self.data_list):
             if re.search(how_many_have_voted_marker, l):
                 self.votes_indices.append(i)
 

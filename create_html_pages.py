@@ -51,6 +51,24 @@ os.system('pg_dump parlamentarenkontrol -U parlamentarenkontrol | gzip > generat
 
 
 ##############################################################################
+# Set up sitemap.
+##############################################################################
+class Sitemap(object):
+    def __init__(self):
+        self.base_string = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n%s\n</urlset>'
+        self.url_string = '<url><loc>http://www.parlamentaren-kontrol.com/%s</loc><priority>%0.1f</priority></url>'
+        self.content_tuples = []
+    def add(self, loc, priority):
+        self.content_tuples.append((loc, priority))
+    def write(self):
+        string = self.base_string % '\n'.join([self.url_string % t for t in self.content_tuples])
+        with open('generated_html/sitemap.xml', 'w') as sitemap_file:
+            sitemap_file.write(string)
+        with open('generated_html/robots.txt', 'w') as robots_file:
+            robots_file.write('Sitemap: http://www.parlamentaren-kontrol.com/sitemap.xml')
+sitemap = Sitemap()
+
+##############################################################################
 # Static pages
 ##############################################################################
 # Index
@@ -58,12 +76,14 @@ logger_html.info("Generating html index page.")
 index_template = templates.get_template('index_template.html')
 with open('generated_html/index.html', 'w') as html_file:
     html_file.write(index_template.render())
+    sitemap.add('', 0.5)
 
 # Contacts
 logger_html.info("Generating html contacts page.")
 contacts_template = templates.get_template('contacts_template.html')
 with open('generated_html/contacts.html', 'w') as html_file:
     html_file.write(contacts_template.render())
+    sitemap.add('contacts.html', 0.4)
 
 
 ##############################################################################
@@ -88,6 +108,7 @@ logger_html.info("Generating html page of MP mail addresses.")
 mails_template = templates.get_template('mails_template.html')
 with open('generated_html/mails.html', 'w') as html_file:
     html_file.write(mails_template.render(mails_per_party_dict=mails_per_party_dict))
+    sitemap.add('mails.html', 0.8)
 
 
 ##############################################################################
@@ -166,8 +187,10 @@ for p in parties:
 graph_template = templates.get_template('forcegraph_template.html')
 bg_en_party_names = zip(parties, map(unidecode, parties)) + [(u'всички партии', 'all')]
 for bg_name, en_name in bg_en_party_names:
-    with open('generated_html/forcegraph_%s.html'%en_name, 'w') as html_file:
+    filename = 'forcegraph_%s.html'%en_name
+    with open('generated_html/%s'%filename, 'w') as html_file:
         html_file.write(graph_template.render(bg_name=bg_name, en_name=en_name, bg_en_party_names=bg_en_party_names))
+        sitemap.add(filename, 0.8)
 
 
 ##############################################################################
@@ -201,6 +224,7 @@ alltime_votes(*votes)
 per_mp_template = templates.get_template('mps_template.html')
 with open('generated_html/mps.html', 'w') as html_file:
     html_file.write(per_mp_template.render(name_orig_with_regs_votes=name_orig_with_regs_votes))
+    sitemap.add('mps.html', 0.8)
 
 
 ##############################################################################
@@ -224,6 +248,7 @@ for (date, ) in cur:
 all_stenograms_template = templates.get_template('stenograms_template.html')
 with open('generated_html/stenograms.html', 'w') as html_file:
     html_file.write(all_stenograms_template.render(stenograms=stenograms))
+    sitemap.add('stenograms.html', 0.8)
 
 
 ##############################################################################
@@ -249,7 +274,8 @@ for st_i, (stenogram_date, text, vote_line_nb, problem) in enumerate(cur):
     if problem:
         logger_html.error("The database reports problems with stenogram %s. Skipping." % datestr)
         # Generate the main page for the current stenogram.
-        with open('generated_html/stenogram%s.html'%datestr, 'w') as html_file:
+        filename = 'stenogram%s.html'%datestr
+        with open('generated_html/%s'%filename, 'w') as html_file:
             html_file.write(per_stenogram_template.render(stenogram_date=stenogram_date,
                                                           problem=True,
                                                           vote_descriptions=None,
@@ -259,6 +285,7 @@ for st_i, (stenogram_date, text, vote_line_nb, problem) in enumerate(cur):
                                                           reg_expected=None,
                                                           text=text,
                                                           vote_line_nb=vote_line_nb))
+            sitemap.add(filename, 0.7)
         continue
 
     ################################
@@ -293,12 +320,14 @@ for st_i, (stenogram_date, text, vote_line_nb, problem) in enumerate(cur):
     reg_by_name = subcur.fetchall()
 
     # Generate registration summary for the current stenogram.
-    with open('generated_html/stenogram%sregistration.html'%datestr, 'w') as html_file:
+    filename = 'stenogram%sregistration.html'%datestr
+    with open('generated_html/%s'%filename, 'w') as html_file:
         html_file.write(per_stenogram_reg_template.render(stenogram_date=stenogram_date,
                                                           party_names=party_names,
                                                           reg_presences=reg_presences,
                                                           reg_expected=reg_expected,
                                                           reg_by_name=reg_by_name))
+        sitemap.add(filename, 0.6)
 
 
     #########################
@@ -373,7 +402,8 @@ for st_i, (stenogram_date, text, vote_line_nb, problem) in enumerate(cur):
             # Plot per-session vote data.
             session_votes_by_party_figure(stenogram_date, session_i, party_names, yes, no, abstain, absences)
             # Generate per-session html summary.
-            with open('generated_html/stenogram%svote%d.html'%(datestr, session_i+1), 'w') as html_file:
+            filename = 'stenogram%svote%d.html'%(datestr, session_i+1)
+            with open('generated_html/%s'%filename, 'w') as html_file:
                 html_file.write(per_stenogram_vote_template.render(stenogram_date=stenogram_date,
                                                                    session_i=session_i,
                                                                    description=description,
@@ -381,12 +411,14 @@ for st_i, (stenogram_date, text, vote_line_nb, problem) in enumerate(cur):
                                                                    yes=yes, no=no, abstain=abstain,
                                                                    absences=absences,
                                                                    votes_by_name=votes_by_name))
+                sitemap.add(filename, 0.6)
 
         #######################################################
         # Big summary page in case there are voting sessions. #
         #######################################################
         # Generate the main page for the current stenogram.
-        with open('generated_html/stenogram%s.html'%datestr, 'w') as html_file:
+        filename = 'stenogram%s.html'%datestr
+        with open('generated_html/%s'%filename, 'w') as html_file:
             html_file.write(per_stenogram_template.render(stenogram_date=stenogram_date,
                                                           problem=False,
                                                           vote_descriptions=vote_descriptions,
@@ -396,12 +428,14 @@ for st_i, (stenogram_date, text, vote_line_nb, problem) in enumerate(cur):
                                                           reg_expected=reg_expected,
                                                           text=text,
                                                           vote_line_nb=vote_line_nb))
+            sitemap.add(filename, 0.7)
     else:
         ##########################################################
         # Big summary page in case there are no voting sessions. #
         ##########################################################
         # Generate the main page for the current stenogram.
-        with open('generated_html/stenogram%s.html'%datestr, 'w') as html_file:
+        filename = 'stenogram%s.html'%datestr
+        with open('generated_html/%s'%filename, 'w') as html_file:
             html_file.write(per_stenogram_template.render(stenogram_date=stenogram_date,
                                                           problem=False,
                                                           vote_descriptions=None,
@@ -411,3 +445,11 @@ for st_i, (stenogram_date, text, vote_line_nb, problem) in enumerate(cur):
                                                           reg_expected=reg_expected,
                                                           text=text,
                                                           vote_line_nb=vote_line_nb))
+            sitemap.add(filename, 0.7)
+
+
+##############################################################################
+# Write down the sitemap.
+##############################################################################
+logger_html.info("Write down the sitemap.")
+sitemap.write()

@@ -2,7 +2,7 @@
 
  1. Install the necessary packages.
  2. Set up postgres user permissions. Run
-    `echo "createuser parlamentarenkontrol -s" | sudo su posgres` in order to
+    `echo "createuser parlamentarenkontrol -s" | sudo su postgres` in order to
     have the database user set up. Then the `METHOD` fields of
     `/etc/postgresql/9.1/main/pg_hba.conf` should be set to `trust`, because
     the database connections in the scripts are usually started by a user
@@ -10,6 +10,9 @@
     `local   all   all   trust`)
  3. In order to set up the database, craw the parliament site and generate html
     reports run `sh start_over.sh`.
+
+Remark: Be sure to have correctly set your locales to UTF8, otherwise much of
+the code could fail. To check the locales of your DB you can look at `psql -l`.
 
 # Requirements
 

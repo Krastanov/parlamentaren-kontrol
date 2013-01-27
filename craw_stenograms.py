@@ -187,7 +187,7 @@ for i, ID in enumerate(stenogram_IDs):
     ID = ID.strip()
     logger_to_db.info("Parsing stenogram %s - %d of %d." % (ID, i+1, len(stenogram_IDs)))
 
-    f = urlopen('http://www.parliament.bg/bg/plenaryst/ID/'+ID)
+    f = urlopen('http://www.parliament.bg/bg/plenaryst/ns/7/ID/'+ID)
     complete_stenogram_page = f.read().decode('utf-8')
 
     parser = StenogramsHTMLParser(complete_stenogram_page)

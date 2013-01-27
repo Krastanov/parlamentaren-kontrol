@@ -1,5 +1,5 @@
 dropdb parlamentarenkontrol -U parlamentarenkontrol
-createdb parlamentarenkontrol -U parlamentarenkontrol
+createdb -E UTF8 parlamentarenkontrol -U parlamentarenkontrol
 
 psql parlamentarenkontrol -U parlamentarenkontrol <<SQL
 CREATE TABLE stenograms (

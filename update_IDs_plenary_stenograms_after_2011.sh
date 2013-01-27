@@ -3,8 +3,8 @@ for i in `cat data/periods_plenary_stenograms`
 do
     if [ "`echo $i | cut -d"-" -f1`" -ge "2011" ]
     then
-        curl "http://www.parliament.bg/bg/plenaryst/period/"$i 2> /dev/null |\
-            grep "/bg/plenaryst/ID/" |\
+        curl "http://www.parliament.bg/bg/plenaryst/ns/7/period/"$i 2> /dev/null |\
+            grep "/bg/plenaryst/ns/7/ID/" |\
             perl -pe "s|.*?/ID/(\d*).*|\1|" |\
             cat >> data/IDs_plenary_stenograms
     fi

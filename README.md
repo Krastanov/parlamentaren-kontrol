@@ -8,7 +8,11 @@
     the database connections in the scripts are usually started by a user
     different than `postgres` (basically, you should have the following line:
     `local   all   all   trust`)
- 3. In order to set up the database, craw the parliament site and generate html
+ 3. Matplotlib needs certain fonts to be installed. On linux make sure that
+    `/usr/share/fonts/truetype/freefont` is present (and update the font cache)
+    or just `apt-get install fonts-freefont-ttf ` on debian. You may need to
+    remove font caches from the `.matplotlib` directory.
+ 4. In order to set up the database, craw the parliament site and generate html
     reports run `sh start_over.sh`.
 
 Remark: Be sure to have correctly set your locales to UTF8, otherwise much of

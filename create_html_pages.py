@@ -460,12 +460,12 @@ def write_stenogram_pages():
 # Execute all.
 ##############################################################################
 todo = [
-#        write_sql_dump,
-#        write_static_pages,
-#        write_MPs_emails_page,
+        write_sql_dump,
+        write_static_pages,
+        write_MPs_emails_page,
 #        write_graph_visualizations,
-#        write_MPs_overview_page,
-#        write_all_stenograms_list_page,
+        write_MPs_overview_page,
+        write_all_stenograms_list_page,
         write_stenogram_pages,
         sitemap.write
         ]

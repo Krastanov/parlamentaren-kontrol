@@ -1,59 +1,48 @@
 <%inherit file="base_template.html" />
 <%block name="title">Стенограми на Народните Събрания</%block>
 <%block name="webpageschema">itemtype="http://schema.org/CollectionPage"</%block>
+<% month_names = [u'Януари', u'Февруари', u'Март', u'Април', u'Май', u'Юни', u'Юли', u'Август', u'Септември', u'Октомври', u'Ноември', u'Декември'] %>
 
-<% years = sorted(list({date.year for date in stenograms.keys()})) %>
-<% stenogram_yeargroups = [[date for date in stenograms.keys() if date.year == y] for y in years] %>
-
-<ul class="tabs left">
+<div class="col_12">
+<ul class="button-bar">
     % for y in years:
-    <li><a href="#yeartab${y}">${y}</a></li>
+    <li><a href="stenograms${y}all.html">${y}</a></li>
     % endfor
-    <li><a href="#yeartaball">Всички години</a></li>
+    <li><a href="stenogramsallall.html">Всички години</a></li>
 </ul>
-
-% for y, stenogram_ygroup in zip(years + ["all"], stenogram_yeargroups + [stenograms.keys()]):
-<div id="yeartab${y}" class="tab-content">
-    <% months = sorted(list({date.month for date in stenogram_ygroup})) %>
-    <% month_names = [u'Януари', u'Февруари', u'Март', u'Април', u'Май', u'Юни', u'Юли', u'Август', u'Септември', u'Октомври', u'Ноември', u'Декември'] %>
-    <% stenogram_monthgroups = [[date for date in stenogram_ygroup if date.month == m] for m in months] %>
-
-    <ul class="tabs left">
-        % for m in months:
-        <li><a href="#monthtab${y}${m}">${month_names[m-1]}</a></li>
-        % endfor
-        <li><a href="#monthtab${y}all">Всички месеци</a></li>
-    </ul>
-
-    % for m, stenogram_mgroup in zip(months + ["all"], stenogram_monthgroups + [stenogram_ygroup]):
-    <div id="monthtab${y}${m}" class="tab-content">
-        <div class="col_12">
-        <table class="striped">
-            <col width="10%">
-            <col width="90%">
-            <thead><tr>
-                <th>Дата</th>
-                <% array_str = "['"+"', '".join(['sessionDescription%s%s'%(y,m)+date.strftime('%Y%m%d') for date in stenogram_mgroup])+"']" %>
-                <th>Гласувания <button class="small" id="showMoreInfo${y}${m}" onClick="toggle_array(${array_str}, 'showMoreInfo${y}${m}', 'покажи', 'скрий')">покажи</button></th>
-            </tr></thead>
-            <tbody>
-                % for date in stenogram_mgroup:
-                <tr>
-                <th valign="top"><a href="stenogram${date.strftime('%Y%m%d')}.html">${date.strftime('%d/%m/%Y')}</a></th>
-                <td><div id="sessionDescription${y}${m}${date.strftime('%Y%m%d')}" style="display: none;"><ul class="alt">
-                    % for description in stenograms[date]:
-                    <li>${description.split(u'по тема ')[-1]}</li>
-                    % endfor
-                </ul></div></td>
-                </tr>
-                % endfor
-            </tbody>
-        </table>
-        </div>
-    </div>
-    % endfor
 </div>
-% endfor
 
+<div class="col_12">
+<ul class="button-bar">
+    % for m in months:
+    <li><a href="stenograms${current_y}${m}.html">${month_names[m-1]}</a></li>
+    % endfor
+    <li><a href="stenograms${current_y}all.html">Всички месеци</a></li>
+</ul>
+</div>
+
+<div class="col_12">
+<table class="striped">
+    <col width="10%">
+    <col width="90%">
+    <thead><tr>
+        <th>Дата</th>
+        <% array_str = "['"+"', '".join(['sessionDescription'+date.strftime('%Y%m%d') for date in stenogram_mgroup])+"']" %>
+        <th>Гласувания <button class="small" id="showMoreInfo" onClick="toggle_array(${array_str}, 'showMoreInfo', 'покажи', 'скрий')">покажи</button></th>
+    </tr></thead>
+    <tbody>
+        % for date in stenogram_mgroup:
+        <tr>
+        <th valign="top"><a href="stenogram${date.strftime('%Y%m%d')}.html">${date.strftime('%d/%m/%Y')}</a></th>
+        <td><div id="sessionDescription${date.strftime('%Y%m%d')}" style="display: none;"><ul class="alt">
+            % for description in stenograms[date]:
+            <li>${description.split(u'по тема ')[-1]}</li>
+            % endfor
+        </ul></div></td>
+        </tr>
+        % endfor
+    </tbody>
+</table>
+</div>
 
 <script type="text/javascript" src="js/toggle.js"></script>

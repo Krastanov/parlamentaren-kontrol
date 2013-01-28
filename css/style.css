@@ -59,8 +59,7 @@ margin:-1px -1px -3px -1px;
 border-radius:3px;
 }
 
-
-#footer{
+footer{
 text-align:center;
 padding:20px;
 margin:0;
@@ -91,34 +90,14 @@ line-height:100%;
 border-radius:3px;
 }
 
-
-/*---------------------------------
-	CUSTOM
------------------------------------*/
-td.percentage:after
-{
-    content: " %";
-}
-
-.box_rotate {
-    float: left; 
-    position: relative;
-    width: 160px;
-          transform: matrix(0, 1, -1, 0, -40, 0); 
-     -moz-transform: matrix(0, 1, -1, 0, -40, 0);  /* FF3.5+ */
-       -o-transform: matrix(0, 1, -1, 0, -40, 0);  /* Opera 10.5 */
-  -webkit-transform: matrix(0, 1, -1, 0, -40, 0);  /* Saf3.1+, Chrome */
-      -ms-transform: matrix(0, 1, -1, 0, -40, 0);  /* IE 9 */
-}
-
-#nav {
+nav {
     text-align: left;
     position: relative;
     top: 0px;
     left: 0px;
 }
 
-#nav form {
+nav form {
     position: absolute;
     top: 20%;
     right: 8px;
@@ -158,6 +137,23 @@ td.percentage:after
     display: none;
 }
 
+/*---------------------------------
+	CUSTOM
+-----------------------------------*/
+td.percentage:after {
+    content: " %";
+}
+
+.box_rotate {
+    float: left; 
+    position: relative;
+    width: 160px;
+          transform: matrix(0, 1, -1, 0, -40, 0); 
+     -moz-transform: matrix(0, 1, -1, 0, -40, 0);  /* FF3.5+ */
+       -o-transform: matrix(0, 1, -1, 0, -40, 0);  /* Opera 10.5 */
+  -webkit-transform: matrix(0, 1, -1, 0, -40, 0);  /* Saf3.1+, Chrome */
+      -ms-transform: matrix(0, 1, -1, 0, -40, 0);  /* IE 9 */
+}
 
 /*---------------------------------
 	D3

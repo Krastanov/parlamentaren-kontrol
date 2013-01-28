@@ -10,9 +10,7 @@
     <%def name="header()">
         Обща Информация
     </%def>
-    <%def name="content()">
-        ${lay.stenogram_registration()}
-    </%def>
+    ${lay.stenogram_registration()}
 </%lay:section>
 
 
@@ -20,24 +18,22 @@
     <%def name="header()">
         Поименен Списък
     </%def>
-    <%def name="content()">
-        <table class="sortable tight striped">
-            <thead><tr>
-                <th>Депутат</th>
-                <th>Партия</th>
-                <th>Присъствал при регистрация</th>
-            </tr></thead>
-            
-            <tbody>
-            % for rep, party, registered in reg_by_name:
-                <tr>
-                    <td>${rep}</td>
-                    <td>${party}</td>
-                    <td>${registered}</td>
-                </tr>
-            % endfor
-            </tbody>
-        </table>
-    </%def>
+    <table class="sortable tight striped">
+        <thead><tr>
+            <th>Депутат</th>
+            <th>Партия</th>
+            <th>Присъствал при регистрация</th>
+        </tr></thead>
+        
+        <tbody>
+        % for rep, party, registered in reg_by_name:
+            <tr>
+                <td>${rep}</td>
+                <td>${party}</td>
+                <td>${registered}</td>
+            </tr>
+        % endfor
+        </tbody>
+    </table>
 </%lay:section>
 

@@ -5,14 +5,14 @@
     <meta name="description" content="Независима Организация за Парламентарен Контрол" />
     <title><%block name="title">Парламентарен Контрол</%block></title>
     ## HTML KICKSTART (includes jquery)
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
     <!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
-    <script type="text/javascript" src="js/kickstart.js"></script>
-    <link rel="stylesheet" type="text/css" href="css/kickstart.css" media="all" />
+    <script src="js/kickstart.js"></script>
+    <link rel="stylesheet" href="css/kickstart.css" media="all" />
     ## CUSTOM STYLES
-    <link rel="stylesheet" type="text/css" href="style.css" media="all" />
+    <link rel="stylesheet" href="style.css" media="all" />
     ## GOOGLE ANALYTICS
-    <script type="text/javascript">
+    <script>
       var _gaq = _gaq || [];
       _gaq.push(['_setAccount', 'UA-34843609-1']);
       _gaq.push(['_setDomainName', 'parlamentaren-kontrol.com']);
@@ -27,7 +27,7 @@
 <body itemscope <%block name="webpageschema">itemtype="http://schema.org/WebPage"</%block>>
     <a id="top-of-page"></a>
     <p>Данни от началото на 2011 до днес.</p>
-    <!--[if LT IE  9]><p>Програмата, която ползвате за да четете тази страница е прекалено стара и някои от опциите ни може да не работят в нея. <a href="http://www.browserchoice.eu/BrowserChoice/browserchoice_en.htm">Изберете и инсталирайте нова версия</a></p><![endif]-->
+    <!--[if LT IE 9]><p>Програмата, която ползвате за да четете тази страница е прекалено стара и някои от опциите ни може да не работят в нея. <a href="http://www.browserchoice.eu/BrowserChoice/browserchoice_en.htm">Изберете и инсталирайте нова версия</a></p><![endif]-->
 
     ##<div id="header">
     ##<h1>Парламентарен Контрол</h1>
@@ -37,7 +37,7 @@
     ##</div>
 
     <div id="wrap" class="clearfix">
-        <div id="nav" itemscope itemtype="http://schema.org/SiteNavigationElement">
+        <nav itemscope itemtype="http://schema.org/SiteNavigationElement">
             <ul class="menu">
                 <li itemscope itemtype="http://schema.org/AboutPage" itemid="http://www.parlamentaren-kontrol.com"><a href="http://www.parlamentaren-kontrol.com" itemprop="url">Начало</a></li>
                 <li><a href="stenograms.html">Стенограми</a></li>
@@ -50,23 +50,21 @@
                 <input style="width: 227px; min-width: 227px;" id="search" type="text" name="q" placeholder="Търсене: пиши и натисни Enter" />
                 <input type="hidden" name="cx" value="010292560853932977821:w-c1g2strro" />
             </form>
-        </div>
+        </nav>
 
-        ## THE ACTUAL CONTENT
-        <div class="col_12">
+        <article class="col_12" itemprop="mainContentOfPage" itemscope itemtype="http://schema.org/WebPageElement">
             <h1 itemprop="name">${self.title()}</h1>
             <div class="col_10"><hr class="alt1" /></div>
             <div class="col_2" style="position:relative; top:25px;">
-            <a href="https://twitter.com/share" class="twitter-share-button" data-count="none" data-hashtags="parlamentarenkontrol">Tweet</a><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
-            <div class="g-plusone" data-size="medium" data-annotation="none"></div><script type="text/javascript">window.___gcfg = {lang: 'bg'}; (function() {var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = 'https://apis.google.com/js/plusone.js'; var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);})();</script>
+                <a href="https://twitter.com/share" class="twitter-share-button" data-count="none" data-hashtags="parlamentarenkontrol">Tweet</a><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+                <div class="g-plusone" data-size="medium" data-annotation="none"></div><script type="text/javascript">window.___gcfg = {lang: 'bg'}; (function() {var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = 'https://apis.google.com/js/plusone.js'; var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);})();</script>
             </div>
-            <div class="col_12" itemprop="mainContentOfPage" itemscope itemtype="http://schema.org/WebPageElement">
             ${self.body()}
-            </div>
-        </div>
+        </article>
 
         <div class="clear"></div>
-        <div id="footer" itemscope itemtype="http://schema.org/WPFooter">
+
+        <footer itemscope itemtype="http://schema.org/WPFooter">
             <div itemscope itemtype="http://schema.org/NGO" itemid="http://www.parlamentaren-kontrol.org">
             <strong><a href="http://www.parlamentaren-kontrol.org" itemprop="url">Независима Организация за <span itemprop="name">Парламентарен Контрол</span></a></strong><br/>
             <span itemprop="contactPoint" itemscope itemtype="http://schema.org/contactPoint" itemid="contacts.html"><a href="contacts.html" itemprop="url">Свържете се с Нас с Предложения, Въпроси и Поръчки</a></span>
@@ -81,7 +79,7 @@
              | 
             <span itemscope itemtype="http://schema.org/GovernmentOrganization" itemid="http://parliament.bg/"><a href="http://parliament.bg/" itemprop="url">Официален Сайт на <span itemprop="name">Българиския Парламент</span></a></span>
             <a id="link-top" href="#top-of-page">Нагоре</a>
-        </div>
+        </footer>
     </div>
 </body>
 </html>

@@ -32,13 +32,22 @@
     </tr></thead>
     <tbody>
         % for date in stenogram_mgroup:
-        <tr>
-        <th valign="top"><a href="stenogram${date.strftime('%Y%m%d')}.html">${date.strftime('%d/%m/%Y')}</a></th>
-        <td><div id="sessionDescription${date.strftime('%Y%m%d')}" style="display: none;"><ul class="alt">
-            % for description in stenograms[date]:
-            <li>${description.split(u'по тема ')[-1]}</li>
-            % endfor
-        </ul></div></td>
+        <tr itemscope itemtype="http://schema.org/Event" itemid="stenogram${date.strftime('%Y%m%d')}.html">
+        <td valign="top">
+            <a itemprop="url" href="stenogram${date.strftime('%Y%m%d')}.html">
+            <time itemprop="startDate" datetime="${date.strftime('%Y-%m-%d')}">
+                ${date.strftime('%d/%m/%Y')}
+            </time>
+            </a>
+        </td>
+        <td>
+            <div id="sessionDescription${date.strftime('%Y%m%d')}" style="display: none;">
+            <ul class="alt">
+                % for description in stenograms[date]:
+                <li>${description.split(u'по тема ')[-1]}</li>
+                % endfor
+            </ul></div>
+        </td>
         </tr>
         % endfor
     </tbody>

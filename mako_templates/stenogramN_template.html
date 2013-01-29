@@ -1,6 +1,8 @@
 <%inherit file="base_template.html" />
 <%namespace name="lay" file="layout_components.html"/>
 <%block name="title">Стенограма от ${stenogram_date.strftime('%d/%m/%Y')}</%block>
+<%block name="main_text_header">Сесия на Народното Събрание <time itemprop="startDate" datetime="${stenogram_date.strftime('%Y-%m-%d')}">${stenogram_date.strftime('%d/%m/%Y')}<time></%block>
+<%block name="maincontentschema">itemtype="http://schema.org/Event" itemid="stenogram${stenogram_date.strftime('%Y%m%d')}.html"</%block>
 
 
 % if problem:
@@ -11,19 +13,16 @@
 % endif
 
 
-<%lay:section>
-    <%def name="header()">
-        Регистрация
-    </%def>
-    <div class="col_12"><a href="stenogram${stenogram_date.strftime('%Y%m%d')}registration.html">Поимемен списък</a></div>
+<% escaped_str=stenogram_date.strftime('%Y%m%d') %>
+
+<%lay:section section_microdata='itemprop="subEvent" itemscope itemtype="http://schema.org/Event" itemid="stenogram${escaped_str}registration.html"'
+              header='Регистрация'>
+    <div class="col_12"><a itemprop="url" href="stenogram${stenogram_date.strftime('%Y%m%d')}registration.html">Поимемен списък</a></div>
     ${lay.stenogram_registration()}
 </%lay:section>
 
 
-<%lay:section>
-    <%def name="header()">
-        Гласувания
-    </%def>
+<%lay:section header='Гласувания'>
     % if votes_by_session_type_party is not None:
         <div class="col_6">
         <h3>Съдържание</h3>
@@ -42,47 +41,49 @@
                 <hr />
             % endif
 
-            <h3 id="vote${i+1}"><a href="#vote${i+1}">Гласуване ${i+1}</a></h3>
+            <section class="col_12" itemprop="subEvent" itemscope itemtype="http://schema.org/Event" itemid="stenogram${stenogram_date.strftime('%Y%m%d')}vote${i+1}.html">
+                <h3 id="vote${i+1}"><a href="#vote${i+1}">Гласуване ${i+1}</a></h3>
 
-            <div class="col_12">
-            <a href="stenogram${stenogram_date.strftime('%Y%m%d')}vote${i+1}.html">Поимемен списък</a>
-            </div>
+                <div class="col_12">
+                <a itemprop="url" href="stenogram${stenogram_date.strftime('%Y%m%d')}vote${i+1}.html">Поимемен списък</a>
+                </div>
 
-            <div class="col_6"><blockquote>${description}</blockquote></div>
-            <div class="col_6"><img class="full-width" src="session${stenogram_date.strftime('%Y%m%d')}votes${i+1}.png" alt="Гласували и отсъстващи депутати."/></div>
+                <div class="col_6"><blockquote>${description}</blockquote></div>
+                <div class="col_6"><img class="full-width" src="session${stenogram_date.strftime('%Y%m%d')}votes${i+1}.png" alt="Гласували и отсъстващи депутати."/></div>
 
-            <div class="col_12">
-                <button class="small" id="showSession${i+1}" onClick="toggle('session${i+1}','showSession${i+1}','Покажи таблица', 'Скрий');" >Покажи таблица</button>
-                <a class="small" href="#votesInText${i+1}">Намери в текста</a>
-            </div>
+                <div class="col_12">
+                    <button class="small" id="showSession${i+1}" onClick="toggle('session${i+1}','showSession${i+1}','Покажи таблица', 'Скрий');" >Покажи таблица</button>
+                    <a class="small" href="#votesInText${i+1}">Намери в текста</a>
+                </div>
 
-            <div class="col_12" id="session${i+1}" style="display: none;">
-            <table class="sortable">
-                <thead><tr>
-                    <th>Партия</th>
-                    <th>За</th>
-                    <th>Против</th>
-                    <th>Въздържали се</th>
-                    <th>Общо Гласували</th>
-                    <th>Не Гласували</th>
-                </tr></thead>
-                <tbody>
-                % for party, (yes, no, abstained, absences) in zip(party_names, zip(*votes_by_type_party)):
-                    <tr>
-                        <td>${party}</td>
-                        <td>${yes}</td>
-                        <td>${no}</td>
-                        <td>${abstained}</td>
-                        <td>${yes+no+abstained}</td>
-                        <td>${absences}</td>
-                    </tr>
-                % endfor
-                </tbody>
-            </table>
+                <div class="col_12" id="session${i+1}" style="display: none;">
+                <table class="sortable">
+                    <thead><tr>
+                        <th>Партия</th>
+                        <th>За</th>
+                        <th>Против</th>
+                        <th>Въздържали се</th>
+                        <th>Общо Гласували</th>
+                        <th>Не Гласували</th>
+                    </tr></thead>
+                    <tbody>
+                    % for party, (yes, no, abstained, absences) in zip(party_names, zip(*votes_by_type_party)):
+                        <tr>
+                            <td>${party}</td>
+                            <td>${yes}</td>
+                            <td>${no}</td>
+                            <td>${abstained}</td>
+                            <td>${yes+no+abstained}</td>
+                            <td>${absences}</td>
+                        </tr>
+                    % endfor
+                    </tbody>
+                </table>
 
-            <% total = map(sum, votes_by_type_party) %>
-            <p><strong>Всички Партии</strong>: За: ${total[0]}, Против: ${total[1]}, Въздържали се: ${total[2]}, Общо Гласували: ${sum(total[:-1])}</p>
-            </div>
+                <% total = map(sum, votes_by_type_party) %>
+                <p><strong>Всички Партии</strong>: За: ${total[0]}, Против: ${total[1]}, Въздържали се: ${total[2]}, Общо Гласували: ${sum(total[:-1])}</p>
+                </div>
+            </section>
         % endfor
         </div>
         <script type="text/javascript" src="js/toggle.js"></script>
@@ -92,10 +93,7 @@
 </%lay:section>
 
 
-<%lay:section>
-    <%def name="header()">
-        Пълен Текст
-    </%def>
+<%lay:section header='Пълен Текст'>
     <p>
     <% count = 1 %>
     % for i, line in enumerate(text):

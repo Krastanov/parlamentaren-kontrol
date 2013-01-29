@@ -1,11 +1,13 @@
 <%inherit file="base_template.html" />
+<%namespace name="lay" file="layout_components.html"/>
 <%block name="title">Адреси за контракт с народните представители</%block>
 <%block name="webpageschema">itemtype="http://schema.org/ContactPage"</%block>
 
 
 % for party, mails in mails_per_party_dict.items():
-    <div class="col_12" itemscope itemtype="http://schema.org/GovernmentOrganization">
-        <h2><span itemprop="name">${party}</span></h2>
-        <blockquote itemprop="email">${mails}</blockquote>
-    </div>
+<%lay:section section_microdata='itemscope itemtype="http://schema.org/GovernmentOrganization"'
+              header_microdata='itemprop="name"'
+              header='${party}'>
+    <address itemprop="email">${mails}</address>
+</%lay:section>
 % endfor

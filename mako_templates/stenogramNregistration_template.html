@@ -6,18 +6,12 @@
 <a href="stenogram${stenogram_date.strftime('%Y%m%d')}.html">Обратно към стенограмата от деня.</a>
 
 
-<%lay:section>
-    <%def name="header()">
-        Обща Информация
-    </%def>
+<%lay:section header='Обща Информация'>
     ${lay.stenogram_registration()}
 </%lay:section>
 
 
-<%lay:section>
-    <%def name="header()">
-        Поименен Списък
-    </%def>
+<%lay:section header='Поименен Списък'>
     <table class="sortable tight striped">
         <thead><tr>
             <th>Депутат</th>

@@ -6,10 +6,7 @@
 <a href="stenogram${stenogram_date.strftime('%Y%m%d')}.html#vote${session_i+1}">Обратно към стенограмата от деня.</a>
 
 
-<%lay:section>
-    <%def name="header()">
-        Обща Информация
-    </%def>
+<%lay:section header='Обща Информация'>
     <div class="col_6"><blockquote>${description}</blockquote></div>
     <div class="col_6"><img class="full-width" src="session${stenogram_date.strftime('%Y%m%d')}votes${session_i+1}.png" alt="Гласували и отсъстващи депутати."/></div>
 
@@ -44,10 +41,7 @@
 </%lay:section>
 
 
-<%lay:section>
-    <%def name="header()">
-        Поименен Списък
-    </%def>
+<%lay:section header='Поименен Списък'>
     <div class="col_12">
     <table class="sortable tight striped">
         <thead><tr>

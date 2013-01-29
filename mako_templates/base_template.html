@@ -52,8 +52,8 @@
             </form>
         </nav>
 
-        <article class="col_12" itemprop="mainContentOfPage" itemscope itemtype="http://schema.org/WebPageElement">
-            <header><h1 itemprop="name">${self.title()}</h1></header>
+        <article class="col_12" itemprop="mainContentOfPage" itemscope <%block name="maincontentschema">itemtype="http://schema.org/WebPageElement"</%block>>
+            <header><h1 itemprop="name"><%block name="main_text_header">${self.title()}</%block></h1></header>
             <div class="col_10"><hr class="alt1" /></div>
             <div class="col_2" style="position:relative; top:25px;">
                 <a href="https://twitter.com/share" class="twitter-share-button" data-count="none" data-hashtags="parlamentarenkontrol">Tweet</a><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>

@@ -35,6 +35,7 @@ logger_html = logging.getLogger('static_html_gen')
 logger_html.info("Copy the static files.")
 os.system('cp -rT raw_components/htmlkickstart/css generated_html/css')
 os.system('cp -rT raw_components/htmlkickstart/js generated_html/js')
+os.system('cp -rT js generated_html/js')
 os.system('cp css/style.css generated_html/style.css')
 os.system('cp raw_components/coat_of_arms.png generated_html/logo.png')
 os.system('cp raw_components/retina_dust/retina_dust.png generated_html/css/img/grid.png')
@@ -234,9 +235,9 @@ def write_MPs_overview_page():
 
 
 ##############################################################################
-# All stenograms summary page.
+# List of stenograms summary pages.
 ##############################################################################
-def write_all_stenograms_list_page():
+def write_list_of_stenograms_summary_pages():
     logger_html.info("Generating html summary page of all stenograms.")
     # Get all stenogram dates and session info into a dict.
     cur.execute("""SELECT stenogram_date
@@ -251,11 +252,24 @@ def write_all_stenograms_list_page():
                           (date,))
         stenograms[date] = [v[0] for v in subcur]
 
+    years = sorted(list({date.year for date in stenograms.keys()}))
+    stenogram_yeargroups = [[date for date in stenograms.keys() if date.year == y] for y in years]
     # Generate the summary page for all stenograms.
     all_stenograms_template = templates.get_template('stenograms_template.html')
-    with open('generated_html/stenograms.html', 'w') as html_file:
-        html_file.write(all_stenograms_template.render(stenograms=stenograms))
-        sitemap.add('stenograms.html', 0.8)
+    for y, stenogram_ygroup in zip(["all"]+years, [stenograms.keys()]+stenogram_yeargroups):
+        months = sorted(list({date.month for date in stenogram_ygroup}))
+        stenogram_monthgroups = [[date for date in stenogram_ygroup if date.month == m] for m in months]
+        for m, stenogram_mgroup in zip(["all"]+months, [stenogram_ygroup]+stenogram_monthgroups):
+            with open('generated_html/stenograms%s%s.html'%(y,m), 'w') as html_file:
+                html_file.write(all_stenograms_template.render(years=years,
+                                                               months=months,
+                                                               current_y=y,
+                                                               stenogram_mgroup=stenogram_mgroup,
+                                                               stenograms=stenograms))
+                sitemap.add('stenograms%s%s.html'%(y,m), 0.8)
+    # Copy the most recent one
+    os.system('cp generated_html/stenograms%s%s.html generated_html/stenograms.html'%(y,m))
+    sitemap.add('stenograms.html', 0.8)
 
 
 ##############################################################################
@@ -465,7 +479,7 @@ todo = [
         write_MPs_emails_page,
 #        write_graph_visualizations,
         write_MPs_overview_page,
-        write_all_stenograms_list_page,
+        write_list_of_stenograms_summary_pages,
         write_stenogram_pages,
         sitemap.write
         ]

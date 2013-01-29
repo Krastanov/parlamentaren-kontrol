@@ -1,6 +1,8 @@
 <%def name="section()">
-    <h2>${caller.header()}</h2>
-    ${caller.content()}
+    <section class="col_12">
+        <h2>${caller.header()}</h2>
+        ${caller.body()}
+    </section>
     <hr class="alt1" />
 </%def>
 

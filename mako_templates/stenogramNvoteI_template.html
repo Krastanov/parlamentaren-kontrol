@@ -8,36 +8,8 @@
 
 <%lay:section header='Обща Информация'>
     <div class="col_6"><blockquote>${description}</blockquote></div>
-    <div class="col_6"><img class="full-width" src="session${stenogram_date.strftime('%Y%m%d')}votes${session_i+1}.png" alt="Гласували и отсъстващи депутати."/></div>
-
-    <div class="col_12">
-    <table class="sortable">
-        <thead><tr>
-            <th>Партия</th>
-            <th>За</th>
-            <th>Против</th>
-            <th>Въздържали се</th>
-            <th>Общо Гласували</th>
-            <th>Не Гласували</th>
-        </tr></thead>
-
-        <tbody>
-        % for party, y, n, abst, absent in zip(party_names, yes, no, abstain, absences):
-            <tr>
-                <td>${party}</td>
-                <td>${y}</td>
-                <td>${n}</td>
-                <td>${abst}</td>
-                <td>${y+n+abst}</td>
-                <td>${absent}</td>
-            </tr>
-        % endfor
-        </tbody>
-    </table>
-
-    <% total = map(sum, [yes, no, abstain]) %>
-    <p><strong>Всички Партии</strong>: За: ${total[0]}, Против: ${total[1]}, Въздържали се: ${total[2]}, Общо Гласували: ${sum(total)}</p>
-    </div>
+    <figure class="col_6"><img class="full-width" src="session${stenogram_date.strftime('%Y%m%d')}votes${session_i+1}.png" alt="Гласували и отсъстващи депутати."/></figure>
+    ${lay.stenogram_vote_table(session_i, votes_by_type_party)}
 </%lay:section>
 
 

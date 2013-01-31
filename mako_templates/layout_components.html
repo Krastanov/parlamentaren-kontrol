@@ -1,14 +1,19 @@
 <%def name="section(section_microdata='', header_microdata='', header='')">
-    <section class="col_12" ${section_microdata}>
+    <section class="col_12 section" ${section_microdata}>
         <h2 ${header_microdata}>${header}</h2>
         ${caller.body()}
     </section>
-    <hr class="alt1" />
 </%def>
 
+<%def name="subsection(section_microdata='', header_microdata='', header='', width='12')">
+    <section class="col_${width} subsection" ${section_microdata}>
+        <h3 ${header_microdata}>${header}</h3>
+        ${caller.body()}
+    </section>
+</%def>
 
-<%def name="stenogram_registration()">
-    <div class="col_6">
+<%def name="stenogram_registration_table()">
+    <section class="col_6">
         <table class="sortable">
             <thead><tr>
                 <th>Партия</th>
@@ -30,8 +35,37 @@
             </tbody>
         </table>
         <p><strong>Всички Партии</strong>: Присъстващи: ${sum(reg_presences)}, Общо регистрирани: ${sum(reg_expected)}</p>
-    </div>
-    <div class="col_6">
+    </section>
+    <figure class="col_6">
         <img class="full-width" src="registration${stenogram_date.strftime('%Y%m%d')}.png" alt="Регистрирани и отсъстващи депутати."/>
-    </div>
+    </figure>
+</%def>
+
+<%def name="stenogram_vote_table(i, votes_by_type_party)">
+    <section class="col_12" id="session${i+1}">
+    <table class="sortable">
+        <thead><tr>
+            <th>Партия</th>
+            <th>За</th>
+            <th>Против</th>
+            <th>Въздържали се</th>
+            <th>Общо Гласували</th>
+            <th>Не Гласували</th>
+        </tr></thead>
+        <tbody>
+        % for party, (yes, no, abstained, absences) in zip(party_names, zip(*votes_by_type_party)):
+            <tr>
+                <td>${party}</td>
+                <td>${yes}</td>
+                <td>${no}</td>
+                <td>${abstained}</td>
+                <td>${yes+no+abstained}</td>
+                <td>${absences}</td>
+            </tr>
+        % endfor
+        </tbody>
+    </table>
+    <% total = map(sum, votes_by_type_party) %>
+    <p><strong>Всички Партии</strong>: За: ${total[0]}, Против: ${total[1]}, Въздържали се: ${total[2]}, Общо Гласували: ${sum(total[:-1])}</p>
+    </section>
 </%def>

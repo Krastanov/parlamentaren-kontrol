@@ -419,10 +419,10 @@ def write_stenogram_pages():
             absences_figure(stenogram_date, party_names, votes_absences, votes_absences_percent)
 
             # Generate plots and html dedicated to a single session.
-            for session_i, (description, votes_by_name, (yes, no, abstain, absences))\
+            for session_i, (description, votes_by_name, votes_by_type_party)\
                 in enumerate(zip(vote_descriptions, votes_by_session_by_name, votes_by_session_type_party)):
                 # Plot per-session vote data.
-                session_votes_by_party_figure(stenogram_date, session_i, party_names, yes, no, abstain, absences)
+                session_votes_by_party_figure(stenogram_date, session_i, party_names, *votes_by_type_party)
                 # Generate per-session html summary.
                 filename = 'stenogram%svote%d.html'%(datestr, session_i+1)
                 with open('generated_html/%s'%filename, 'w') as html_file:
@@ -430,8 +430,7 @@ def write_stenogram_pages():
                                                                        session_i=session_i,
                                                                        description=description,
                                                                        party_names=party_names,
-                                                                       yes=yes, no=no, abstain=abstain,
-                                                                       absences=absences,
+                                                                       votes_by_type_party=votes_by_type_party,
                                                                        votes_by_name=votes_by_name))
                     sitemap.add(filename, 0.6)
 

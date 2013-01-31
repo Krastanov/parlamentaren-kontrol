@@ -1,7 +1,7 @@
 <%inherit file="base_template.html" />
 <%namespace name="lay" file="layout_components.html"/>
 <%block name="title">Стенограма от ${stenogram_date.strftime('%d/%m/%Y')}</%block>
-<%block name="main_text_header">Сесия на Народното Събрание <time itemprop="startDate" datetime="${stenogram_date.strftime('%Y-%m-%d')}">${stenogram_date.strftime('%d/%m/%Y')}<time></%block>
+<%block name="main_text_header">Сесия на Народното Събрание <time itemprop="startDate" datetime="${stenogram_date.strftime('%Y-%m-%d')}">${stenogram_date.strftime('%d/%m/%Y')}</time></%block>
 <%block name="maincontentschema">itemtype="http://schema.org/Event" itemid="stenogram${stenogram_date.strftime('%Y%m%d')}.html"</%block>
 
 <div class="col_12"><a href="${original_url}">Първоизточник</a></div>

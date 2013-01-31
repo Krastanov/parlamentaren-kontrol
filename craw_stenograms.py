@@ -187,7 +187,8 @@ for i, ID in enumerate(stenogram_IDs):
     ID = ID.strip()
     logger_to_db.info("Parsing stenogram %s - %d of %d." % (ID, i+1, len(stenogram_IDs)))
 
-    f = urlopen('http://www.parliament.bg/bg/plenaryst/ns/7/ID/'+ID)
+    original_url = 'http://www.parliament.bg/bg/plenaryst/ns/7/ID/'+ID
+    f = urlopen(original_url)
     complete_stenogram_page = f.read().decode('utf-8')
 
     parser = StenogramsHTMLParser(complete_stenogram_page)
@@ -223,12 +224,12 @@ for i, ID in enumerate(stenogram_IDs):
 
 
     if problem_by_name or problem_by_party:
-        cur.execute("""INSERT INTO stenograms VALUES (%s, %s, %s, %s)""",
-                    (parser.date, parser.data_list, parser.votes_indices, True))
+        cur.execute("""INSERT INTO stenograms VALUES (%s, %s, %s, %s, %s)""",
+                    (parser.date, parser.data_list, parser.votes_indices, True, original_url))
     else:
         try:
-            cur.execute("""INSERT INTO stenograms VALUES (%s, %s, %s, %s)""",
-                        (parser.date, parser.data_list, parser.votes_indices, False))
+            cur.execute("""INSERT INTO stenograms VALUES (%s, %s, %s, %s, %s)""",
+                        (parser.date, parser.data_list, parser.votes_indices, False, original_url))
             cur.executemany("""INSERT INTO party_reg VALUES (%s, %s, %s, %s)""",
                             ((k, parser.date, v.present, v.expected) for k,v in reg_by_party_dict.items()))
             cur.executemany("""INSERT INTO vote_sessions VALUES (%s, %s, %s)""",

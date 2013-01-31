@@ -4,11 +4,13 @@
 <%block name="main_text_header">Сесия на Народното Събрание <time itemprop="startDate" datetime="${stenogram_date.strftime('%Y-%m-%d')}">${stenogram_date.strftime('%d/%m/%Y')}<time></%block>
 <%block name="maincontentschema">itemtype="http://schema.org/Event" itemid="stenogram${stenogram_date.strftime('%Y%m%d')}.html"</%block>
 
+<div class="col_12"><a href="${original_url}">Първоизточник</a></div>
 
 % if problem:
     <p>Имаше проблем при обработката на данните за тази стенограма. Вероятно
     официалния сайт на парламента предоставя повредени или непълни данни
-    причинявайки тази грешка.</p> 
+    причинявайки тази грешка. <a href="${original_url}">От тук можете да го
+    посетите за повече информация</a>.</p> 
     <% return %>
 % endif
 

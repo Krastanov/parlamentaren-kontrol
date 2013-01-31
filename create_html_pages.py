@@ -284,11 +284,11 @@ def write_stenogram_pages():
     # Get all stenograms into an iterator.
     cur.execute("""SELECT COUNT(*) FROM stenograms""")
     len_stenograms = cur.fetchone()[0]
-    cur.execute("""SELECT stenogram_date, text, vote_line_nb, problem
+    cur.execute("""SELECT stenogram_date, text, vote_line_nb, problem, original_url
                    FROM stenograms
                    ORDER BY stenogram_date""")
 
-    for st_i, (stenogram_date, text, vote_line_nb, problem) in enumerate(cur):
+    for st_i, (stenogram_date, text, vote_line_nb, problem, original_url) in enumerate(cur):
 
         datestr = stenogram_date.strftime('%Y%m%d')
         logger_html.info("Generating HTML and plots for %s - %d of %d" % (datestr, st_i+1, len_stenograms))
@@ -300,6 +300,7 @@ def write_stenogram_pages():
             with open('generated_html/%s'%filename, 'w') as html_file:
                 html_file.write(per_stenogram_template.render(stenogram_date=stenogram_date,
                                                               problem=True,
+                                                              original_url=original_url,
                                                               vote_descriptions=None,
                                                               party_names=None,
                                                               votes_by_session_type_party=None,
@@ -442,6 +443,7 @@ def write_stenogram_pages():
             with open('generated_html/%s'%filename, 'w') as html_file:
                 html_file.write(per_stenogram_template.render(stenogram_date=stenogram_date,
                                                               problem=False,
+                                                              original_url=original_url,
                                                               vote_descriptions=vote_descriptions,
                                                               party_names=party_names,
                                                               votes_by_session_type_party=votes_by_session_type_party,
@@ -459,6 +461,7 @@ def write_stenogram_pages():
             with open('generated_html/%s'%filename, 'w') as html_file:
                 html_file.write(per_stenogram_template.render(stenogram_date=stenogram_date,
                                                               problem=False,
+                                                              original_url=original_url,
                                                               vote_descriptions=None,
                                                               party_names=party_names,
                                                               votes_by_session_type_party=None,

@@ -14,13 +14,15 @@ logger_mps = logging.getLogger('mps_data')
 names_list = []
 forces_list = []
 mails_list = []
+url_list = []
 
 
 #TODO hardcoded value: id of the first mp from the current assembly
 indices = map(int, open('data/IDs_MPs').readlines())
 for i in range(835, max(indices)+1):
     logger_mps.info("Parsing data for MP id %s" % i)
-    xml_str = urlopen('http://www.parliament.bg/export.php/bg/xml/MP/%d'%i).read()
+    original_url = 'http://www.parliament.bg/export.php/bg/xml/MP/%d'%i
+    xml_str = urlopen(original_url).read()
     try:
         r = xmltodict.parse(xml_str)
         name = ' '.join([r['schema']['Profile']['Names']['FirstName']['@value'],
@@ -43,6 +45,7 @@ for i in range(835, max(indices)+1):
         except Exception, e:
             logger_mps.error("The csv file for MP %s is unparsable as well due to %s. Skipping this id."%(i, str(e)))
             continue
+    url_list.append(original_url)
     names_list.append(name)
     forces_list.append(force)
     mails_list.append(mail)
@@ -50,6 +53,6 @@ for i in range(835, max(indices)+1):
 
 cur.executemany("""INSERT INTO parties VALUES (%s)""",
                 zip(list(set(forces_list))+[u'независим']))
-cur.executemany("""INSERT INTO mps VALUES (%s, %s, %s)""",
-                zip(names_list, forces_list, mails_list))
+cur.executemany("""INSERT INTO mps VALUES (%s, %s, %s, %s)""",
+                zip(names_list, forces_list, mails_list, url_list))
 db.commit()

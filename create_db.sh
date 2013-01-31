@@ -6,7 +6,8 @@ CREATE TABLE stenograms (
        stenogram_date  date PRIMARY KEY,
        text            text[],
        vote_line_nb    integer[],
-       problem         bool
+       problem         bool,
+       original_url    text UNIQUE
 );
 
 CREATE TABLE vote_sessions (
@@ -23,7 +24,8 @@ CREATE TABLE parties (
 CREATE TABLE mps (
        mp_name          text PRIMARY KEY,
        orig_party_name  text REFERENCES parties (party_name),
-       email            text
+       email            text,
+       original_url     text UNIQUE
 );
 
 CREATE TYPE mp_vote_enum AS ENUM ('yes', 'no', 'abstain', 'absent');

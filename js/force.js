@@ -12,7 +12,7 @@ var force = d3.layout.force()
     .gravity(0.2)
     .friction(0.2)
     .theta(1)
-    .linkStrength(function(l) {return l.value*2-1; });
+    .linkStrength(function(l) {return l.value; });
 
 
 var svg = d3.select("#chart").append("svg")
@@ -29,7 +29,7 @@ d3.json(json_file_name, function(json) {
       .data(json.links)
     .enter().append("line")
       .attr("class", "link")
-      .style("stroke-width", function(d) { return Math.floor(3*(d.value*2-1))+1; });
+      .style("stroke-width", function(d) { return Math.floor(3*d.value)+1; });
 
   var node = svg.selectAll("circle.node")
       .data(json.nodes)

@@ -155,20 +155,11 @@ def write_graph_visualizations():
     M_tot  = np.tensordot(abs(is_yes_no_abst_absent), abs(is_yes_no_abst_absent), axes=([1],[1]))
     del is_yes_no_abst_absent
     M = M_diff/(M_tot+0.00001)
-    C = not_abses**2/tots/len(name) # average number of common (i.e. by pairs) not absents/abstrains
-    print np.max(M_tot)
-    from matplotlib import pyplot
-    pyplot.hist(M_tot.flatten())
-    pyplot.savefig('hist.png')
-    pyplot.figure()
-    pyplot.hist(M[M>0].flatten())
-    pyplot.savefig('M.png')
+    C = np.median(M_tot)
     M[M_tot<C] = 0
-    pyplot.figure()
-    pyplot.hist(M[M>0].flatten())
-    pyplot.savefig('Mclip.png')
+    M[M<0.5] = 0
+    M = M*2-1
     del M_diff, M_tot
-    print np.sum(M!=0)
 
     # Make the JSON dumps.
     json_dict = {}

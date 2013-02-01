@@ -136,7 +136,8 @@ def write_graph_visualizations():
     date_session = cur.fetchall()
     ds_index_dict = dict(zip(date_session, range(len(date_session))))
 
-    is_yes_no_abst_absent  = np.zeros((len(name), len(date_session), 4), np.float)
+    # yes=1 no=-1 abst/absent=0
+    is_yes_no_abst_absent  = np.zeros((len(name), len(date_session)), np.float16)
     cur.execute("""SELECT mp_name, stenogram_date, session_number, vote
                    FROM mp_votes""")
     for n, d, s, v in cur:
@@ -144,25 +145,30 @@ def write_graph_visualizations():
         if i_n is None:
             continue
         i_ds = ds_index_dict[(d, s)]
-        i = {'yes':0, 'no':1, 'abstain':2, 'absent':3}[v]
-        is_yes_no_abst_absent[i_n, i_ds, i] = 1
+        is_yes_no_abst_absent[i_n, i_ds] = {'yes':1, 'no':-1, 'abstain':0, 'absent':0}[v]
 
     # Prepare the graph matrix.
-    M_same = np.tensordot(is_yes_no_abst_absent[:,:,:2], is_yes_no_abst_absent[:,:,:2],
-                          axes=([1,2],[1,2]))
-    M_diff = np.tensordot(is_yes_no_abst_absent[:,:,0], is_yes_no_abst_absent[:,:,1],
-                          axes=([1],[1]))
-    M_same_abst = np.tensordot(is_yes_no_abst_absent[:,:,2], is_yes_no_abst_absent[:,:,2],
-                               axes=([1],[1]))
-    M_diff_abst = np.tensordot(np.sum(is_yes_no_abst_absent[:,:,:2], axis=2), is_yes_no_abst_absent[:,:,2],
-                               axes=([1],[1]))
-    fudge = 0.3
-    M = (M_same - M_diff + fudge*(M_same_abst - M_diff_abst))/((M_same + M_diff + fudge*(M_same_abst + M_diff_abst))+0.001)
-    M = np.clip(M, 0, 1)
-    M = M**8
-    M = M/np.max(M)
-    cut = 0.5
+    abses = np.sum(is_yes_no_abst_absent==0)
+    tots = is_yes_no_abst_absent.size
+    not_abses = tots - abses
+    M_diff = np.tensordot(is_yes_no_abst_absent, is_yes_no_abst_absent, axes=([1],[1]))
+    M_tot  = np.tensordot(abs(is_yes_no_abst_absent), abs(is_yes_no_abst_absent), axes=([1],[1]))
     del is_yes_no_abst_absent
+    M = M_diff/(M_tot+0.00001)
+    C = not_abses**2/tots/len(name) # average number of common (i.e. by pairs) not absents/abstrains
+    print np.max(M_tot)
+    from matplotlib import pyplot
+    pyplot.hist(M_tot.flatten())
+    pyplot.savefig('hist.png')
+    pyplot.figure()
+    pyplot.hist(M[M>0].flatten())
+    pyplot.savefig('M.png')
+    M[M_tot<C] = 0
+    pyplot.figure()
+    pyplot.hist(M[M>0].flatten())
+    pyplot.savefig('Mclip.png')
+    del M_diff, M_tot
+    print np.sum(M!=0)
 
     # Make the JSON dumps.
     json_dict = {}
@@ -173,7 +179,7 @@ def write_graph_visualizations():
     json_dict['links'] = [{'source':j, 'target':i, 'value':float(M[i,j])}
                           for j in range(len(name))
                           for i in range(j)
-                          if M[i,j]>cut]
+                          if M[i,j]>0]
     with open('generated_html/graph_all.json','w') as f:
         f.write(json.dumps(json_dict))
     for p in parties:
@@ -185,7 +191,7 @@ def write_graph_visualizations():
         json_dict['links'] = [{'source':j, 'target':i, 'value':float(M[n_index_dict[restricted_name[i]],n_index_dict[restricted_name[j]]])}
                               for j in range(len(restricted_name))
                               for i in range(j)
-                              if M[n_index_dict[restricted_name[i]],n_index_dict[restricted_name[j]]]>cut and name_party_dict[n]==p]
+                              if M[n_index_dict[restricted_name[i]],n_index_dict[restricted_name[j]]]>0 and name_party_dict[n]==p]
         with open('generated_html/graph_%s.json'%asciiname,'w') as f:
             f.write(json.dumps(json_dict))
 
@@ -476,14 +482,14 @@ def write_stenogram_pages():
 # Execute all.
 ##############################################################################
 todo = [
-        write_sql_dump,
-        write_static_pages,
-        write_MPs_emails_page,
-#        write_graph_visualizations,
-        write_MPs_overview_page,
-        write_list_of_stenograms_summary_pages,
-        write_stenogram_pages,
-        sitemap.write
+#        write_sql_dump,
+#        write_static_pages,
+#        write_MPs_emails_page,
+        write_graph_visualizations,
+#        write_MPs_overview_page,
+#        write_list_of_stenograms_summary_pages,
+#        write_stenogram_pages,
+#        sitemap.write
         ]
 for f in todo:
     try:

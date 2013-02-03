@@ -181,13 +181,18 @@ logger_to_db = logging.getLogger('to_db')
 
 stenograms = {}
 stenogram_IDs = open('data/IDs_plenary_stenograms').readlines()
+cur.execute("""SELECT original_url FROM stenograms""")
+urls_already_in_db = set(zip(*cur.fetchall())[0])
+print urls_already_in_db
 for i, ID in enumerate(stenogram_IDs):
     problem_by_name = False
     problem_by_party = False
     ID = ID.strip()
+    original_url = unicode('http://www.parliament.bg/bg/plenaryst/ns/7/ID/'+ID)
+    if original_url in urls_already_in_db:
+        continue
     logger_to_db.info("Parsing stenogram %s - %d of %d." % (ID, i+1, len(stenogram_IDs)))
 
-    original_url = 'http://www.parliament.bg/bg/plenaryst/ns/7/ID/'+ID
     f = urlopen(original_url)
     complete_stenogram_page = f.read().decode('utf-8')
 

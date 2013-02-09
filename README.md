@@ -64,13 +64,16 @@ the code could fail. To check the locales of your DB you can look at `psql -l`.
     just skip them. Below is a copy of the explanation given by the
     parliamentary infocenter (in Bulgarian):
 
-    > За г-жа ВАНЯ ЧАВДАРОВА ДОБРЕВА беше допусната грешка при първоначлното
-въвеждане на данни за нея и след поправяне на грешката системата дава следващ
-идентификационен номер.
+    > Здравейте, г-н МИХАИЛ ВЛАДИМИРОВ ВЛАДОВ и г-н НИКОЛАЙ НАНКОВ НАНКОВ са
+били избрани за народни представители с Решение на ЦИК, но не са встъпвали в
+длъжност. По тази причина фигурират като имена в разпечатките до момента, в
+който ЦИК излезе с Решение, в което обявява за избран следващия народен
+представител в листата на съответната партия.
 
 *   The MP name "МАРИЯНА ПЕТРОВА ИВАНОВА-НИКОЛОВА" is a misspell of "МАРИАНА
-    ПЕТРОВА ИВАНОВА-НИКОЛОВА". Below is a copy of the explanation given by the
-    parliamentary infocenter (in Bulgarian):
+    ПЕТРОВА ИВАНОВА-НИКОЛОВА". It is present in stenograms 2809, 2810, 2811, 2812.
+    Below is a copy of the explanation given by the parliamentary infocenter (in
+    Bulgarian):
 
     > Госпожа Мариана Иванова – Николова е избрана за народен представител с >
 решение на Централната избирателна комисия №2041-НС, съобщено в пленарна > зала
@@ -84,6 +87,10 @@ the code could fail. To check the locales of your DB you can look at `psql -l`.
 причина, а не допусната от нас > правописна грешка госпожа Иванова-Николова
 фигурира в посочените от Вас > разпечатки от поименно гласуване, като
 „МАРИЯНА".
+
+*   The MP name "ВЕНЦЕСЛАВ ВАСИЛЕВ ВЪРБАНОВ" is a misspell of "ВЕНЦИСЛАВ
+    ВАСИЛЕВ ВЪРБАНОВ". It is present in stenograms 676, 678, 679, 680, 681, 742.
+
 
 ## XML file with MP information 
 

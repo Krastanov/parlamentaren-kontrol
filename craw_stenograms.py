@@ -72,7 +72,8 @@ def parse_excel_by_name(filename):
     """
     # Correct spelling errors in names of MPs.
     def MP_name_spellcheck(name): # XXX Workaround
-        tr_dict = {u'МАРИЯНА ПЕТРОВА ИВАНОВА-НИКОЛОВА': u'МАРИАНА ПЕТРОВА ИВАНОВА-НИКОЛОВА'}
+        tr_dict = {u'МАРИЯНА ПЕТРОВА ИВАНОВА-НИКОЛОВА': u'МАРИАНА ПЕТРОВА ИВАНОВА-НИКОЛОВА',
+                   u'ВЕНЦЕСЛАВ ВАСИЛЕВ ВЪРБАНОВ': u'ВЕНЦИСЛАВ ВАСИЛЕВ ВЪРБАНОВ'}
         if name in tr_dict:
             logger_excel.warning("Spelling error: %s" % name)
             return tr_dict[name]
@@ -183,7 +184,6 @@ stenograms = {}
 stenogram_IDs = open('data/IDs_plenary_stenograms').readlines()
 cur.execute("""SELECT original_url FROM stenograms""")
 urls_already_in_db = set(zip(*cur.fetchall())[0])
-print urls_already_in_db
 for i, ID in enumerate(stenogram_IDs):
     problem_by_name = False
     problem_by_party = False

@@ -19,9 +19,13 @@ url_list = []
 
 #TODO hardcoded value: id of the first mp from the current assembly
 indices = map(int, open('data/IDs_MPs').readlines())
+cur.execute("""SELECT original_url FROM mps""")
+urls_already_in_db = set(zip(*cur.fetchall())[0])
 for i in range(835, max(indices)+1):
+    original_url = unicode('http://www.parliament.bg/export.php/bg/xml/MP/%d'%i)
+    if original_url in urls_already_in_db:
+        continue
     logger_mps.info("Parsing data for MP id %s" % i)
-    original_url = 'http://www.parliament.bg/export.php/bg/xml/MP/%d'%i
     xml_str = urlopen(original_url).read()
     try:
         r = xmltodict.parse(xml_str)

@@ -7,7 +7,7 @@ from mako.lookup import TemplateLookup
 
 import numpy as np
 
-from pk_db import cur, subcur
+from pk_db import db, cur, subcur
 from pk_logging import logging
 from pk_plots import (registration_figure, absences_figure,
         session_votes_by_party_figure, alltime_regs, alltime_votes)
@@ -138,14 +138,16 @@ def write_graph_visualizations():
 
     # yes=1 no=-1 abst/absent=0
     is_yes_no_abst_absent  = np.zeros((len(name), len(date_session)), np.float16)
-    cur.execute("""SELECT mp_name, stenogram_date, session_number, vote
+    named_cur = db.cursor(name="sever_side_due_to_low_memory")
+    named_cur.execute("""SELECT mp_name, stenogram_date, session_number, vote
                    FROM mp_votes""")
-    for n, d, s, v in cur:
+    for n, d, s, v in named_cur:
         i_n = n_index_dict.get(n)
         if i_n is None:
             continue
         i_ds = ds_index_dict[(d, s)]
         is_yes_no_abst_absent[i_n, i_ds] = {'yes':1, 'no':-1, 'abstain':0, 'absent':0}[v]
+    named_cur.close()
 
     # Prepare the graph matrix.
     abses = np.sum(is_yes_no_abst_absent==0)
@@ -160,6 +162,12 @@ def write_graph_visualizations():
     M[M<0.5] = 0
     M = M*2-1
     del M_diff, M_tot
+    M, temp = np.zeros_like(M), M
+    indices = np.argmax(temp, axis=1)
+    M[indices,:] = temp[indices,:]
+    M = M + M.T
+    del temp
+
 
     # Make the JSON dumps.
     json_dict = {}
@@ -473,14 +481,14 @@ def write_stenogram_pages():
 # Execute all.
 ##############################################################################
 todo = [
-        write_sql_dump,
-        write_static_pages,
-        write_MPs_emails_page,
+#        write_sql_dump,
+#        write_static_pages,
+#        write_MPs_emails_page,
         write_graph_visualizations,
-        write_MPs_overview_page,
-        write_list_of_stenograms_summary_pages,
-        write_stenogram_pages,
-        sitemap.write
+#        write_MPs_overview_page,
+#        write_list_of_stenograms_summary_pages,
+#        write_stenogram_pages,
+#        sitemap.write
         ]
 for f in todo:
     try:

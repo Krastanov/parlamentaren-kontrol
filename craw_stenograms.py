@@ -159,6 +159,9 @@ def parse_excel_by_party(filename):
             reg_by_party_dict = per_party_dict
         elif vote_marker in first:
             description = first.split(vote_marker)[-1].strip()
+            time, description = description.split(u'по тема')
+            time = datetime.strptime(unpr_time[-6:], '%H:%M ')
+            description = description.strip()
             row += 2
             votes_by_party_dict = {}
             for i in range(parties_count):
@@ -169,7 +172,7 @@ def parse_excel_by_party(filename):
                 abstained = int(sheet.cell_value(rowx=row, colx=3))
                 total = int(sheet.cell_value(rowx=row, colx=4))
                 votes_by_party_dict[party] = vote_stats_per_party_tuple(yes, no, abstained, total)
-            sessions.append(session_tuple(description, None, votes_by_party_dict))
+            sessions.append(session_tuple(description, time, None, votes_by_party_dict))
         row += 1
     return reg_by_party_dict, sessions
 
@@ -238,7 +241,7 @@ for i, ID in enumerate(stenogram_IDs):
             cur.executemany("""INSERT INTO party_reg VALUES (%s, %s, %s, %s)""",
                             ((k, parser.date, v.present, v.expected) for k,v in reg_by_party_dict.items()))
             cur.executemany("""INSERT INTO vote_sessions VALUES (%s, %s, %s)""",
-                            ((parser.date, i, s.description) for i, s in enumerate(sessions)))
+                            ((parser.date, i, s.description, s.time) for i, s in enumerate(sessions)))
             cur.executemany("""INSERT INTO party_votes VALUES (%s, %s, %s, %s, %s, %s, %s)""",
                             ((party, parser.date, i, votes.yes, votes.no, votes.abstained, votes.total)
                                  for i, s in enumerate(sessions)

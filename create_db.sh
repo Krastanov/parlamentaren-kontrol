@@ -14,6 +14,7 @@ CREATE TABLE vote_sessions (
        stenogram_date  date REFERENCES stenograms (stenogram_date),
        session_number  integer,
        description     text,
+       time            time,
        PRIMARY KEY (stenogram_date, session_number)
 );
 

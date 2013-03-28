@@ -236,6 +236,7 @@ for i, ID in enumerate(stenogram_IDs):
                     (parser.date, parser.data_list, parser.votes_indices, True, original_url))
     else:
         try:
+            assert all([len(sessions) == len(mp_votes) for mp_votes in mp_vote_sessions]), "Not all sessions are recorded."
             cur.execute("""INSERT INTO stenograms VALUES (%s, %s, %s, %s, %s)""",
                         (parser.date, parser.data_list, parser.votes_indices, False, original_url))
             cur.executemany("""INSERT INTO party_reg VALUES (%s, %s, %s, %s)""",

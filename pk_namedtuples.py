@@ -12,6 +12,7 @@ stgram_tuple = namedtuple('stgram_tuple', ['date', 'text_lines', 'in_text_votes'
 rep_tuple = namedtuple('rep_tuple', ['name', 'party'])
 
 session_tuple = namedtuple('session_tuple', ['description',
+                                             'time',
                                              'votes_by_name_dict',
                                                 # {rep_tuple: vote_code_string}
                                              'votes_by_party_dict',

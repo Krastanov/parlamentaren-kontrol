@@ -160,7 +160,7 @@ def parse_excel_by_party(filename):
         elif vote_marker in first:
             description = first.split(vote_marker)[-1].strip()
             time, description = description.split(u'по тема')
-            time = datetime.strptime(unpr_time[-6:], '%H:%M ')
+            time = datetime.datetime.strptime(time[-6:], '%H:%M ')
             description = description.strip()
             row += 2
             votes_by_party_dict = {}
@@ -240,7 +240,7 @@ for i, ID in enumerate(stenogram_IDs):
                         (parser.date, parser.data_list, parser.votes_indices, False, original_url))
             cur.executemany("""INSERT INTO party_reg VALUES (%s, %s, %s, %s)""",
                             ((k, parser.date, v.present, v.expected) for k,v in reg_by_party_dict.items()))
-            cur.executemany("""INSERT INTO vote_sessions VALUES (%s, %s, %s)""",
+            cur.executemany("""INSERT INTO vote_sessions VALUES (%s, %s, %s, %s)""",
                             ((parser.date, i, s.description, s.time) for i, s in enumerate(sessions)))
             cur.executemany("""INSERT INTO party_votes VALUES (%s, %s, %s, %s, %s, %s, %s)""",
                             ((party, parser.date, i, votes.yes, votes.no, votes.abstained, votes.total)

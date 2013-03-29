@@ -8,10 +8,9 @@ echo "Update all IDs of MPs"
 sh update_IDs_MPs.sh
 echo "Download MPs details"
 python craw_mps_data.py
-echo "Update all periods for which there is a record."
-sh update_all_periods.sh
 echo "Update all IDs of plenary stenograms."
-sh update_IDs_plenary_stenograms_after_2011.sh
+sh update_periods_plenary_stenograms_ns7.sh
+sh update_IDs_plenary_stenograms.sh
 echo "Download and parse the stenograms."
 python craw_stenograms.py
 echo "Create the html pages."

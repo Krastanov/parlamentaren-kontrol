@@ -1,4 +1,0 @@
-sh update_periods_parliamentary_control.sh
-sh update_periods_plenary_stenograms.sh
-sh update_periods_plenary_programs.sh
-

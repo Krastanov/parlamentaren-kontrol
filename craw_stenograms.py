@@ -73,7 +73,8 @@ def parse_excel_by_name(filename):
     # Correct spelling errors in names of MPs.
     def MP_name_spellcheck(name): # XXX Workaround
         tr_dict = {u'МАРИЯНА ПЕТРОВА ИВАНОВА-НИКОЛОВА': u'МАРИАНА ПЕТРОВА ИВАНОВА-НИКОЛОВА',
-                   u'ВЕНЦЕСЛАВ ВАСИЛЕВ ВЪРБАНОВ': u'ВЕНЦИСЛАВ ВАСИЛЕВ ВЪРБАНОВ'}
+                   u'ВЕНЦЕСЛАВ ВАСИЛЕВ ВЪРБАНОВ': u'ВЕНЦИСЛАВ ВАСИЛЕВ ВЪРБАНОВ',
+                   u'АЛЕКСАНДЪР СТОЙЧЕВ СТОЙЧЕВ': u'АЛЕКСАНДЪР СТОЙЧЕВ СТОЙКОВ'}
         if name in tr_dict:
             logger_excel.warning("Spelling error: %s" % name)
             return tr_dict[name]
@@ -183,24 +184,24 @@ def parse_excel_by_party(filename):
 logger_to_db = logging.getLogger('to_db')
 
 
-stenograms = {}
-stenogram_IDs = open('data/IDs_plenary_stenograms').readlines()
 cur.execute("""SELECT original_url FROM stenograms""")
 urls_already_in_db = set(zip(*cur.fetchall())[0])
+stenogram_IDs = [i for i in map(str.strip, open('data/IDs_plenary_stenograms').readlines())
+                 if unicode('http://www.parliament.bg/bg/plenaryst/ns/7/ID/'+i) not in urls_already_in_db]
 for i, ID in enumerate(stenogram_IDs):
     problem_by_name = False
     problem_by_party = False
-    ID = ID.strip()
     original_url = unicode('http://www.parliament.bg/bg/plenaryst/ns/7/ID/'+ID)
-    if original_url in urls_already_in_db:
-        continue
     logger_to_db.info("Parsing stenogram %s - %d of %d." % (ID, i+1, len(stenogram_IDs)))
 
-    f = urlopen(original_url)
-    complete_stenogram_page = f.read().decode('utf-8')
-
-    parser = StenogramsHTMLParser(complete_stenogram_page)
-    date_string = parser.date.strftime('%d%m%y')
+    try:
+        f = urlopen(original_url)
+        complete_stenogram_page = f.read().decode('utf-8')
+        parser = StenogramsHTMLParser(complete_stenogram_page)
+        date_string = parser.date.strftime('%d%m%y')
+    except Exception as e:
+        logger_to_db.error("Parsing problem with ID %s. %s"%(ID,str(e)))
+        continue
 
 
     try:

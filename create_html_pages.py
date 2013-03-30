@@ -477,14 +477,14 @@ def write_stenogram_pages():
 # Execute all.
 ##############################################################################
 todo = [
-#        write_sql_dump,
-#        write_static_pages,
-#        write_MPs_emails_page,
+        write_sql_dump,
+        write_static_pages,
+        write_MPs_emails_page,
 #        write_graph_visualizations,
-#        write_MPs_overview_page,
+        write_MPs_overview_page,
         write_list_of_stenograms_summary_pages,
-#        write_stenogram_pages,
-#        sitemap.write
+        write_stenogram_pages,
+        sitemap.write
         ]
 for f in todo:
     try:

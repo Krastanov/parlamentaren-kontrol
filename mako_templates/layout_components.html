@@ -41,6 +41,12 @@
     </figure>
 </%def>
 
+<%def name="stenogram_vote_session_overvie(stenogram_date, session_i, description, votes_by_type_party)">
+    <div class="col_6"><blockquote itemprop="name">${description}</blockquote></div>
+    <figure class="col_6"><img class="full-width" src="session${stenogram_date.strftime('%Y%m%d')}votes${session_i+1}.png" alt="Разпределение на гласовете и отсъствия на депутати по партии на ${stenogram_date.strftime('%Y-%m-%d')} за гласуване номер ${session_i+1}."/></figure>
+    ${stenogram_vote_table(session_i, votes_by_type_party)}
+</%def>
+
 <%def name="stenogram_vote_table(i, votes_by_type_party)">
     <section class="col_12" id="session${i+1}">
     <table class="sortable">

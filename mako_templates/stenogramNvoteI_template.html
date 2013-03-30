@@ -1,18 +1,15 @@
 <%inherit file="base_template.html" />
 <%namespace name="lay" file="layout_components.html"/>
-<%block name="title">Гласуване ${session_i+1} на ${stenogram_date.strftime('%d/%m/%Y')}</%block>
-<%block name="main_text_header">Гласуване ${session_i+1} на <time itemprop="startDate" datetime="${stenogram_date.strftime('%Y-%m-%d')}">${stenogram_date.strftime('%d/%m/%Y')}</time></%block>
+<%block name="title">${description}</%block>
 <%block name="maincontentschema">itemtype="http://schema.org/Event" itemid="stenogram${stenogram_date.strftime('%Y%m%d')}votes${session_i+1}.html"</%block>
 
 
-<span itemprop="supEvent" itemscope itemtype="http://schema.org/Event" itemid="stenogram${stenogram_date.strftime('%Y%m%d')}.html"><a itemprop="url" href="stenogram${stenogram_date.strftime('%Y%m%d')}.html#vote${session_i+1}">Обратно към стенограмата от деня.</a></span>
+<strong>Гласуване ${session_i+1} на <time itemprop="startDate" datetime="${stenogram_date.strftime('%Y-%m-%d')}">${stenogram_date.strftime('%d/%m/%Y')}</time><strong>
+<p itemprop="supEvent" itemscope itemtype="http://schema.org/Event" itemid="stenogram${stenogram_date.strftime('%Y%m%d')}.html"><a itemprop="url" href="stenogram${stenogram_date.strftime('%Y%m%d')}.html#vote${session_i+1}">Обратно към стенограмата от деня.</a></p>
 
 
-## TODO this can be refactored away (repeated in stenogramN.html)
 <%lay:section header='Обща Информация'>
-    <div class="col_6"><blockquote>${description}</blockquote></div>
-    <figure class="col_6"><img class="full-width" src="session${stenogram_date.strftime('%Y%m%d')}votes${session_i+1}.png" alt="Разпределение на гласовете и отсъствия на депутати по партии на ${stenogram_date.strftime('%Y-%m-%d')} за гласуване номер ${session_i+1}."/></figure>
-    ${lay.stenogram_vote_table(session_i, votes_by_type_party)}
+    ${lay.stenogram_vote_session_overvie(stenogram_date, session_i, description, votes_by_type_party)}
 </%lay:section>
 
 

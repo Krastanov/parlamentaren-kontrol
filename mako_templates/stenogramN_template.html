@@ -46,11 +46,7 @@
                     <a itemprop="url" href="stenogram${stenogram_date.strftime('%Y%m%d')}vote${i+1}.html">Поимемен списък.</a>
                     <a class="small" href="#votesInText${i+1}">Намери в текста на стенограмата.</a>
                 </div>
-
-                <div class="col_6"><blockquote>${description}</blockquote></div>
-                <figure class="col_6"><img class="full-width" src="session${stenogram_date.strftime('%Y%m%d')}votes${i+1}.png" alt="Гласували и отсъстващи депутати."/></figure>
-
-                ${lay.stenogram_vote_table(i, votes_by_type_party)}
+                ${lay.stenogram_vote_session_overvie(stenogram_date, i, description, votes_by_type_party)}
             </%lay:subsection>
         % endfor
         </section>

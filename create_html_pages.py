@@ -48,18 +48,26 @@ os.system('cp raw_components/BingSiteAuth.xml generated_html/BingSiteAuth.xml')
 ##############################################################################
 class Sitemap(object):
     def __init__(self):
-        self.base_string = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n%s\n</urlset>'
-        self.url_string = '<url><loc>http://www.parlamentaren-kontrol.com/%s</loc><priority>%0.1f</priority></url>'
+        self.base_string = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n%s\n</urlset>'
+        self.url_string = '<url><loc>http://www.parlamentaren-kontrol.com/%s</loc><priority>%0.1f</priority>%s</url>'
+        self.image_string = '<image:image><image:loc>http://www.parlamentaren-kontrol.com/%s</image:loc><image:caption>%s</image:caption></image:image>'
         self.content_tuples = []
-    def add(self, loc, priority):
-        self.content_tuples.append((loc, priority))
+
+    def add(self, loc, priority, images=[]):
+        self.content_tuples.append((loc, priority, images))
+
     def write(self):
         logger_html.info("Write down the sitemap.")
-        string = self.base_string % '\n'.join([self.url_string % t for t in self.content_tuples])
+        url_strings = (self.url_string % (t[0],
+                                          t[1],
+                                          '\n '.join(self.image_string % im for im in t[2]))
+                       for t in self.content_tuples)
+        string = self.base_string % '\n'.join(url_strings)
         with open('generated_html/sitemap.xml', 'w') as sitemap_file:
-            sitemap_file.write(string)
+            sitemap_file.write(string.encode('utf-8'))
         with open('generated_html/robots.txt', 'w') as robots_file:
             robots_file.write('Sitemap: http://www.parlamentaren-kontrol.com/sitemap.xml')
+
 sitemap = Sitemap()
 
 
@@ -236,7 +244,8 @@ def write_MPs_overview_page():
     per_mp_template = templates.get_template('mps_template.html')
     with open('generated_html/mps.html', 'w') as html_file:
         html_file.write(per_mp_template.render(name_orig_with_regs_votes=name_orig_with_regs_votes))
-        sitemap.add('mps.html', 0.8)
+        sitemap.add('mps.html', 0.8, [('alltimeregs.png', u'Oтсъствия на депутати по време на регистрация.'),
+                                      ('alltimevotes.png', u'Гласове и отсъствия на депутати по време на гласувания.')])
 
 
 ##############################################################################
@@ -334,11 +343,6 @@ def write_stenogram_pages():
         # Plot registration data.
         registration_figure(stenogram_date, party_names, reg_presences, reg_expected)
 
-
-        ################################
-        # Registration data per party. #
-        ################################
-
         # Load the registration-by-name data.
         subcur.execute("""SELECT mp_name, with_party, reg
                           FROM mp_reg
@@ -355,7 +359,8 @@ def write_stenogram_pages():
                                                               reg_presences=reg_presences,
                                                               reg_expected=reg_expected,
                                                               reg_by_name=reg_by_name))
-            sitemap.add(filename, 0.6)
+            sitemap.add(filename, 0.6, [('registration%s.png' % stenogram_date.strftime('%Y%m%d'),
+                                         u'Регистрирани и отсъстващи депутати на %s.' % stenogram_date.strftime('%Y-%m-%d'))])
 
 
         #########################
@@ -438,7 +443,8 @@ def write_stenogram_pages():
                                                                        party_names=party_names,
                                                                        votes_by_type_party=votes_by_type_party,
                                                                        votes_by_name=votes_by_name))
-                    sitemap.add(filename, 0.6)
+                    sitemap.add(filename, 0.6, [('session%svotes%s.png' % (stenogram_date.strftime('%Y%m%d'), session_i+1),
+                                                 u'Разпределение на гласовете и отсътвията на депутати по партии на %s за гласуване номер %s.' % (stenogram_date.strftime('%Y-%m-%d'), session_i+1))])
 
             #######################################################
             # Big summary page in case there are voting sessions. #
@@ -456,7 +462,8 @@ def write_stenogram_pages():
                                                               reg_expected=reg_expected,
                                                               text=text,
                                                               vote_line_nb=vote_line_nb))
-                sitemap.add(filename, 0.7)
+                sitemap.add(filename, 0.7, [('absences%s.png' % stenogram_date.strftime('%Y%m%d'),
+                                             u'Промяна на броя присъстващи/отсъстващи депутати на %s.' % stenogram_date.strftime('%Y-%m-%d'))])
         else:
             ##########################################################
             # Big summary page in case there are no voting sessions. #

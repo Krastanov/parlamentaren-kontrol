@@ -8,9 +8,10 @@
 <span itemprop="supEvent" itemscope itemtype="http://schema.org/Event" itemid="stenogram${stenogram_date.strftime('%Y%m%d')}.html"><a itemprop="url" href="stenogram${stenogram_date.strftime('%Y%m%d')}.html#vote${session_i+1}">Обратно към стенограмата от деня.</a></span>
 
 
+## TODO this can be refactored away (repeated in stenogramN.html)
 <%lay:section header='Обща Информация'>
     <div class="col_6"><blockquote>${description}</blockquote></div>
-    <figure class="col_6"><img class="full-width" src="session${stenogram_date.strftime('%Y%m%d')}votes${session_i+1}.png" alt="Гласували и отсъстващи депутати."/></figure>
+    <figure class="col_6"><img class="full-width" src="session${stenogram_date.strftime('%Y%m%d')}votes${session_i+1}.png" alt="Разпределение на гласовете и отсъствия на депутати по партии на ${stenogram_date.strftime('%Y-%m-%d')} за гласуване номер ${session_i+1}."/></figure>
     ${lay.stenogram_vote_table(session_i, votes_by_type_party)}
 </%lay:section>
 

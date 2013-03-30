@@ -8,13 +8,12 @@
     % for y in years:
     <li><a href="stenograms${y}all.html">${y}</a></li>
     % endfor
-    <li><a href="stenogramsallall.html">Всички години</a></li>
 </ul>
 </div>
 
 <div class="col_12">
 <ul class="button-bar">
-    % for m in months:
+    % for m in months[:-1]:
     <li><a href="stenograms${current_y}${m}.html">${month_names[m-1]}</a></li>
     % endfor
     <li><a href="stenograms${current_y}all.html">Всички месеци</a></li>
@@ -27,11 +26,11 @@
     <col width="90%">
     <thead><tr>
         <th>Дата</th>
-        <% array_str = "['"+"', '".join(['sessionDescription'+date.strftime('%Y%m%d') for date in stenogram_mgroup])+"']" %>
+        <% array_str = "['"+"', '".join(['sessionDescription'+date.strftime('%Y%m%d') for date, sten in stenogram_mgroup])+"']" %>
         <th>Гласувания <button class="small" id="showMoreInfo" onClick="toggle_array(${array_str}, 'showMoreInfo', 'покажи', 'скрий')">покажи</button></th>
     </tr></thead>
     <tbody>
-        % for date in stenogram_mgroup:
+        % for date, sten in stenogram_mgroup:
         <tr itemscope itemtype="http://schema.org/Event" itemid="stenogram${date.strftime('%Y%m%d')}.html">
         <td valign="top">
             <a itemprop="url" href="stenogram${date.strftime('%Y%m%d')}.html">
@@ -43,8 +42,8 @@
         <td>
             <div id="sessionDescription${date.strftime('%Y%m%d')}" style="display: none;">
             <ul class="alt">
-                % for description in stenograms[date]:
-                <li>${description.split(u'по тема ')[-1]}</li>
+                % for i, (description, _date) in enumerate(sten):
+                <li itemprop="subEvent" itemscope itemid="stenogram20090714vote2.html" itemtype="http://schema.org/Event"><a itemprop="url" href="stenogram${date.strftime('%Y%m%d')}vote${i+1}.html"><span itemprop="name">${description}</span></a></li>
                 % endfor
             </ul></div>
         </td>

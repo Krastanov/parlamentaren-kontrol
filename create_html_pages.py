@@ -104,6 +104,7 @@ def write_static_pages():
 # MP emails
 ##############################################################################
 def write_MPs_emails_page():
+    logger_html.info("Generating list page for MP emails.")
     # Get all mails into a dict.
     mailscur = db.cursor()
     mailscur.execute("""SELECT email, orig_party_name FROM mps ORDER BY orig_party_name""")
@@ -247,34 +248,28 @@ def write_MPs_overview_page():
 ##############################################################################
 def write_list_of_stenograms_summary_pages():
     logger_html.info("Generating html summary page of all stenograms.")
-    # Get all stenogram dates and session info into a dict.
-    cur.execute("""SELECT stenogram_date
-                   FROM stenograms
-                   ORDER BY stenogram_date""")
-    stenograms = collections.OrderedDict()
-    for (date, ) in cur:
-        subcur.execute("""SELECT description
-                          FROM vote_sessions
-                          WHERE stenogram_date = %s
-                          ORDER BY session_number""",
-                          (date,))
-        stenograms[date] = [v[0] for v in subcur]
-
-    years = sorted(list({date.year for date in stenograms.keys()}))
-    stenogram_yeargroups = [[date for date in stenograms.keys() if date.year == y] for y in years]
-    # Generate the summary page for all stenograms.
     all_stenograms_template = templates.get_template('stenograms_template.html')
-    for y, stenogram_ygroup in zip(["all"]+years, [stenograms.keys()]+stenogram_yeargroups):
-        months = sorted(list({date.month for date in stenogram_ygroup}))
-        stenogram_monthgroups = [[date for date in stenogram_ygroup if date.month == m] for m in months]
-        for m, stenogram_mgroup in zip(["all"]+months, [stenogram_ygroup]+stenogram_monthgroups):
+
+    sessionscur = db.cursor()
+    sessionscur.execute("""SELECT description, stenogram_date
+                           FROM vote_sessions
+                           ORDER BY stenogram_date, session_number""")
+    groupby = lambda l, kf: [(k, list(v)) for k, v in itertools.groupby(l, kf)]
+    date_stenogr = groupby(sessionscur, operator.itemgetter(1))
+
+    year_date_stenogr = groupby(date_stenogr, lambda d_s: d_s[0].year)
+    years = zip(*year_date_stenogr)[0]
+    for y, y_date_stenogr in year_date_stenogr:
+        month_date_stenogr = groupby(y_date_stenogr, lambda d_s: d_s[0].month) + [('all', y_date_stenogr)]
+        months = zip(*month_date_stenogr)[0]
+        for m, m_date_stenogr in month_date_stenogr:
             with open('generated_html/stenograms%s%s.html'%(y,m), 'w') as html_file:
                 html_file.write(all_stenograms_template.render(years=years,
                                                                months=months,
                                                                current_y=y,
-                                                               stenogram_mgroup=stenogram_mgroup,
-                                                               stenograms=stenograms))
+                                                               stenogram_mgroup=m_date_stenogr))
                 sitemap.add('stenograms%s%s.html'%(y,m), 0.8)
+
     # Copy the most recent one
     os.system('cp generated_html/stenograms%s%s.html generated_html/stenograms.html'%(y,m))
     sitemap.add('stenograms.html', 0.8)
@@ -484,10 +479,10 @@ def write_stenogram_pages():
 todo = [
 #        write_sql_dump,
 #        write_static_pages,
-        write_MPs_emails_page,
+#        write_MPs_emails_page,
 #        write_graph_visualizations,
 #        write_MPs_overview_page,
-#        write_list_of_stenograms_summary_pages,
+        write_list_of_stenograms_summary_pages,
 #        write_stenogram_pages,
 #        sitemap.write
         ]

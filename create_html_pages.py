@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-import json
 import collections
+import itertools
+import json
+import operator
 import os
 
 from mako.lookup import TemplateLookup
@@ -103,24 +105,16 @@ def write_static_pages():
 ##############################################################################
 def write_MPs_emails_page():
     # Get all mails into a dict.
-    cur.execute("""SELECT party_name
-                   FROM parties
-                   ORDER BY party_name""")
-    mails_per_party_dict = {}
-    for (party, ) in cur:
-        subcur.execute("""SELECT email
-                          FROM mps
-                          WHERE orig_party_name = %s""",
-                          (party,))
-        mails = [m[0] for m in subcur]
-        if mails:
-            mails_per_party_dict[party] = ', '.join([m for m in mails if m])
+    mailscur = db.cursor()
+    mailscur.execute("""SELECT email, orig_party_name FROM mps ORDER BY orig_party_name""")
+    groups = itertools.groupby(mailscur, operator.itemgetter(1))
+    mails_by_party_dict = {k: ', '.join(m[0] for m in mails if m[0]) for k, mails in groups}
 
     #Generate the webpage with the mails.
     logger_html.info("Generating html page of MP mail addresses.")
     mails_template = templates.get_template('mails_template.html')
     with open('generated_html/mails.html', 'w') as html_file:
-        html_file.write(mails_template.render(mails_per_party_dict=mails_per_party_dict))
+        html_file.write(mails_template.render(mails_by_party_dict=mails_by_party_dict))
         sitemap.add('mails.html', 0.8)
 
 
@@ -488,14 +482,14 @@ def write_stenogram_pages():
 # Execute all.
 ##############################################################################
 todo = [
-        write_sql_dump,
-        write_static_pages,
+#        write_sql_dump,
+#        write_static_pages,
         write_MPs_emails_page,
 #        write_graph_visualizations,
-        write_MPs_overview_page,
-        write_list_of_stenograms_summary_pages,
-        write_stenogram_pages,
-        sitemap.write
+#        write_MPs_overview_page,
+#        write_list_of_stenograms_summary_pages,
+#        write_stenogram_pages,
+#        sitemap.write
         ]
 for f in todo:
     try:

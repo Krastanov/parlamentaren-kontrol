@@ -4,7 +4,7 @@
 <%block name="webpageschema">itemtype="http://schema.org/ContactPage"</%block>
 
 
-% for party, mails in mails_per_party_dict.items():
+% for party, mails in mails_by_party_dict.items():
 <%lay:section section_microdata='itemscope itemtype="http://schema.org/GovernmentOrganization"'
               header_microdata='itemprop="name"'
               header='${party}'>

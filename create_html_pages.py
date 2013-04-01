@@ -34,15 +34,16 @@ logger_html = logging.getLogger('static_html_gen')
 ##############################################################################
 # Copy static files.
 ##############################################################################
-logger_html.info("Copy the static files.")
-os.system('cp -rT raw_components/htmlkickstart/css generated_html/css')
-os.system('cp -rT raw_components/htmlkickstart/js generated_html/js')
-os.system('cp -rT js generated_html/js')
-os.system('cp css/style.css generated_html/style.css')
-os.system('cp raw_components/coat_of_arms.png generated_html/logo.png')
-os.system('cp raw_components/retina_dust/retina_dust.png generated_html/css/img/grid.png')
-os.system('cp raw_components/google93d3e91ac1977e5b.html generated_html/google93d3e91ac1977e5b.html')
-os.system('cp raw_components/BingSiteAuth.xml generated_html/BingSiteAuth.xml')
+def copy_static():
+    logger_html.info("Copy the static files.")
+    os.system('cp -rT raw_components/htmlkickstart/css generated_html/css')
+    os.system('cp -rT raw_components/htmlkickstart/js generated_html/js')
+    os.system('cp -rT js generated_html/js')
+    os.system('cp css/style.css generated_html/style.css')
+    os.system('cp raw_components/coat_of_arms.png generated_html/logo.png')
+    os.system('cp raw_components/retina_dust/retina_dust.png generated_html/css/img/grid.png')
+    os.system('cp raw_components/google93d3e91ac1977e5b.html generated_html/google93d3e91ac1977e5b.html')
+    os.system('cp raw_components/BingSiteAuth.xml generated_html/BingSiteAuth.xml')
 
 
 ##############################################################################
@@ -477,6 +478,7 @@ def write_stenogram_pages():
 # Execute all.
 ##############################################################################
 todo = [
+        copy_static,
         write_sql_dump,
         write_static_pages,
         write_MPs_emails_page,

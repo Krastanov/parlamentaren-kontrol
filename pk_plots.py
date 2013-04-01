@@ -80,32 +80,40 @@ def absences_figure(date, names, vote_absences, vote_absences_percent):
 ##############################################################################
 # Per stenogram session plots.
 ##############################################################################
+f = plt.figure()                      # XXX "ugly tweak"
+gs = gridspec.GridSpec(3,5)           # These were made global and reused,
+main = f.add_subplot(gs[:,0:-1])      # giving 2x speedup. The `remove` calls
+summ = f.add_subplot(gs[-1,-1])       # below are part of the same tweak.
+title = f.suptitle('')
+main.set_ylabel(u'Брой Депутати')
+summ.set_title(u'Общо')
+
 def session_votes_by_party_figure(date, i, party_names, yes, no, abstain, absences):
     datestr = date.strftime('%Y%m%d')
     datestr_human = date.strftime('%d/%m/%Y')
-
     pos = np.arange(len(party_names))
     width = 0.35
-    f = plt.figure()
-    f.suptitle(u'Гласували Депутати %s гл.%d' % (datestr_human, i+1))
-    gs = gridspec.GridSpec(3,5)
-    main = f.add_subplot(gs[:,0:-1])
+
+    global f, main, summ, title
+
+    title.set_text(u'Гласували Депутати %s гл.%d' % (datestr_human, i+1))
     p1 = main.bar(pos, yes, width, color='g')
     p2 = main.bar(pos, no, width, color='r', bottom=yes)
     p3 = main.bar(pos, abstain, width, color='c', bottom=yes+no)
     p4 = main.bar(pos, absences, width, color='k', bottom=yes+no+abstain)
-    main.set_ylabel(u'Брой Депутати')
     main.set_xticks(pos+width/2.)
     main.set_xticklabels(party_names)
     main.tick_params(axis='x', length=0)
     main.set_xlim(-0.5*width, pos[-1]+1.5*width)
     main.legend((p1[0], p2[0], p3[0], p4[0]), (u'За', u'Против', u'Въздържали се', u'Отсъстващи'), loc='upper left', bbox_to_anchor=(1,1))
-    summ = f.add_subplot(gs[-1,-1])
     pie_array = [np.sum(yes), np.sum(no), np.sum(abstain), np.sum(absences)]
-    summ.pie(pie_array, colors=['g', 'r', 'c', 'k'])
-    summ.set_title(u'Общо')
+    wedges, texts = summ.pie(pie_array, colors=['g', 'r', 'c', 'k'])
     f.savefig('generated_html/session%svotes%s.png' % (datestr, i+1))
-    plt.close()
+
+    for o in [p1, p2, p3, p4] + wedges + texts:
+        o.remove()
+
+plt.close()
 
 
 ##############################################################################

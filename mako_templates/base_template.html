@@ -50,15 +50,14 @@
                 <li itemscope itemtype="http://schema.org/Blog" itemid="http://blog.parlamentaren-kontrol.com"><a href="http://blog.parlamentaren-kontrol.com" itemprop="url">Блог</a></li>
             </ul>
             <form action="http://www.google.com/cse">
-                <input style="width: 227px; min-width: 227px;" id="search" type="text" name="q" placeholder="Търсене: пиши и натисни Enter" />
+                <input id="search" type="text" name="q" placeholder="Търсене: пиши и натисни Enter" />
                 <input type="hidden" name="cx" value="010292560853932977821:w-c1g2strro" />
             </form>
         </nav>
 
         <article class="col_12" itemprop="mainContentOfPage" itemscope <%block name="maincontentschema">itemtype="http://schema.org/WebPageElement"</%block>>
-            <header><h1 itemprop="name"><%block name="main_text_header">${self.title()}</%block></h1></header>
-            <div class="col_10"><hr class="alt1" /></div>
-            <div class="col_2" style="position:relative; top:25px;">
+            <header><h1 class="mainheader" itemprop="name"><%block name="main_text_header">${self.title()}</%block></h1></header>
+            <div class="social">
                 <a href="https://twitter.com/share" class="twitter-share-button" data-count="none" data-hashtags="parlamentarenkontrol">Tweet</a><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
                 <div class="g-plusone" data-size="medium" data-annotation="none"></div><script>window.___gcfg = {lang: 'bg'}; (function() {var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = 'https://apis.google.com/js/plusone.js'; var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);})();</script>
             </div>

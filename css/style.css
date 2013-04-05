@@ -144,6 +144,10 @@ td.percentage:after {
     content: " %";
 }
 
+div.social {
+    float: right;
+}
+
 .box_rotate {
     float: left; 
     position: relative;
@@ -155,12 +159,21 @@ td.percentage:after {
       -ms-transform: matrix(0, 1, -1, 0, -40, 0);  /* IE 9 */
 }
 
+.mainheader {
+    border-bottom:1px solid rgb(204, 204, 204);
+}
+
 .section {
     border-bottom:1px solid rgb(204, 204, 204);
 }
 
 .subsection {
     border-bottom:1px dotted rgb(204, 204, 204);
+}
+
+#search {
+    width: 227px;
+    min-width: 227px;
 }
 
 /*---------------------------------

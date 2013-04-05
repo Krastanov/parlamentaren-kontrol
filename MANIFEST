@@ -6,8 +6,9 @@ One to one
 ==========
 
 raw_components/htmlkickstart - the HTML Kickstart framework
-raw_components/retina_dust - png pattern
+raw_components/retina_dust - png pattern from www.subtlepatterns.com
 js/d3.legend.js - MIT Licensed code for providing legends to d3 graphics
+js/socialite.js - Socialite.js by David Bushell
 
 
 Modified

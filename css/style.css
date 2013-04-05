@@ -46,6 +46,8 @@ text-shadow: 0px 0px 1px transparent; /* google font pixelation fix */
 
 #wrap{
 width:98%;
+max-width:1200px;
+min-width:800px;
 background:#fff;
 margin:30px auto 30px auto;
 padding:0;
@@ -202,3 +204,14 @@ line.link {
   fill:white;
   stroke:black;
   opacity:0.8;}
+
+/*---------------------------------
+	SOCIALITE
+-----------------------------------*/
+#social { display: block; list-style: none; padding: 0; margin: 0px; margin-right: 20px; }
+#social li { display: block; margin: 0; padding: 5px; float: left; }
+
+#social .twitter-share { width: 55px; height: 65px; background-position: 0 0; }
+#social .googleplus-one { width: 50px; height: 65px; background-position: -65px 0; }
+#social .linkedin-share { width: 60px; height: 65px; background-position: -125px 0; }
+#social .facebook-like { width: 50px; height: 65px; background-position: -205px 0; }

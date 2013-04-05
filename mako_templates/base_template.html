@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="css/kickstart.css" media="all" />
     ## CUSTOM STYLES
     <link rel="stylesheet" href="style.css" media="all" />
+    ## SOCIAL
+    <script src="js/socialite.js"></script>
     ## GOOGLE ANALYTICS
     <script>
       var _gaq = _gaq || [];
@@ -58,8 +60,29 @@
         <article class="col_12" itemprop="mainContentOfPage" itemscope <%block name="maincontentschema">itemtype="http://schema.org/WebPageElement"</%block>>
             <header><h1 class="mainheader" itemprop="name"><%block name="main_text_header">${self.title()}</%block></h1></header>
             <div class="social">
-                <a href="https://twitter.com/share" class="twitter-share-button" data-count="none" data-hashtags="parlamentarenkontrol">Tweet</a><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
-                <div class="g-plusone" data-size="medium" data-annotation="none"></div><script>window.___gcfg = {lang: 'bg'}; (function() {var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = 'https://apis.google.com/js/plusone.js'; var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);})();</script>
+                <ul id="social" class="cf">
+                    <li>
+                        <a href="http://twitter.com/share" class="socialite twitter-share" data-text="#parlamentarenkontrol" data-url="http://www.parlamentaren-kontrol.com" data-count="none" rel="nofollow" target="_blank">
+                            <span class="vhidden">Сподели в Twitter</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://plusone.google.com/_/+1/confirm?hl=bg&amp;url=http://www.parlamentaren-kontrol.com" class="socialite googleplus-one" data-href="http://www.parlamentaren-kontrol.com" data-size="tall" data-annotation="none" rel="nofollow" target="_blank">
+                            <span class="vhidden">Сподели в Google+</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="http://www.linkedin.com/shareArticle?mini=true&amp;url=http://www.parlamentaren-kontrol.com&amp;title=parlamentaren-kontrol" class="socialite linkedin-share" data-url="http://www.parlamentaren-kontrol.com" rel="nofollow" target="_blank">
+                            <span class="vhidden">Сподели в LinkedIn</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="http://www.facebook.com/sharer.php?u=http://www.parlamentaren-kontrol.com&amp;t=parlamentaren-kontrol" class="socialite facebook-like" data-href="http://www.parlamentaren-kontrol.com" data-send="false" data-width="60" data-show-faces="false" data-layout="button_count" rel="nofollow" target="_blank">
+                            <span class="vhidden">Сподели във Facebook</span>
+                        </a>
+                    </li>
+                </ul>
+                <script>Socialite.load();</script>
             </div>
             <section class="col_12">
             ${self.body()}

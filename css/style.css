@@ -45,7 +45,7 @@ text-shadow: 0px 0px 1px transparent; /* google font pixelation fix */
 }
 
 #wrap{
-width:1200px;
+width:98%;
 background:#fff;
 margin:30px auto 30px auto;
 padding:0;
@@ -144,19 +144,28 @@ td.percentage:after {
     content: " %";
 }
 
+thead th {
+    padding: 1px 5px;
+    font-size: 0.65em;
+}
+
 div.social {
     float: right;
 }
 
-.box_rotate {
+.throtate div {
     float: left; 
     position: relative;
-    width: 160px;
-          transform: matrix(0, 1, -1, 0, -40, 0); 
-     -moz-transform: matrix(0, 1, -1, 0, -40, 0);  /* FF3.5+ */
-       -o-transform: matrix(0, 1, -1, 0, -40, 0);  /* Opera 10.5 */
-  -webkit-transform: matrix(0, 1, -1, 0, -40, 0);  /* Saf3.1+, Chrome */
-      -ms-transform: matrix(0, 1, -1, 0, -40, 0);  /* IE 9 */
+    width: 120px;
+          transform: matrix(0, 1, -1, 0, -50, 0); 
+     -moz-transform: matrix(0, 1, -1, 0, -50, 0);  /* FF3.5+ */
+       -o-transform: matrix(0, 1, -1, 0, -50, 0);  /* Opera 10.5 */
+  -webkit-transform: matrix(0, 1, -1, 0, -50, 0);  /* Saf3.1+, Chrome */
+      -ms-transform: matrix(0, 1, -1, 0, -50, 0);  /* IE 9 */
+}
+
+.throtate {
+    height: 130px;
 }
 
 .mainheader {

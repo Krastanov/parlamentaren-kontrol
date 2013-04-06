@@ -151,10 +151,6 @@ thead th {
     font-size: 0.65em;
 }
 
-div.social {
-    float: right;
-}
-
 .throtate div {
     float: left; 
     position: relative;
@@ -187,6 +183,10 @@ div.social {
     min-width: 227px;
 }
 
+#tiptip_holder {
+    max-width: 350px !important;
+}
+
 /*---------------------------------
 	D3
 -----------------------------------*/
@@ -208,6 +208,10 @@ line.link {
 /*---------------------------------
 	SOCIALITE
 -----------------------------------*/
+div.social {
+    float: right;
+}
+
 #social { display: block; list-style: none; padding: 0; margin: 0px; margin-right: 20px; }
 #social li { display: block; margin: 0; padding: 5px; float: left; }
 

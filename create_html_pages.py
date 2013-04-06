@@ -32,21 +32,6 @@ logger_html = logging.getLogger('static_html_gen')
 
 
 ##############################################################################
-# Copy static files.
-##############################################################################
-def copy_static():
-    logger_html.info("Copy the static files.")
-    os.system('cp -rT raw_components/htmlkickstart/css generated_html/css')
-    os.system('cp -rT raw_components/htmlkickstart/js generated_html/js')
-    os.system('cp -rT js generated_html/js')
-    os.system('cp css/style.css generated_html/style.css')
-    os.system('cp raw_components/coat_of_arms.png generated_html/logo.png')
-    os.system('cp raw_components/retina_dust/retina_dust.png generated_html/css/img/grid.png')
-    os.system('cp raw_components/google93d3e91ac1977e5b.html generated_html/google93d3e91ac1977e5b.html')
-    os.system('cp raw_components/BingSiteAuth.xml generated_html/BingSiteAuth.xml')
-
-
-##############################################################################
 # Set up sitemap.
 ##############################################################################
 class Sitemap(object):
@@ -72,6 +57,21 @@ class Sitemap(object):
             robots_file.write('Sitemap: http://www.parlamentaren-kontrol.com/sitemap.xml')
 
 sitemap = Sitemap()
+
+
+##############################################################################
+# Copy static files.
+##############################################################################
+def copy_static():
+    logger_html.info("Copy the static files.")
+    os.system('cp -rT raw_components/htmlkickstart/css generated_html/css')
+    os.system('cp -rT raw_components/htmlkickstart/js generated_html/js')
+    os.system('cp -rT js generated_html/js')
+    os.system('cp css/style.css generated_html/style.css')
+    os.system('cp raw_components/coat_of_arms.png generated_html/logo.png')
+    os.system('cp raw_components/retina_dust/retina_dust.png generated_html/css/img/grid.png')
+    os.system('cp raw_components/google93d3e91ac1977e5b.html generated_html/google93d3e91ac1977e5b.html')
+    os.system('cp raw_components/BingSiteAuth.xml generated_html/BingSiteAuth.xml')
 
 
 ##############################################################################
@@ -261,7 +261,7 @@ def write_list_of_stenograms_summary_pages():
     year_date_stenogr = groupby(date_stenogr, lambda d_s: d_s[0].year)
     years = zip(*year_date_stenogr)[0]
     for y, y_date_stenogr in year_date_stenogr:
-        month_date_stenogr = groupby(y_date_stenogr, lambda d_s: d_s[0].month) + [('all', y_date_stenogr)]
+        month_date_stenogr = [('all', y_date_stenogr)] + groupby(y_date_stenogr, lambda d_s: d_s[0].month)
         months = zip(*month_date_stenogr)[0]
         for m, m_date_stenogr in month_date_stenogr:
             with open('generated_html/stenograms%s%s.html'%(y,m), 'w') as html_file:
@@ -478,15 +478,15 @@ def write_stenogram_pages():
 # Execute all.
 ##############################################################################
 todo = [
-        copy_static,
-        write_sql_dump,
-        write_static_pages,
-        write_MPs_emails_page,
+#        copy_static,
+#        write_sql_dump,
+#        write_static_pages,
+#        write_MPs_emails_page,
 #        write_graph_visualizations,
-        write_MPs_overview_page,
+#        write_MPs_overview_page,
         write_list_of_stenograms_summary_pages,
-        write_stenogram_pages,
-        sitemap.write
+#        write_stenogram_pages,
+#        sitemap.write
         ]
 for f in todo:
     try:

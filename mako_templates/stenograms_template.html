@@ -13,7 +13,7 @@
 
 <div class="col_12">
 <ul class="button-bar">
-    % for m in months[:-1]:
+    % for m in months[1:]:
     <li><a href="stenograms${current_y}${m}.html">${month_names[m-1]}</a></li>
     % endfor
     <li><a href="stenograms${current_y}all.html">Всички месеци</a></li>

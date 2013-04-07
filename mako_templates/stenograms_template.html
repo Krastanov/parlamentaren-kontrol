@@ -43,7 +43,7 @@
             <div id="sessionDescription${date.strftime('%Y%m%d')}" style="display: none;">
             <ul class="alt">
                 % for i, (description, _date) in enumerate(sten):
-                <li itemprop="subEvent" itemscope itemid="stenogram20090714vote2.html" itemtype="http://schema.org/Event"><a itemprop="url" href="stenogram${date.strftime('%Y%m%d')}vote${i+1}.html"><span itemprop="name">${description}</span></a></li>
+                <li itemprop="subEvent" itemscope itemid="stenogram${date.strftime('%Y%m%d')}vote${i+1}.html" itemtype="http://schema.org/Event"><a itemprop="url" href="stenogram${date.strftime('%Y%m%d')}vote${i+1}.html"><span itemprop="name">${description}</span></a></li>
                 % endfor
             </ul></div>
         </td>

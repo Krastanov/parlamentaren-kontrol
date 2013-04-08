@@ -9,11 +9,13 @@ from matplotlib import rcParams, gridspec
 ##############################################################################
 rcParams['font.family'] = 'sans-serif'
 rcParams['font.sans-serif'] = ['FreeSans']
-rcParams['font.size'] = 10
+rcParams['font.size'] = 8
 rcParams['figure.figsize'] = (5, 3)
 figsize_square = (5, 5)
+figsize_square_small = (3, 3)
+figsize_long = (10, 3)
 rcParams['savefig.dpi'] = 90
-rcParams['legend.fontsize'] = 'small'
+rcParams['legend.fontsize'] = 'medium'
 rcParams['text.antialiased'] = True
 rcParams['patch.antialiased'] = True
 rcParams['lines.antialiased'] = True
@@ -72,7 +74,6 @@ def absences_figure(date, names, vote_absences, vote_absences_percent):
     sd.set_ylim(0, 100)
     sd.set_xticks([])
     sd.set_yticks([25, 50, 75])
-    f.autofmt_xdate()
     f.savefig('generated_html/absences%s.png' % datestr)
     plt.close()
 
@@ -113,11 +114,9 @@ def session_votes_by_party_figure(date, i, party_names, yes, no, abstain, absenc
     for o in [p1, p2, p3, p4] + wedges + texts:
         o.remove()
 
-plt.close()
-
 
 ##############################################################################
-# Alltime plots.
+# Pie plots for MPs.
 ##############################################################################
 def alltime_regs(present, absent, manual):
     f = plt.figure(figsize=figsize_square)
@@ -135,4 +134,64 @@ def alltime_votes(y, n, abst, absent):
     pie_array = [y, n, abst, absent]
     s.pie(pie_array, colors=['g', 'r', 'c', 'k'], labels=[u'За', u'Против', u'Въздържали се', u'Отсъстващи'])
     f.savefig('generated_html/alltimevotes.png')
+    plt.close()
+
+def alltime_regs_singleMP((present, absent, manual), name, asciiname):
+    f = plt.figure(figsize=figsize_square_small)
+    f.suptitle(u'Обобщение на Всички Регистрации на\n%s'%name)
+    s = f.add_subplot(1,1,1)
+    pie_array = [present, absent, manual]
+    s.pie(pie_array, colors=['g', 'r', 'c'], labels=[u'Присъствия', u'Отсъствия', u'Ръчно\nзаписани'])
+    f.savefig('generated_html/alltimeregs_%s.png'%asciiname)
+    plt.close()
+
+def alltime_votes_singleMP_compare_all((w, a), (abst, absent), name, asciiname):
+    f = plt.figure(figsize=figsize_square_small)
+    f.suptitle(u'Обобщение на Всички Гласове на\n%s'%name)
+    s = f.add_subplot(1,1,1)
+    pie_array = [w, a, abst, absent]
+    s.pie(pie_array, colors=['g', 'r', 'c', 'k'], labels=[u'Съгласие с\nмнозинството', u'\n\n Противоречие с\n   мнозинството', u'Въздържал се\n', u'Отсъстващ'])
+    f.savefig('generated_html/alltimevotes_compare_all_%s.png'%asciiname)
+    plt.close()
+
+def alltime_votes_singleMP_compare_party((w, a), (abst, absent), name, asciiname):
+    f = plt.figure(figsize=figsize_square_small)
+    f.suptitle(u'Обобщение на Всички Гласове на\n%s'%name)
+    s = f.add_subplot(1,1,1)
+    pie_array = [w, a, abst, absent]
+    s.pie(pie_array, colors=['g', 'r', 'c', 'k'], labels=[u'Съгласие с\nпартията', u'\n\n Противоречие с\n    партията', u'Въздържал се\n', u'Отсъстващ'])
+    f.savefig('generated_html/alltimevotes_compare_party_%s.png'%asciiname)
+    plt.close()
+
+def evolution_of_votes_singleMP(dates, votes, wa_all, wa_party, name, asciiname):
+    f = plt.figure(figsize=figsize_long)
+    f.suptitle(u'Гласове и отсъствия на %s през годините.'%name)
+    absences = f.add_subplot(3,1,3)
+    with_all = f.add_subplot(3,1,1, sharex=absences)
+    with_party = f.add_subplot(3,1,2, sharex=absences)
+
+    all_votes_no_abs = np.sum(votes[:,:3], 1)
+    all_votes = np.sum(votes, 1)
+    mask_no_abs = np.logical_not(all_votes_no_abs)
+    mask = np.logical_not(all_votes)
+    with_all_array = np.ma.masked_array(100*wa_all[:,0], mask=mask_no_abs)/all_votes_no_abs
+    with_party_array = np.ma.masked_array(100*wa_party[:,0], mask=mask_no_abs)/all_votes_no_abs
+    absences_array = np.ma.masked_array(100*votes[:,3], mask=mask)/all_votes
+
+    with_all.plot(dates, with_all_array, '.-', alpha=0.3, linewidth=0.1)
+    with_all.legend([u'% съгласие с мнозинството (без отсъствия)'])
+    with_party.plot(dates, with_party_array, '.-', alpha=0.3, linewidth=0.1)
+    with_party.legend([u'% съгласие с партията (без отсъствия)'])
+    absences.plot(dates, absences_array, '.-', alpha=0.3, linewidth=0.1)
+    absences.legend([u'% отсъствия'])
+
+    with_all.set_yticks([25, 50, 75])
+    with_party.set_yticks([25, 50, 75])
+    absences.set_yticks([25, 50, 75])
+    with_all.set_ylim(0, 100)
+    with_party.set_ylim(0, 100)
+    absences.set_ylim(0, 100)
+    absences.set_xlim(dates[0], dates[-1])
+    f.autofmt_xdate()
+    f.savefig('generated_html/vote_evol_%s.png'%asciiname)
     plt.close()

@@ -30,4 +30,6 @@ def canonical_party_name(name):
 
 def unidecode(string):
     """Transliterate unicode to latin."""
-    return _unidecode.unidecode(string.replace(u'ъ',u'а').replace(u'ь',u'й'))
+    return _unidecode.unidecode(string.replace(u'ѝ',u'и')
+                                      .replace(u'ъ',u'а').replace(u'Ъ',u'А')
+                                      .replace(u'ь',u'й').replace(u'Ь',u'Й'))

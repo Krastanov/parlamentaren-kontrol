@@ -1,10 +1,11 @@
 <%inherit file="base_template.html" />
 <%namespace name="lay" file="layout_components.html"/>
 <%block name="title">Народни Представители</%block>
+<% from pk_tools import unidecode %>
 
 
 <%lay:section header='Обща Информация'>
-    <div class="col_6">
+    <figure class="col_6">
         <img class="full-width tooltip" src="alltimeregs.png" alt="Отсъствия на депутати по време на регистрация."
         title="Регистрация: В началото на деня се провежда регистрация. Народни
         представители дошли твърде късно за регистрацията могат да бъдат записани
@@ -12,14 +13,14 @@
         гласовете му ще бъдат регистрирани като отсъстващи. Това не променя статуса
         на началната регистрацията. За подобна информация погледнете следващата
         графика или графиките в списъка със стенограми."/>
-    </div>
-    <div class="col_6">
+    </figure>
+    <figure class="col_6">
         <img class="full-width tooltip" src="alltimevotes.png" alt="Гласове и отсъствия на депутати по време на гласувания."
         title='Гласуване: Всяко заседание включва голям брой точки, по които да се
         гласува. Освен "за", "против" и "въздържал се", народния представител може
         да бъде записан като "не гласувал", което се случва при отсъствие или
         просто липса на реакция.'/>
-    </div>
+    </figure>
 </%lay:section>
 
 
@@ -40,7 +41,7 @@
                 <div>Партия при най-скорошно гласуване</div></th>
             <th style="max-width:40px" class="tooltip"
                 title="Брой участия в заседания: Общия брой на заседания, в
-                които народният представител е има право да участва.
+                които народният представител е имал право да участва.
                 Включва и отсъствията.">
                 <div>Брой участия в заседания</div></th>
             <th style="max-width:40px" class="tooltip"
@@ -54,43 +55,63 @@
             <th style="max-width:40px" class="tooltip"
                 title="Отсъствия при регистрация: Частта от заседания, за
                 които народният представител е регистриран като
-                отсъстващ.">
+                отсъстващ. Тъй като регистрацията се прави в началото на деня,
+                депутатът може да напусне заседанието след регистрация и да
+                не бъде записан като отсъстващ. За отсъствия по време на
+                гласуване погледнете последната колона.">
                 <div>Отсъствия при регистрация</div></th>
             <th style="max-width:40px" class="tooltip"
                 title="Ръчно записан при регистрация: Частта от заседания,
                 при които народния представител не е присъствал в началото
                 по време на регистрация, но е се е явил по-късно и е бил
-                ръчно записан.">
+                ръчно записан. Тъй като регистрацията се прави в началото на деня,
+                депутатът може да напусне заседанието след регистрация и да
+                не бъде записан като отсъстващ. За отсъствия по време на
+                гласуване погледнете последната колона.">
                 <div>Ръчно записан при регистрация</div></th>
             <th style="max-width:40px" class="tooltip"
-                title='Гласове "за": От общия брой гласове, на които
-                народният представител е имал право, частта които са
-                "за".'>
-                <div>Гласове "за"</div></th>
+                title='Съгласие с мнозинството: От всички гласове,
+                които народният представител е дал, каква част са в съгласие
+                с мнозинството.'>
+                <div>Съгласие с мнозинството</div></th>
             <th style="max-width:40px" class="tooltip"
-                title='Гласове "против": От общия брой гласове, на които
-                народният представител е имал право, частта които са
-                "против".'>
-                <div>Гласове "против"</div></th>
+                title='Противоречие с мнозинството: От всички гласове,
+                които народният представител е дал, каква част противоречат
+                на мнозинството.'>
+                <div>Противоречие с мнозинството</div></th>
             <th style="max-width:40px" class="tooltip"
-                title='Гласове "въздържал се": От общия брой гласове, на
-                които народният представител е имал право, частта които са
+                title='Съгласие с парламентарната група: От всички гласове,
+                които народният представител е дал, каква част са в съгласие
+                с парламентарната му група.'>
+                <div>Съгласие с парламенарната група</div></th>
+            <th style="max-width:40px" class="tooltip"
+                title='Противоречие с парламентарната група: От всички гласове,
+                които народният представител е дал, каква част противоречат
+                на парламентарната му група.'>
+                <div>Противоречие с парламентарната група</div></th>
+            <th style="max-width:40px" class="tooltip"
+                title='Гласове "въздържал се": От общия брой гласове,
+                които народният представител е дал, частта която е
                 "въздържал се".'>
                 <div>Гласове "въздържал се"</div></th>
             <th style="max-width:40px" class="tooltip"
                 title='Отсъствия при гласуване: От общия брой гласове, на
-                които народният представител е имал право, частта от която
-                не е реализирал.'>
+                които народният представител е имал право, частта която
+                не е реализирал поради отсъствие.'>
                 <div>Отсъствия при гласуване</div></th>
         </tr></thead>
         
         <tbody>
-        % for mp, origp, withp, rpres, rabs, rman, vy, vn, vabst, vabs in name_orig_with_regs_votes:
+        % for mp_i, (mp, origp, withp, orig_url) in enumerate(mps):
+            <% rpres, rabs, rman = mps_all_reg[mp_i] %>
+            <% vy, vn, vabst, vabs = mps_all_vote[mp_i] %>
+            <% wa, aa = mps_all_with_against_all[mp_i] %>
+            <% wp, ap = mps_all_with_against_party[mp_i] %>
             % if not withp:
                 <% continue %>
             % endif
             <tr>
-                <td>${mp}</td>
+                <td><a href="mp_${unidecode(mp).replace(' ', '_').lower()}.html">${mp}</a></td>
                 <td>${origp}</td>
                 <td>${withp}</td>
                 <td>${rpres+rabs}</td>
@@ -106,16 +127,25 @@
                 <td class="percentage">0</td>
                 % endif
 
-                <% allvote = (vy+vn+vabst+vabs) %>
-                % if allvote:
-                <td class="percentage">${100*vy    / allvote}</td>
-                <td class="percentage">${100*vn    / allvote}</td>
-                <td class="percentage">${100*vabst / allvote}</td>
-                <td class="percentage">${100*vabs  / allvote}</td>
+                <% allvote_noabs = (vy+vn+vabst) %>
+                % if allvote_noabs:
+                <td class="percentage">${100*wa    / allvote_noabs}</td>
+                <td class="percentage">${'%.1f' % (100.*aa/allvote_noabs)}</td>
+                <td class="percentage">${100*wp    / allvote_noabs}</td>
+                <td class="percentage">${'%.1f' % (100.*ap/allvote_noabs)}</td>
+                <td class="percentage">${100*vabst / allvote_noabs}</td>
                 % else:
                 <td class="percentage">0</td>
+                <td class="percentage">0.0</td>
                 <td class="percentage">0</td>
+                <td class="percentage">0.0</td>
                 <td class="percentage">0</td>
+                % endif
+
+                <% allvote = (allvote_noabs+vabs) %>
+                % if allvote_noabs:
+                <td class="percentage">${100*vabs/allvote}</td>
+                % else:
                 <td class="percentage">0</td>
                 % endif
             </tr>

@@ -6,12 +6,9 @@ import bs4
 import xlrd
 
 from pk_db import db, cur
-from pk_logging import logging
+from pk_logging import logging, logger_workaround
 from pk_namedtuples import *
 from pk_tools import urlopen, canonical_party_name
-
-
-NA = u'Няма информация'
 
 
 ##############################################################################
@@ -40,13 +37,14 @@ class StenogramsHTMLParser(bs4.BeautifulSoup):
 # Excel Parsing
 ##############################################################################
 logger_excel = logging.getLogger('excel_parser')
+logger_excel_lib = logging.getLogger('excel_parser_lib')
 
 
 class ExcelWarnings(object):
     def write(self, string):
         s = string.strip()
         if s:
-            logger_excel.warning(s)
+            logger_excel_lib.warning(s)
 excel_warnings = ExcelWarnings()
 
 
@@ -70,15 +68,26 @@ def parse_excel_by_name(filename):
         - undefined number of fields containing stuff about how the
         representative voted.
     """
+    # XXX Workarounds
     # Correct spelling errors in names of MPs.
-    def MP_name_spellcheck(name): # XXX Workaround
+    def MP_name_spellcheck(name):
         tr_dict = {u'МАРИЯНА ПЕТРОВА ИВАНОВА-НИКОЛОВА': u'МАРИАНА ПЕТРОВА ИВАНОВА-НИКОЛОВА',
                    u'ВЕНЦЕСЛАВ ВАСИЛЕВ ВЪРБАНОВ': u'ВЕНЦИСЛАВ ВАСИЛЕВ ВЪРБАНОВ',
                    u'АЛЕКСАНДЪР СТОЙЧЕВ СТОЙЧЕВ': u'АЛЕКСАНДЪР СТОЙЧЕВ СТОЙКОВ'}
         if name in tr_dict:
-            logger_excel.warning("Spelling error: %s" % name)
+            logger_workaround.warning("Spelling error: %s" % name)
             return tr_dict[name]
         return name
+    # Remove unregistered MPs.
+    def filter_names(*args):
+        to_filter_out = [u'МИХАИЛ ВЛАДИМИРОВ ВЛАДОВ', u'НИКОЛАЙ НАНКОВ НАНКОВ']
+        zip_args = zip(*args)
+        filtered = filter(lambda a: a[0] not in to_filter_out, zip_args)
+        if len(filtered) != len(zip_args):
+            logger_workaround.warning("An MP was filtered out of the by-names list, because they are not registered as an MP.")
+            return zip(*filtered)
+        return args
+    # XXX End of Workarounds.
 
     # Translate the registration and vote markers.
     tr_reg = {u'О':'absent', u'П':'present', u'Р':'manually_registered'}
@@ -111,16 +120,6 @@ def parse_excel_by_name(filename):
         logger_excel.warning("There are more than one registration for this stenogram.")
     elif len(reg_sessions) != 1:
         raise ValueError('No registrations detected in the by-names file.')
-
-    # Remove unregistered MPs.
-    def filter_names(*args): # XXX Workaround
-        to_filter_out = [u'МИХАИЛ ВЛАДИМИРОВ ВЛАДОВ', u'НИКОЛАЙ НАНКОВ НАНКОВ']
-        zip_args = zip(*args)
-        filtered = filter(lambda a: a[0] not in to_filter_out, zip_args)
-        if len(filtered) != len(zip_args):
-            logger_excel.warning("An MP was filtered out of the by-names list, because they are not registered as an MP.")
-            return zip(*filtered)
-        return args
 
     return filter_names(names, parties, reg_sessions[-1], vote_sessions)
 
@@ -211,7 +210,7 @@ for i, ID in enumerate(stenogram_IDs):
         by_name_temp.write(by_name_web.read())
         by_name_temp.close()
         if ID == '2766': # XXX Workaround malformated excel file.
-            logger_to_db.warning('Using the workaround for ID 2766.')
+            logger_workaround.warning('Using the workaround for ID 2766.')
             mp_names, mp_parties, mp_reg_session, mp_vote_sessions = parse_excel_by_name('workarounds/iv050712_ID2766_line32-33_workaround.xls')
         else:
             mp_names, mp_parties, mp_reg_session, mp_vote_sessions = parse_excel_by_name('/tmp/temp.excel')

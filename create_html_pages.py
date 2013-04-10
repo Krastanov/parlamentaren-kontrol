@@ -170,6 +170,7 @@ def write_graph_visualizations():
     not_abses = tots - abses
     M_diff = np.tensordot(is_yes_no_abst_absent, is_yes_no_abst_absent, axes=([1],[1]))
     M_tot  = np.tensordot(abs(is_yes_no_abst_absent), abs(is_yes_no_abst_absent), axes=([1],[1]))
+    tot_yes_no = np.diagonal(M_tot)
     del is_yes_no_abst_absent
     M = M_diff/(M_tot+0.00001)
     C = np.median(M_tot)
@@ -177,16 +178,19 @@ def write_graph_visualizations():
     M[M<0.5] = 0
     M = M*2-1
     del M_diff, M_tot
+    connectivity = 7
     M, temp = np.zeros_like(M), M
     indices = np.argmax(temp, axis=1)
-    M[indices,:] = temp[indices,:]
-    M = M + M.T
+    M[indices[:connectivity],:] = temp[indices[:connectivity],:]
+    M = (M + M.T)/2
     del temp
 
 
     # Make the JSON dumps.
     json_dict = {}
-    json_dict['nodes'] = [{'name':'%s - %s'%(n, name_party_dict[n]),
+    json_dict['nodes'] = [{'name':u'%s (%d гласа) - %s'%(n,
+                                                         tot_yes_no[n_index_dict[n]],
+                                                         name_party_dict[n]),
                            'group':parties.index(name_party_dict[n]),
                            'datalegend':name_party_dict[n]}
                           for n in name]
@@ -200,7 +204,7 @@ def write_graph_visualizations():
         asciiname = unidecode(p)
         json_dict = {}
         restricted_name = [n for n in name if name_party_dict[n]==p]
-        json_dict['nodes'] = [{'name':n, 'group':0, 'datalegend':p}
+        json_dict['nodes'] = [{'name':u'%s (%d гласа)'%(n,tot_yes_no[n_index_dict[n]]), 'group':0, 'datalegend':p}
                               for n in restricted_name]
         json_dict['links'] = [{'source':j, 'target':i, 'value':float(M[n_index_dict[restricted_name[i]],n_index_dict[restricted_name[j]]])}
                               for j in range(len(restricted_name))
@@ -648,7 +652,7 @@ todo = [
         write_sql_dump,
         write_static_pages,
         write_MPs_emails_page,
-#        write_graph_visualizations,
+        write_graph_visualizations,
         write_MPs_overview_page,
         write_list_of_stenograms_summary_pages,
         write_stenogram_pages,

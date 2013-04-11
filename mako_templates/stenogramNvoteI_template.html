@@ -4,7 +4,7 @@
 <%block name="maincontentschema">itemtype="http://schema.org/Event" itemid="stenogram${stenogram_date.strftime('%Y%m%d')}votes${session_i+1}.html"</%block>
 
 
-<strong>Гласуване ${session_i+1} на <time itemprop="startDate" datetime="${stenogram_date.strftime('%Y-%m-%d')}">${stenogram_date.strftime('%d/%m/%Y')}</time><strong>
+<strong>Гласуване ${session_i+1} на <time itemprop="startDate" datetime="${stenogram_date.strftime('%Y-%m-%d')}">${stenogram_date.strftime('%d/%m/%Y')}</time></strong>
 <p itemprop="supEvent" itemscope itemtype="http://schema.org/Event" itemid="stenogram${stenogram_date.strftime('%Y%m%d')}.html"><a itemprop="url" href="stenogram${stenogram_date.strftime('%Y%m%d')}.html#vote${session_i+1}">Обратно към стенограмата от деня.</a></p>
 
 

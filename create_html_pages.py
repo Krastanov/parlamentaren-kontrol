@@ -116,7 +116,7 @@ def write_static_pages():
     contacts_template = templates.get_template('links_template.html')
     with open('generated_html/links.html', 'w') as html_file:
         html_file.write(contacts_template.render())
-        sitemap.add('contacts.html', 0.4)
+        sitemap.add('links.html', 0.4)
 
 
 ##############################################################################

@@ -71,6 +71,154 @@ sitemap = Sitemap()
 
 
 ##############################################################################
+# Load the information.
+##############################################################################
+#TODO probably rewrite in pandas panel objects (and deal with NaNs)
+data_loaded = False
+def load_data():
+    global data_loaded
+    if data_loaded:
+        return
+    data_loaded = True
+    logger_html.info("Fetching most of the db in memory.")
+
+    # All MPs
+    mpscur = db.cursor()
+    mpscur.execute("""SELECT mp_name,
+                             orig_party_name,
+                             (SELECT LAST(with_party ORDER BY mp_reg.stenogram_date) FROM mp_reg WHERE mp_reg.mp_name = mps.mp_name),
+                             original_url
+                      FROM mps
+                      ORDER BY orig_party_name, mp_name""")
+    global mps, parties
+    mps = mpscur.fetchall()
+    parties = groupby_list(mps, operator.itemgetter(1))
+
+    # All sessions
+    sescur = db.cursor()
+    sescur.execute("""SELECT stenogram_date, session_number
+                      FROM vote_sessions
+                      ORDER BY stenogram_date, session_number""")
+    global sessions, session_dates
+    sessions = sescur.fetchall()
+    session_dates = groupby_list(sessions, operator.itemgetter(0))
+
+    # All dates - includes dates on which no voting was done
+    datecur = db.cursor()
+    datecur.execute("""SELECT stenogram_date
+                       FROM stenograms
+                       ORDER BY stenogram_date""")
+    global all_dates
+    all_dates = [d[0] for d in datecur]
+
+    def aggregate_sessions_in_dates(array):
+        new_shape = list(array.shape)
+        new_shape[1] = len(session_dates)
+        new_array = np.zeros(new_shape, dtype=np.int32)
+        start = 0
+        for date_i, date in enumerate(session_dates):
+            end = start+len(date[1])
+            new_array[:,date_i,:] = np.sum(array[:,start:end,:], 1)
+            start = end
+        return new_array
+
+    def aggregate_names_in_parties(array):
+        new_shape = list(array.shape)
+        new_shape[0] = len(parties)
+        new_array = np.zeros(new_shape, dtype=np.int32)
+        start = 0
+        for party_i, party in enumerate(parties):
+            end = start+len(party[1])
+            new_array[party_i,:,:] = np.sum(array[start:end,:,:], 0)
+            start = end
+        return new_array
+
+    # All regs.
+    datacur = db.cursor()
+    global mps_dates_reg
+    mps_dates_reg = np.zeros((len(mps), len(all_dates), 3), dtype=np.int32)
+    """ A 3D array with the same structure as above."""
+    reg_dict = {'present':0, 'absent':1, 'manually_registered':2}
+    for (mp_i, mp) in enumerate(mps):
+        datacur.execute("""SELECT reg, stenogram_date FROM mp_reg
+                           WHERE mp_name = %s
+                           ORDER BY stenogram_date""",
+                           (mp[0],))
+        f =  datacur.fetchone()
+        for r in datacur:
+            date_i = index(all_dates, r[1]) # While the index is monotonic it is not always +=1
+            mps_dates_reg[mp_i, date_i, reg_dict[r[0]]] = 1
+
+    global mps_all_reg
+    mps_all_reg = np.sum(mps_dates_reg, 1)
+
+    # All votes
+    global mps_sessions_vote
+    mps_sessions_vote = np.zeros((len(mps), len(sessions), 4), dtype=np.int32)
+    """  A 3D array       sessions /
+         with the         index   /___yes_no_abst_absent
+         following               |    0   0   0   1
+         structure:        names |    1   0   0   0
+                           index |   ...
+         Contains votes. If the MP was not even registered for the session it contains only zeros."""
+    vote_dict = {'yes':0, 'no':1, 'abstain':2, 'absent':3}
+    for (mp_i, mp) in enumerate(mps):
+        datacur.execute("""SELECT vote, stenogram_date, session_number FROM mp_votes
+                           WHERE mp_name = %s
+                           ORDER BY stenogram_date, session_number""",
+                           (mp[0],))
+        for v in datacur.fetchall():
+            ses_i = index(sessions, v[1:]) # While the index is monotonic it is not always +=1
+            mps_sessions_vote[mp_i, ses_i, vote_dict[v[0]]] = 1
+
+    global mps_dates_vote, parties_sessions_vote, parties_dates_vote, mps_all_vote, all_sessions_vote
+    mps_dates_vote = aggregate_sessions_in_dates(mps_sessions_vote)
+    parties_sessions_vote = aggregate_names_in_parties(mps_sessions_vote)
+    parties_dates_vote = aggregate_sessions_in_dates(parties_sessions_vote)
+    mps_all_vote = np.sum(mps_dates_vote, 1)
+    all_sessions_vote = np.sum(parties_sessions_vote, 0)
+    """3D and 2D arrays with aggregated data."""
+
+    global mps_sessions_with_against_party
+    mps_sessions_with_against_party = np.zeros((len(mps), len(sessions), 2), dtype=np.int32)
+    """ A 3D array with the same structure as above. The data is vote with/against party."""
+    offset = 0
+    for p_i, (party, p_mps) in enumerate(parties):
+        end = offset + len(p_mps)
+        for mp_i, ses_i in itertools.product(range(offset, end), range(len(sessions))):
+            if not any(mps_sessions_vote[mp_i, ses_i, :2]):
+                continue
+            if parties_sessions_vote[p_i, ses_i, 0] == parties_sessions_vote[p_i, ses_i, 1]:
+                mps_sessions_with_against_party[mp_i, ses_i, 0] = 1
+                continue
+            mps_sessions_with_against_party[mp_i, ses_i, 0] = mps_sessions_vote[mp_i, ses_i, np.argmax(parties_sessions_vote[p_i, ses_i, :2])]
+            mps_sessions_with_against_party[mp_i, ses_i, 1] = 1 - mps_sessions_with_against_party[mp_i, ses_i, 0]
+        offset = end
+
+    global mps_dates_with_against_party, mps_all_with_against_party
+    mps_dates_with_against_party = aggregate_sessions_in_dates(mps_sessions_with_against_party)
+    mps_all_with_against_party = np.sum(mps_dates_with_against_party, 1)
+    """3D and 2D arrays with aggregated data."""
+
+    global mps_sessions_with_against_all
+    mps_sessions_with_against_all = np.zeros((len(mps), len(sessions), 2), dtype=np.int32)
+    """ A 3D array with the same structure as above. The data is vote with/against all."""
+    for mp_i, ses_i in itertools.product(range(len(mps)), range(len(sessions))):
+        if not any(mps_sessions_vote[mp_i, ses_i, :2]):
+            continue
+        if all_sessions_vote[ses_i, 0] == all_sessions_vote[ses_i, 1]:
+            mps_sessions_with_against_all[mp_i, ses_i, 0] = 1
+            continue
+        mps_sessions_with_against_all[mp_i, ses_i, 0] = mps_sessions_vote[mp_i, ses_i, np.argmax(all_sessions_vote[ses_i, :2])]
+        mps_sessions_with_against_all[mp_i, ses_i, 1] = 1 - mps_sessions_with_against_all[mp_i, ses_i, 0]
+
+    global mps_dates_with_against_all, mps_all_with_against_all
+    mps_dates_with_against_all = aggregate_sessions_in_dates(mps_sessions_with_against_all)
+    mps_all_with_against_all = np.sum(mps_dates_with_against_all, 1)
+    """3D and 2D arrays with aggregated data."""
+
+
+##############################################################################
 # Copy static files.
 ##############################################################################
 def copy_static():
@@ -142,284 +290,75 @@ def write_MPs_emails_page():
 # Graph visualizations.
 ##############################################################################
 def write_graph_visualizations():
+    load_data()
     logger_html.info("Generating the graph visualizations.")
-    # Load the information.
-    cur.execute("""SELECT mp_name, orig_party_name
-                   FROM mps
-                   WHERE (SELECT COUNT(*) FROM mp_reg WHERE mps.mp_name = mp_reg.mp_name) > 150""")
-    name_party_dict = dict(cur.fetchall())
-    parties = sorted(list(set(name_party_dict.values())))
-    name = sorted(name_party_dict.keys())
-    n_index_dict = dict(zip(name, range(len(name))))
-
-    cur.execute("""SELECT stenogram_date, session_number
-                   FROM vote_sessions
-                   ORDER BY stenogram_date, session_number""")
-    date_session = cur.fetchall()
-    ds_index_dict = dict(zip(date_session, range(len(date_session))))
-
-    # yes=1 no=-1 abst/absent=0
-    is_yes_no_abst_absent  = np.zeros((len(name), len(date_session)), np.float16)
-    named_cur = db.cursor(name="sever_side_due_to_low_memory")
-    named_cur.execute("""SELECT mp_name, stenogram_date, session_number, vote
-                   FROM mp_votes""")
-    for n, d, s, v in named_cur:
-        i_n = n_index_dict.get(n)
-        if i_n is None:
-            continue
-        i_ds = ds_index_dict[(d, s)]
-        is_yes_no_abst_absent[i_n, i_ds] = {'yes':1, 'no':-1, 'abstain':0, 'absent':0}[v]
-    named_cur.close()
 
     # Prepare the graph matrix.
-    abses = np.sum(is_yes_no_abst_absent==0)
-    tots = is_yes_no_abst_absent.size
-    not_abses = tots - abses
+    is_yes_no_abst_absent = mps_sessions_vote[:,:,0] - mps_sessions_vote[:,:,1]
     M_diff = np.tensordot(is_yes_no_abst_absent, is_yes_no_abst_absent, axes=([1],[1]))
     M_tot  = np.tensordot(abs(is_yes_no_abst_absent), abs(is_yes_no_abst_absent), axes=([1],[1]))
     tot_yes_no = np.diagonal(M_tot)
-    del is_yes_no_abst_absent
     M = M_diff/(M_tot+0.00001)
-    C = np.median(M_tot)
-    M[M_tot<C] = 0
-    M[M<0.5] = 0
-    M = M*2-1
-    del M_diff, M_tot
-    connectivity = 7
+
+    median_tot_per_party = []
+    median_rel_per_party = []
+    start = 0
+    median_no_diag = lambda mat: np.sort(mat, axis=None)[len(mat)*(len(mat)-1)/2]
+    for party, names in parties:
+        end = start+len(names)
+        median_tot_per_party.append(median_no_diag(M_tot[start:end,start:end]))
+        median_rel_per_party.append(median_no_diag(M[start:end,start:end]))
+        start = end
+    C_tot = median_no_diag(M_tot)
+    C_rel = (median_no_diag(M) + np.median(median_rel_per_party))/2
+    M[M_tot<C_tot] = 0 # to filter out frequently absent
+    M[M<C_rel] = 0 # to filter out disagreements
+    M = (M-C_rel)/(1.-C_rel)
+
+    connectivity = 5
     M, temp = np.zeros_like(M), M
-    indices = np.argmax(temp, axis=1)
+    indices = np.argsort(temp, axis=0)
     M[indices[:connectivity],:] = temp[indices[:connectivity],:]
     M = (M + M.T)/2
-    del temp
-
 
     # Make the JSON dumps.
     json_dict = {}
-    json_dict['nodes'] = [{'name':u'%s (%d гласа) - %s'%(n,
-                                                         tot_yes_no[n_index_dict[n]],
-                                                         name_party_dict[n]),
-                           'group':parties.index(name_party_dict[n]),
-                           'datalegend':name_party_dict[n]}
-                          for n in name]
+    party_names = zip(*parties)[0]
+    json_dict['nodes'] = [{'name':u'%s (%d гласа) - %s'%(mp[0],
+                                                         tot_yes_no[mp_i],
+                                                         mp[1]),
+                           'group':party_names.index(mp[1]),
+                           'datalegend':mp[1]}
+                          for mp_i, mp in enumerate(mps)]
     json_dict['links'] = [{'source':j, 'target':i, 'value':float(M[i,j])}
-                          for j in range(len(name))
+                          for j in range(len(mps))
                           for i in range(j)
                           if M[i,j]>0]
     with open('generated_html/graph_all.json','w') as f:
         f.write(json.dumps(json_dict))
-    for p in parties:
-        asciiname = unidecode(p)
+    start = 0
+    for party, names in parties:
+        asciiname = unidecode(party)
+        end = start+len(names)
         json_dict = {}
-        restricted_name = [n for n in name if name_party_dict[n]==p]
-        json_dict['nodes'] = [{'name':u'%s (%d гласа)'%(n,tot_yes_no[n_index_dict[n]]), 'group':0, 'datalegend':p}
-                              for n in restricted_name]
-        json_dict['links'] = [{'source':j, 'target':i, 'value':float(M[n_index_dict[restricted_name[i]],n_index_dict[restricted_name[j]]])}
-                              for j in range(len(restricted_name))
-                              for i in range(j)
-                              if M[n_index_dict[restricted_name[i]],n_index_dict[restricted_name[j]]]>0 and name_party_dict[n]==p]
+        json_dict['nodes'] = [{'name':u'%s (%d гласа)'%(mp[0],tot_yes_no[start+mp_i]), 'group':0, 'datalegend':party}
+                              for mp_i, mp in enumerate(names)]
+        json_dict['links'] = [{'source':j-start, 'target':i-start, 'value':float(M[i,j])}
+                              for j in range(start, end)
+                              for i in range(start, j)
+                              if M[i,j]>0]
+        start = end
         with open('generated_html/graph_%s.json'%asciiname,'w') as f:
             f.write(json.dumps(json_dict))
 
     # HTML
     graph_template = templates.get_template('forcegraph_template.html')
-    bg_en_party_names = zip(parties, map(unidecode, parties)) + [(u'всички партии', 'all')]
+    bg_en_party_names = zip(party_names, map(unidecode, party_names)) + [(u'всички партии', 'all')]
     for bg_name, en_name in bg_en_party_names:
         filename = 'forcegraph_%s.html'%en_name
         with open('generated_html/%s'%filename, 'w') as html_file:
             html_file.write(graph_template.render(bg_name=bg_name, en_name=en_name, bg_en_party_names=bg_en_party_names))
             sitemap.add(filename, 0.8)
-
-
-##############################################################################
-# Per MP stuff.
-##############################################################################
-#TODO probably rewrite in pandas panel objects (and deal with NaNs)
-def write_MPs_overview_page():
-    logger_html.info("Generating summary html page with MP details.")
-
-    #########################
-    # Load the information. #
-    #########################
-
-    # All MPs
-    mpscur = db.cursor()
-    mpscur.execute("""SELECT mp_name,
-                             orig_party_name,
-                             (SELECT LAST(with_party ORDER BY mp_reg.stenogram_date) FROM mp_reg WHERE mp_reg.mp_name = mps.mp_name),
-                             original_url
-                      FROM mps
-                      ORDER BY orig_party_name, mp_name""")
-    mps = mpscur.fetchall()
-    parties = groupby_list(mps, operator.itemgetter(1))
-
-    # All sessions
-    sescur = db.cursor()
-    sescur.execute("""SELECT stenogram_date, session_number
-                      FROM vote_sessions
-                      ORDER BY stenogram_date, session_number""")
-    sessions = sescur.fetchall()
-    session_dates = groupby_list(sessions, operator.itemgetter(0))
-
-    # All dates - includes dates on which no voting was done
-    datecur = db.cursor()
-    datecur.execute("""SELECT stenogram_date
-                       FROM stenograms
-                       ORDER BY stenogram_date""")
-    all_dates = [d[0] for d in datecur]
-
-    def aggregate_sessions_in_dates(array):
-        new_shape = list(array.shape)
-        new_shape[1] = len(session_dates)
-        new_array = np.zeros(new_shape, dtype=np.int32)
-        i = 0
-        for date_i, date in enumerate(session_dates):
-            end = i+len(date[1])
-            new_array[:,date_i,:] = np.sum(array[:,i:end,:], 1)
-            i = end
-        return new_array
-
-    def aggregate_names_in_parties(array):
-        new_shape = list(array.shape)
-        new_shape[0] = len(parties)
-        new_array = np.zeros(new_shape, dtype=np.int32)
-        i = 0
-        for party_i, party in enumerate(parties):
-            end = i+len(party[1])
-            new_array[party_i,:,:] = np.sum(array[i:end,:,:], 0)
-            i = end
-        return new_array
-
-    # All regs.
-    datacur = db.cursor()
-    mps_dates_reg = np.zeros((len(mps), len(all_dates), 3), dtype=np.int32)
-    """ A 3D array with the same structure as above."""
-    reg_dict = {'present':0, 'absent':1, 'manually_registered':2}
-    for (mp_i, mp) in enumerate(mps):
-        datacur.execute("""SELECT reg, stenogram_date FROM mp_reg
-                           WHERE mp_name = %s
-                           ORDER BY stenogram_date""",
-                           (mp[0],))
-        f =  datacur.fetchone()
-        for r in datacur:
-            date_i = index(all_dates, r[1])
-            mps_dates_reg[mp_i, date_i, reg_dict[r[0]]] = 1
-
-    mps_all_reg = np.sum(mps_dates_reg, 1)
-
-    # All votes
-    mps_sessions_vote = np.zeros((len(mps), len(sessions), 4), dtype=np.int32)
-    """  A 3D array       sessions /
-         with the         index   /___yes_no_abst_absent
-         following               |    0   0   0   1
-         structure:        names |    1   0   0   0
-                           index |   ...
-         Contains votes. If the MP was not even registered for the session it contains only zeros."""
-    vote_dict = {'yes':0, 'no':1, 'abstain':2, 'absent':3}
-    for (mp_i, mp) in enumerate(mps):
-        datacur.execute("""SELECT vote, stenogram_date, session_number FROM mp_votes
-                           WHERE mp_name = %s
-                           ORDER BY stenogram_date, session_number""",
-                           (mp[0],))
-        for v in datacur.fetchall():
-            ses_i = index(sessions, v[1:])
-            mps_sessions_vote[mp_i, ses_i, vote_dict[v[0]]] = 1
-
-    mps_dates_vote = aggregate_sessions_in_dates(mps_sessions_vote)
-    parties_sessions_vote = aggregate_names_in_parties(mps_sessions_vote)
-    parties_dates_vote = aggregate_sessions_in_dates(parties_sessions_vote)
-    mps_all_vote = np.sum(mps_dates_vote, 1)
-    all_sessions_vote = np.sum(parties_sessions_vote, 0)
-    """3D and 2D arrays with aggregated data."""
-
-    mps_sessions_with_against_party = np.zeros((len(mps), len(sessions), 2), dtype=np.int32)
-    """ A 3D array with the same structure as above. The data is vote with/against party."""
-    offset = 0
-    for p_i, (party, p_mps) in enumerate(parties):
-        end = offset + len(p_mps)
-        for mp_i, ses_i in itertools.product(range(offset, end), range(len(sessions))):
-            if not any(mps_sessions_vote[mp_i, ses_i, :2]):
-                continue
-            if parties_sessions_vote[p_i, ses_i, 0] == parties_sessions_vote[p_i, ses_i, 1]:
-                mps_sessions_with_against_party[mp_i, ses_i, 0] = 1
-                continue
-            mps_sessions_with_against_party[mp_i, ses_i, 0] = mps_sessions_vote[mp_i, ses_i, np.argmax(parties_sessions_vote[p_i, ses_i, :2])]
-            mps_sessions_with_against_party[mp_i, ses_i, 1] = 1 - mps_sessions_with_against_party[mp_i, ses_i, 0]
-        offset = end
-
-    mps_dates_with_against_party = aggregate_sessions_in_dates(mps_sessions_with_against_party)
-    mps_all_with_against_party = np.sum(mps_dates_with_against_party, 1)
-    """3D and 2D arrays with aggregated data."""
-
-    mps_sessions_with_against_all = np.zeros((len(mps), len(sessions), 2), dtype=np.int32)
-    """ A 3D array with the same structure as above. The data is vote with/against all."""
-    for mp_i, ses_i in itertools.product(range(len(mps)), range(len(sessions))):
-        if not any(mps_sessions_vote[mp_i, ses_i, :2]):
-            continue
-        if all_sessions_vote[ses_i, 0] == all_sessions_vote[ses_i, 1]:
-            mps_sessions_with_against_all[mp_i, ses_i, 0] = 1
-            continue
-        mps_sessions_with_against_all[mp_i, ses_i, 0] = mps_sessions_vote[mp_i, ses_i, np.argmax(all_sessions_vote[ses_i, :2])]
-        mps_sessions_with_against_all[mp_i, ses_i, 1] = 1 - mps_sessions_with_against_all[mp_i, ses_i, 0]
-
-    mps_dates_with_against_all = aggregate_sessions_in_dates(mps_sessions_with_against_all)
-    mps_all_with_against_all = np.sum(mps_dates_with_against_all, 1)
-    """3D and 2D arrays with aggregated data."""
-
-    ############
-    # Summary. #
-    ############
-
-    # Plots
-    alltime_regs(*np.sum(mps_all_reg, 0))
-    alltime_votes(*np.sum(all_sessions_vote, 0))
-
-    # HTML
-    mps_template = templates.get_template('mps_template.html')
-    with open('generated_html/mps.html', 'w') as html_file:
-        html_file.write(mps_template.render(mps=mps,
-                                            mps_all_reg=mps_all_reg,
-                                            mps_all_vote=mps_all_vote,
-                                            mps_all_with_against_party=mps_all_with_against_party,
-                                            mps_all_with_against_all=mps_all_with_against_all))
-        sitemap.add('mps.html', 0.8, [('alltimeregs.png', u'Oтсъствия на депутати по време на регистрация.'),
-                                      ('alltimevotes.png', u'Гласове и отсъствия на депутати по време на гласувания.')])
-
-    #################
-    # Per MP pages. #
-    #################
-
-    per_mp_template = templates.get_template('mp_N_template.html')
-    only_dates = [d[0] for d in session_dates]
-    for mp_i, (name, party, party_now, original_url) in enumerate(mps):
-        asciiname = unidecode(name).replace(' ', '_').lower()
-        alltime_regs_singleMP(mps_all_reg[mp_i,:], name, asciiname)
-        alltime_votes_singleMP_compare_all(mps_all_with_against_all[mp_i,:],
-                                           mps_all_vote[mp_i,2:],
-                                           name, asciiname)
-        alltime_votes_singleMP_compare_party(mps_all_with_against_party[mp_i,:],
-                                             mps_all_vote[mp_i,2:],
-                                             name, asciiname)
-        evolution_of_votes_singleMP(only_dates,
-                                    mps_dates_vote[mp_i,:,:],
-                                    mps_dates_with_against_all[mp_i,:,:],
-                                    mps_dates_with_against_party[mp_i,:,:],
-                                    name, asciiname)
-        with open('generated_html/mp_%s.html'%asciiname, 'w') as html_file:
-            html_file.write(per_mp_template.render(name=name,
-                                                   asciiname=asciiname,
-                                                   party=party,
-                                                   party_now=party_now,
-                                                   vote=mps_all_vote[mp_i,:],
-                                                   with_against_p=mps_all_with_against_party[mp_i,:],
-                                                   with_against_a=mps_all_with_against_all[mp_i,:],
-                                                   reg=mps_all_reg[mp_i,:],
-                                                   original_url=original_url))
-            sitemap.add('mp_%s.html'%asciiname, 0.7,
-                        [('vote_evol_%s.png'%asciiname, u'Гласовете и отсъствията на %s през годините.'%name),
-                         ('alltimeregs_%s.png'%asciiname, u'Oтсъствия на %s по време на регистрация.'%name),
-                         ('alltimevotes_compare_all_%s.png'%asciiname, u'Гласове и отсъствия на %s по време на гласувания (сравнение с мнозинството).'%name),
-                         ('alltimevotes_compare_party_%s.png'%asciiname, u'Гласове и отсъствия на %s по време на гласувания (сравнение с позицията на партията).'%name)])
-
 
 
 ##############################################################################
@@ -451,6 +390,69 @@ def write_list_of_stenograms_summary_pages():
     # Copy the most recent one
     os.system('cp generated_html/stenograms%s%s.html generated_html/stenograms.html'%(y,m))
     sitemap.add('stenograms.html', 0.8)
+
+
+##############################################################################
+# Per MP stuff.
+##############################################################################
+def write_MPs_overview_page():
+    load_data()
+
+    ############
+    # Summary. #
+    ############
+    logger_html.info("Generating summary html page with MP details.")
+
+    # Plots
+    alltime_regs(*np.sum(mps_all_reg, 0))
+    alltime_votes(*np.sum(all_sessions_vote, 0))
+
+    # HTML
+    mps_template = templates.get_template('mps_template.html')
+    with open('generated_html/mps.html', 'w') as html_file:
+        html_file.write(mps_template.render(mps=mps,
+                                            mps_all_reg=mps_all_reg,
+                                            mps_all_vote=mps_all_vote,
+                                            mps_all_with_against_party=mps_all_with_against_party,
+                                            mps_all_with_against_all=mps_all_with_against_all))
+        sitemap.add('mps.html', 0.8, [('alltimeregs.png', u'Oтсъствия на депутати по време на регистрация.'),
+                                      ('alltimevotes.png', u'Гласове и отсъствия на депутати по време на гласувания.')])
+
+    #################
+    # Per MP pages. #
+    #################
+    per_mp_template = templates.get_template('mp_N_template.html')
+    only_dates = [d[0] for d in session_dates]
+    for mp_i, (name, party, party_now, original_url) in enumerate(mps):
+        logger_html.info("Generating page for MP %d of %d."%(mp_i, len(mps)))
+        asciiname = unidecode(name).replace(' ', '_').lower()
+        alltime_regs_singleMP(mps_all_reg[mp_i,:], name, asciiname)
+        alltime_votes_singleMP_compare_all(mps_all_with_against_all[mp_i,:],
+                                           mps_all_vote[mp_i,2:],
+                                           name, asciiname)
+        alltime_votes_singleMP_compare_party(mps_all_with_against_party[mp_i,:],
+                                             mps_all_vote[mp_i,2:],
+                                             name, asciiname)
+        evolution_of_votes_singleMP(only_dates,
+                                    mps_dates_vote[mp_i,:,:],
+                                    mps_dates_with_against_all[mp_i,:,:],
+                                    mps_dates_with_against_party[mp_i,:,:],
+                                    name, asciiname)
+        with open('generated_html/mp_%s.html'%asciiname, 'w') as html_file:
+            html_file.write(per_mp_template.render(name=name,
+                                                   asciiname=asciiname,
+                                                   party=party,
+                                                   party_now=party_now,
+                                                   vote=mps_all_vote[mp_i,:],
+                                                   with_against_p=mps_all_with_against_party[mp_i,:],
+                                                   with_against_a=mps_all_with_against_all[mp_i,:],
+                                                   reg=mps_all_reg[mp_i,:],
+                                                   original_url=original_url))
+            sitemap.add('mp_%s.html'%asciiname, 0.7,
+                        [('vote_evol_%s.png'%asciiname, u'Гласовете и отсъствията на %s през годините.'%name),
+                         ('alltimeregs_%s.png'%asciiname, u'Oтсъствия на %s по време на регистрация.'%name),
+                         ('alltimevotes_compare_all_%s.png'%asciiname, u'Гласове и отсъствия на %s по време на гласувания (сравнение с мнозинството).'%name),
+                         ('alltimevotes_compare_party_%s.png'%asciiname, u'Гласове и отсъствия на %s по време на гласувания (сравнение с позицията на партията).'%name)])
 
 
 ##############################################################################

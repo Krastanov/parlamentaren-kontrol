@@ -1,19 +1,19 @@
 <%def name="section(section_microdata='', header_microdata='', header='')">
-    <section class="col_12 section" ${section_microdata}>
+    <article class="col_12 section" ${section_microdata}>
         <h2 ${header_microdata}>${header}</h2>
         ${caller.body()}
-    </section>
+    </article>
 </%def>
 
 <%def name="subsection(section_microdata='', header_microdata='', header='', width='12')">
-    <section class="col_${width} subsection" ${section_microdata}>
+    <article class="col_${width} subsection" ${section_microdata}>
         <h3 ${header_microdata}>${header}</h3>
         ${caller.body()}
-    </section>
+    </article>
 </%def>
 
 <%def name="stenogram_registration_table()">
-    <section class="col_6">
+    <div class="col_6">
         <table class="sortable">
             <thead><tr>
                 <th>Партия</th>
@@ -35,7 +35,7 @@
             </tbody>
         </table>
         <p><strong>Всички Партии</strong>: Присъстващи: ${sum(reg_presences)}, Общо регистрирани: ${sum(reg_expected)}</p>
-    </section>
+    </div>
     <figure class="col_6">
         <img class="full-width" src="registration${stenogram_date.strftime('%Y%m%d')}.png" alt="Регистрирани и отсъстващи депутати на ${stenogram_date.strftime('%Y-%m-%d')}."/>
     </figure>
@@ -48,7 +48,7 @@
 </%def>
 
 <%def name="stenogram_vote_table(i, votes_by_type_party)">
-    <section class="col_12" id="session${i+1}">
+    <div class="col_12" id="session${i+1}">
     <table class="sortable">
         <thead><tr>
             <th>Партия</th>
@@ -73,5 +73,5 @@
     </table>
     <% total = map(sum, votes_by_type_party) %>
     <p><strong>Всички Партии</strong>: За: ${total[0]}, Против: ${total[1]}, Въздържали се: ${total[2]}, Общо Гласували: ${sum(total[:-1])}</p>
-    </section>
+    </div>
 </%def>

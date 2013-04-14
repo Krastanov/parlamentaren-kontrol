@@ -71,6 +71,6 @@ CREATE TABLE party_reg (
 
 CREATE INDEX mp_votes_BY_stenogram_date_session_number ON mp_votes (stenogram_date, session_number);
 
- CREATE EXTENSION first_last_agg;
+CREATE EXTENSION first_last_agg;
 
 SQL

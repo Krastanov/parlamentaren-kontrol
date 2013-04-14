@@ -43,7 +43,7 @@
         </nav>
 
         ## Google Schema <article class="col_12" itemprop="mainContentOfPage" itemscope <%block name="maincontentschema">itemtype="http://schema.org/WebPageElement"</%block>>
-        <article class="col_12" itemscope <%block name="maincontentschema">itemtype="http://schema.org/WebPageElement"</%block>>
+        <main class="col_12" itemscope <%block name="maincontentschema">itemtype="http://schema.org/WebPageElement"</%block>>
             <header><h1 class="mainheader" itemprop="name"><%block name="main_text_header">${self.title()}</%block></h1></header>
             <div class="social">
                 <ul id="social" class="cf">
@@ -53,10 +53,10 @@
                     <li><a href="http://www.facebook.com/sharer.php?u=http://www.parlamentaren-kontrol.com&amp;t=parlamentaren-kontrol" class="socialite facebook-like" data-href="http://www.parlamentaren-kontrol.com" data-send="false" data-width="60" data-show-faces="false" data-layout="button_count" rel="nofollow" target="_blank"><span class="vhidden">Сподели във Facebook</span></a></li>
                 </ul>
             </div>
-            <section class="col_12">
+            <div class="col_12">
                 ${self.body()}
-            </section>
-        </article>
+            </div>
+        </main>
 
         <div class="clear"></div>
 

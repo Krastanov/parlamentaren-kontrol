@@ -37,7 +37,7 @@
         <img class="full-width" src="absences${stenogram_date.strftime('%Y%m%d')}.png" alt="Промяна на броя присъстващи/отсъстващи депутати на ${stenogram_date.strftime('%Y-%m-%d')}."/>
         </figure>
 
-        <section class="col_12 " id="sessions">
+        <div class="col_12 " id="sessions">
         % for i, (description, votes_by_type_party) in enumerate(zip(vote_descriptions, votes_by_session_type_party)):
             <%lay:subsection section_microdata='itemprop="subEvent" itemscope itemtype="http://schema.org/Event" itemid="stenogram${escaped_str}vote${str(i+1)}.html"'
                              header_microdata='id="vote${str(i+1)}"'
@@ -49,7 +49,7 @@
                 ${lay.stenogram_vote_session_overvie(stenogram_date, i, description, votes_by_type_party)}
             </%lay:subsection>
         % endfor
-        </section>
+        </div>
     % else:
         <div class="col_12"><p>На тази дата не е имало гласувания.</p></div>
     % endif

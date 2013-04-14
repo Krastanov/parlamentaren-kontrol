@@ -137,7 +137,7 @@ def load_data():
     datacur = db.cursor()
     global mps_dates_reg
     mps_dates_reg = np.zeros((len(mps), len(all_dates), 3), dtype=np.int32)
-    """ A 3D array with the same structure as above."""
+    """ A 3D array with the same structure as described for `mps_sessions_vote`."""
     reg_dict = {'present':0, 'absent':1, 'manually_registered':2}
     for (mp_i, mp) in enumerate(mps):
         datacur.execute("""SELECT reg, stenogram_date FROM mp_reg

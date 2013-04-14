@@ -5,7 +5,10 @@
 <%block name="maincontentschema">itemtype="http://schema.org/Event" itemid="stenogram${stenogram_date.strftime('%Y%m%d')}registration.html"</%block>
 
 
-<span itemprop="superEvent" itemscope itemtype="http://schema.org/Event" itemid="stenogram${stenogram_date.strftime('%Y%m%d')}.html"><a itemprop="url" href="stenogram${stenogram_date.strftime('%Y%m%d')}.html">Обратно към стенограмата от деня.</a></span>
+<ul class="breadcrumbs">## Google Schema add breadcrumbs here.
+<li itemprop="superEvent" itemscope itemtype="http://schema.org/Event" itemid="stenogram${stenogram_date.strftime('%Y%m%d')}.html"><a itemprop="url" href="stenogram${stenogram_date.strftime('%Y%m%d')}.html">Стенограма от ${stenogram_date.strftime('%d/%m/%Y')}</a></li>
+<li><a href="">Регистрация</a></li>
+</ul>
 
 
 <%lay:section header='Обща Информация'>

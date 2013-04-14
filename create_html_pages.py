@@ -300,6 +300,7 @@ def write_graph_visualizations():
     tot_yes_no = np.diagonal(M_tot)
     M = M_diff/(M_tot+0.00001)
 
+    # Prepare some almost arbitrary cuts.
     median_tot_per_party = []
     median_rel_per_party = []
     start = 0
@@ -315,6 +316,7 @@ def write_graph_visualizations():
     M[M<C_rel] = 0 # to filter out disagreements
     M = (M-C_rel)/(1.-C_rel)
 
+    # Filter only for nearest neighbours.
     connectivity = 5
     M, temp = np.zeros_like(M), M
     indices = np.argsort(temp, axis=0)

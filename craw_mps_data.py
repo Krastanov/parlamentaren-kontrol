@@ -22,11 +22,12 @@ indices = map(int, open('data/IDs_MPs').readlines())
 cur.execute("""SELECT original_url FROM mps""")
 urls_already_in_db = set(zip(*cur.fetchall())[0])
 for i in range(835, max(indices)+1):
-    original_url = unicode('http://www.parliament.bg/export.php/bg/xml/MP/%d'%i)
+    original_url = unicode('http://www.parliament.bg/bg/MP/%d'%i)
     if original_url in urls_already_in_db:
         continue
     logger_mps.info("Parsing data for MP id %s" % i)
-    xml_str = urlopen(original_url).read()
+    xml_file = unicode('http://www.parliament.bg/export.php/bg/xml/MP/%d'%i)
+    xml_str = urlopen(xml_file).read()
     try:
         r = xmltodict.parse(xml_str)
         name = ' '.join([r['schema']['Profile']['Names']['FirstName']['@value'],

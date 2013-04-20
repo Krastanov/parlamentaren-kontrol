@@ -7,7 +7,7 @@ CREATE TABLE stenograms (
        text            text[],
        vote_line_nb    integer[],
        problem         bool,
-       original_url    text UNIQUE
+       original_url    text UNIQUE NOT NULL
 );
 
 CREATE TABLE vote_sessions (
@@ -26,7 +26,7 @@ CREATE TABLE mps (
        mp_name          text PRIMARY KEY,
        orig_party_name  text REFERENCES parties (party_name),
        email            text,
-       original_url     text UNIQUE
+       original_url     text UNIQUE NOT NULL
 );
 
 CREATE TYPE mp_vote_enum AS ENUM ('yes', 'no', 'abstain', 'absent');
@@ -69,7 +69,42 @@ CREATE TABLE party_reg (
        PRIMARY KEY (party_name, stenogram_date)
 );
 
+CREATE TABLE bills (
+       bill_name       text,
+       bill_signature  text PRIMARY KEY,
+       bill_date       date,
+       original_url    text UNIQUE NOT NULL
+);
+
+CREATE TABLE bill_authors (
+       bill_signature  text REFERENCES bills (bill_signature),
+       bill_author     text REFERENCES mps (mp_name),
+       PRIMARY KEY (bill_signature, bill_author)
+);
+
+CREATE TABLE bills_by_government (
+       bill_signature  text PRIMARY KEY REFERENCES bills (bill_signature)
+);
+
+CREATE TYPE bill_event AS ENUM ('proposed_1st', 'proposed_2nd',
+                                'accepted_1st', 'accepted_2nd',
+                                'rejected_1st', 'rejected_2nd',
+                                'retracted',
+                                'vetoed',
+                                'proposed_after_veto',
+                                'accepted_after_veto',
+                                'challenged_after_veto'
+                                );
+CREATE TABLE bill_history (
+    bill_signature  text REFERENCES bills (bill_signature),
+    event_date      date,
+    event           bill_event,
+    PRIMARY KEY (bill_signature, event_date, event)
+);
+
+
 CREATE INDEX mp_votes_BY_stenogram_date_session_number ON mp_votes (stenogram_date, session_number);
+
 
 CREATE EXTENSION first_last_agg;
 

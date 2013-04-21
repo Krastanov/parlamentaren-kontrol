@@ -24,6 +24,8 @@ u'оспорени текстове(преразглеждане зала (сл�
 u'оспорен по принцип(преразглеждане зала (след вето))':'challenged_after_veto',
 #u'обсъждане(зала първо четене)':                       'proposed_1st', see signature 002-02-50
 }
+
+
 ##############################################################################
 # Gather bills.
 ##############################################################################
@@ -72,4 +74,15 @@ for month in parser_calendar.find('div', id='calendar').find_all('a'):
             ev_date = datetime.datetime.strptime(ev_date_str, '%d/%m/%Y')
             billcur.execute("""INSERT INTO bill_history VALUES (%s, %s, %s)""",
                             (sig, ev_date, state_of_bill_dict[descr]))
+
+        # is it a law?
+        try:
+            law_href = table.find_all('tr')[12].find('a').get('href')
+            sg_issue, sg_year = map(int, table.find_all('tr')[11].find_all('td')[1].string.split()[1].split('/'))
+            law_text = '\n'.join(map(unicode, bs4.BeautifulSoup(urlopen(base_url+law_href).read()).find('table', class_='bills').find('td', colspan='2').contents))
+            lawcur = db.cursor()
+            lawcur.execute("""INSERT INTO laws VALUES (%s, %s, %s, %s)""",
+                           (sig, sg_issue, datetime.date(sg_year, 1, 1), law_text))
+        except IndexError:
+            pass
         db.commit()

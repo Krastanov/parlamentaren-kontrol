@@ -458,6 +458,42 @@ def write_MPs_overview_page():
 
 
 ##############################################################################
+# Per bill stuff.
+##############################################################################
+def write_bills_pages():
+    logger_html.info("Generating bills html pages.")
+
+    #################
+    # Per MP pages. #
+    #################
+    per_bill_template = templates.get_template('bill_D_S_template.html')
+    billcur = db.cursor()
+    billcur.execute("""SELECT * FROM bills""")
+    count = 0
+    for name, sig, date, original_url in billcur:
+        print count
+        count += 1
+        chroncur = db.cursor()
+        chroncur.execute("""SELECT event, event_date FROM bill_history
+                            WHERE bill_signature = %s""", (sig,))
+        authcur = db.cursor()
+        authcur.execute("""SELECT bill_author FROM bill_authors
+                           WHERE bill_signature = %s""", (sig,))
+        authors = [(a, 'mp_%s.html'%unidecode(a).replace(' ', '_').lower())
+                   for (a,) in authcur]
+        authcur.execute("""SELECT COUNT(*) FROM bills_by_government
+                           WHERE bill_signature = %s""", (sig,))
+        if authcur.fetchone()[0]:
+            authors.append((u'Mинистерски съвет', 'http://www.government.bg/'))
+        with open('generated_html/bill_%s_%s.html'%(date.strftime('%Y%m%d'), sig), 'w') as html_file:
+            html_file.write(per_bill_template.render(name=name,
+                                                     chronology=chroncur.fetchall(),
+                                                     authors=authors,
+                                                     original_url=original_url))
+            sitemap.add('bill_%s_%s.html'%(date.strftime('%Y%m%d'), sig), 0.7)
+
+
+##############################################################################
 # Per stenogram stuff.
 ##############################################################################
 def write_stenogram_pages():
@@ -665,6 +701,7 @@ todo = [
         write_MPs_emails_page,
         write_graph_visualizations,
         write_MPs_overview_page,
+        write_bills_pages,
         write_list_of_stenograms_summary_pages,
         write_stenogram_pages,
         sitemap.write

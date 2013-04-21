@@ -102,6 +102,13 @@ CREATE TABLE bill_history (
     PRIMARY KEY (bill_signature, event_date, event)
 );
 
+CREATE TABLE laws (
+    bill_signature  text PRIMARY KEY REFERENCES bills (bill_signature),
+    sg_issue        int,
+    sg_year         date,
+    text            text
+);
+
 
 CREATE INDEX mp_votes_BY_stenogram_date_session_number ON mp_votes (stenogram_date, session_number);
 

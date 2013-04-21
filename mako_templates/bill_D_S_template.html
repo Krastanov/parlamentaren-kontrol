@@ -1,0 +1,28 @@
+<%inherit file="base_template.html" />
+<%namespace name="lay" file="layout_components.html"/>
+<%block name="title">${name}</%block>
+
+<div class="col_12"><a href="${original_url}">Първоизточник</a></div>
+
+<%lay:section header='Автори'>
+    <ul class="alt">
+        % for auth_name, auth_url in authors:
+        <li><a href="${auth_url}">${auth_name}</a></li>
+        % endfor
+    </ul>
+</%lay:section>
+
+<%lay:section header='Хронология'>
+    <ul class="alt">
+        % for event, date in chronology:
+        <% url_date = date.strftime('%Y%m%d') %>
+        <% str_date = date.strftime('%d/%m/%Y') %>
+        <% descr = "%s: %s"%(date.strftime('%d/%m/%Y'), event) %>
+            % if event == 'vetoed':
+            <li>${descr}</li>
+            % else:
+            <li><a href="stenogram${url_date}.html">${descr}</a></li>
+            % endif
+        % endfor
+    </ul>
+</%lay:section>

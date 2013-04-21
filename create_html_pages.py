@@ -75,7 +75,7 @@ sitemap = Sitemap()
 ##############################################################################
 #TODO probably rewrite in pandas panel objects (and deal with NaNs)
 data_loaded = False
-def load_data():
+def load_votes_regs_data():
     global data_loaded
     if data_loaded:
         return
@@ -290,7 +290,7 @@ def write_MPs_emails_page():
 # Graph visualizations.
 ##############################################################################
 def write_graph_visualizations():
-    load_data()
+    load_votes_regs_data()
     logger_html.info("Generating the graph visualizations.")
 
     # Prepare the graph matrix.
@@ -398,7 +398,7 @@ def write_list_of_stenograms_summary_pages():
 # Per MP stuff.
 ##############################################################################
 def write_MPs_overview_page():
-    load_data()
+    load_votes_regs_data()
 
     ############
     # Summary. #
@@ -462,10 +462,6 @@ def write_MPs_overview_page():
 ##############################################################################
 def write_bills_pages():
     logger_html.info("Generating bills html pages.")
-
-    #################
-    # Per MP pages. #
-    #################
     per_bill_template = templates.get_template('bill_D_S_template.html')
     billcur = db.cursor()
     billcur.execute("""SELECT * FROM bills""")
@@ -503,17 +499,15 @@ def write_stenogram_pages():
     per_stenogram_vote_template = templates.get_template('stenogramNvoteI_template.html')
 
     # Get all stenograms into an iterator.
-    cur.execute("""SELECT COUNT(*) FROM stenograms""")
-    len_stenograms = cur.fetchone()[0]
-    cur.execute("""SELECT stenogram_date, text, vote_line_nb, problem, original_url
-                   FROM stenograms
-                   ORDER BY stenogram_date""")
+    stenogramcur = db.cursor()
+    stenogramcur.execute("""SELECT stenogram_date, text, vote_line_nb, problem, original_url
+                            FROM stenograms
+                            ORDER BY stenogram_date""")
+    len_stenograms = stenogramcur.rowcount
 
-    for st_i, (stenogram_date, text, vote_line_nb, problem, original_url) in enumerate(cur):
-
+    for st_i, (stenogram_date, text, vote_line_nb, problem, original_url) in enumerate(stenogramcur):
         datestr = stenogram_date.strftime('%Y%m%d')
         logger_html.info("Generating HTML and plots for %s - %d of %d" % (datestr, st_i+1, len_stenograms))
-
         if problem:
             logger_html.error("The database reports problems with stenogram %s. Skipping." % datestr)
             # Generate the main page for the current stenogram.
@@ -531,11 +525,9 @@ def write_stenogram_pages():
                                                               vote_line_nb=vote_line_nb))
                 sitemap.add(filename, 0.7)
             continue
-
         ################################
         # Registration data per party. #
         ################################
-
         # Load all party registration data for the current stenogram.
         subcur.execute("""SELECT party_name, present, expected
                           FROM party_reg
@@ -546,10 +538,8 @@ def write_stenogram_pages():
         party_names = [n for n in party_names]
         reg_presences = np.array(reg_presences)
         reg_expected = np.array(reg_expected)
-
         # Plot registration data.
         registration_figure(stenogram_date, party_names, reg_presences, reg_expected)
-
         # Load the registration-by-name data.
         subcur.execute("""SELECT mp_name, with_party, reg
                           FROM mp_reg
@@ -557,7 +547,6 @@ def write_stenogram_pages():
                           ORDER BY mp_name""",
                           (stenogram_date,))
         reg_by_name = subcur.fetchall()
-
         # Generate registration summary for the current stenogram.
         filename = 'stenogram%sregistration.html'%datestr
         with open('generated_html/%s'%filename, 'w') as html_file:
@@ -568,22 +557,21 @@ def write_stenogram_pages():
                                                               reg_by_name=reg_by_name))
             sitemap.add(filename, 0.6, [('registration%s.png' % stenogram_date.strftime('%Y%m%d'),
                                          u'Регистрирани и отсъстващи депутати на %s.' % stenogram_date.strftime('%Y-%m-%d'))])
-
-
         #########################
         # Voting sessions data. #
         #########################
-
         # Check whether there were any voting sessions at all.
-        subcur.execute("""SELECT COUNT(*) FROM vote_sessions WHERE stenogram_date = %s""", (stenogram_date,))
-        len_sessions = subcur.fetchone()[0]
-
+        sesscur = db.cursor()
+        sesscur.execute("""SELECT description
+                           FROM vote_sessions
+                           WHERE stenogram_date = %s
+                           ORDER BY session_number""",
+                           (stenogram_date,))
+        len_sessions = sesscur.rowcount
         if len_sessions:
-
             ###########
             # LOADING #
             ###########
-
             # Load all party absence and vote data for all sessions of the current stenogram.
             # list format: vote_* is [party1_votes, ...], party*_votes is [session1_vote, ...], session*_vote is int
             votes_yes = []
@@ -609,15 +597,8 @@ def write_stenogram_pages():
                 votes_absences_percent.append(absent_party*100/reg_expected[party_i])
             votes_by_session_type_party = np.array([votes_yes, votes_no, votes_abstain, votes_absences
                                                    ]).transpose(2,0,1)
-
             # Load all session descriptions for the current stenogram.
-            subcur.execute("""SELECT description
-                              FROM vote_sessions
-                              WHERE stenogram_date = %s
-                              ORDER BY session_number""",
-                              (stenogram_date,))
-            vote_descriptions = [d[0] for d in subcur]
-
+            vote_descriptions = [d[0] for d in sesscur]
             # Load the list-by-mp-name vote for each session.
             votes_by_session_by_name = []
             for session_i in range(len_sessions):
@@ -628,14 +609,11 @@ def write_stenogram_pages():
                                   ORDER BY mp_name""",
                                   (session_i, stenogram_date))
                 votes_by_session_by_name.append(subcur.fetchall())
-
             ##############
             # PRESENTING #
             ##############
-
             # Plot absences timeseries.
             absences_figure(stenogram_date, party_names, votes_absences, votes_absences_percent)
-
             # Generate plots and html dedicated to a single session.
             for session_i, (description, votes_by_name, votes_by_type_party)\
                 in enumerate(zip(vote_descriptions, votes_by_session_by_name, votes_by_session_type_party)):
@@ -652,7 +630,6 @@ def write_stenogram_pages():
                                                                        votes_by_name=votes_by_name))
                     sitemap.add(filename, 0.6, [('session%svotes%s.png' % (stenogram_date.strftime('%Y%m%d'), session_i+1),
                                                  u'Разпределение на гласовете и отсътвията на депутати по партии на %s за гласуване номер %s.' % (stenogram_date.strftime('%Y-%m-%d'), session_i+1))])
-
             #######################################################
             # Big summary page in case there are voting sessions. #
             #######################################################
@@ -695,16 +672,16 @@ def write_stenogram_pages():
 # Execute all.
 ##############################################################################
 todo = [
-        copy_static,
-        write_sql_dump,
-        write_static_pages,
-        write_MPs_emails_page,
-        write_graph_visualizations,
-        write_MPs_overview_page,
-        write_bills_pages,
-        write_list_of_stenograms_summary_pages,
+#        copy_static,
+#        write_sql_dump,
+#        write_static_pages,
+#        write_MPs_emails_page,
+#        write_graph_visualizations,
+#        write_MPs_overview_page,
+#        write_bills_pages,
+#        write_list_of_stenograms_summary_pages,
         write_stenogram_pages,
-        sitemap.write
+#        sitemap.write
         ]
 for f in todo:
     try:

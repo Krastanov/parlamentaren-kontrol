@@ -17,7 +17,7 @@ from pk_plots import (registration_figure, absences_figure,
         alltime_regs_singleMP, alltime_votes_singleMP_compare_all,
         alltime_votes_singleMP_compare_party, evolution_of_votes_singleMP)
 
-from pk_tools import unidecode
+from pk_tools import unidecode, unicode2urlsafe
 
 def index(a, x):
     i = bisect.bisect_left(a, x)
@@ -427,7 +427,7 @@ def write_MPs_overview_page():
     only_dates = [d[0] for d in session_dates]
     for mp_i, (name, party, party_now, original_url) in enumerate(mps):
         logger_html.info("Generating page for MP %d of %d."%(mp_i, len(mps)))
-        asciiname = unidecode(name).replace(' ', '_').lower()
+        asciiname = unicode2urlsafe(name)
         alltime_regs_singleMP(mps_all_reg[mp_i,:], name, asciiname)
         alltime_votes_singleMP_compare_all(mps_all_with_against_all[mp_i,:],
                                            mps_all_vote[mp_i,2:],
@@ -475,7 +475,7 @@ def write_bills_pages():
         authcur = db.cursor()
         authcur.execute("""SELECT bill_author FROM bill_authors
                            WHERE bill_signature = %s""", (sig,))
-        authors = [(a, 'mp_%s.html'%unidecode(a).replace(' ', '_').lower())
+        authors = [(a, 'mp_%s.html'%unicode2urlsafe(a))
                    for (a,) in authcur]
         authcur.execute("""SELECT COUNT(*) FROM bills_by_government
                            WHERE bill_signature = %s""", (sig,))

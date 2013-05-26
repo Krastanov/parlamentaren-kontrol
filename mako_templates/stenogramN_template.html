@@ -58,15 +58,8 @@
 
 <%lay:section header='Пълен Текст'>
     <p>
-    <% count = 1 %>
-    % for i, line in enumerate(text):
-        % if i in vote_line_nb:
-            <strong id="votesInText${count}">${line}</strong>
-            <% count += 1 %>
-        % else:
-            ${line}
-        % endif
-        <br />
-    % endfor
+    ${stenogram_text}
     </p>
 </%lay:section>
+
+${'\n'.join(divs)}

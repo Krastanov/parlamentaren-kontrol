@@ -17,7 +17,7 @@ from pk_plots import (registration_figure, absences_figure,
         alltime_regs_singleMP, alltime_votes_singleMP_compare_all,
         alltime_votes_singleMP_compare_party, evolution_of_votes_singleMP)
 
-from pk_tools import unidecode, unicode2urlsafe
+from pk_tools import unidecode, unicode2urlsafe, groupby_list, annotate_mps
 
 def index(a, x):
     i = bisect.bisect_left(a, x)
@@ -25,7 +25,6 @@ def index(a, x):
         return i
     raise ValueError
 
-groupby_list = lambda l, kf: [(k, list(v)) for k, v in itertools.groupby(l, kf)]
 
 ##############################################################################
 # Load templates.
@@ -508,6 +507,15 @@ def write_stenogram_pages():
     for st_i, (stenogram_date, text, vote_line_nb, problem, original_url) in enumerate(stenogramcur):
         datestr = stenogram_date.strftime('%Y%m%d')
         logger_html.info("Generating HTML and plots for %s - %d of %d" % (datestr, st_i+1, len_stenograms))
+
+        def counter(count=[0]):
+            count[0] = count[0]+1
+            return count[0]
+        stenogram_text = '<br />\n'.join('<strong id="votesInText%d">%s</strong>'%(counter(), l)
+                                         if i in vote_line_nb else l
+                                         for i, l in enumerate(text))
+        stenogram_text, divs = annotate_mps(stenogram_text)
+
         if problem:
             logger_html.error("The database reports problems with stenogram %s. Skipping." % datestr)
             # Generate the main page for the current stenogram.
@@ -521,8 +529,8 @@ def write_stenogram_pages():
                                                               votes_by_session_type_party=None,
                                                               reg_presences=None,
                                                               reg_expected=None,
-                                                              text=text,
-                                                              vote_line_nb=vote_line_nb))
+                                                              divs=divs,
+                                                              stenogram_text=stenogram_text))
                 sitemap.add(filename, 0.7)
             continue
         ################################
@@ -644,8 +652,8 @@ def write_stenogram_pages():
                                                               votes_by_session_type_party=votes_by_session_type_party,
                                                               reg_presences=reg_presences,
                                                               reg_expected=reg_expected,
-                                                              text=text,
-                                                              vote_line_nb=vote_line_nb))
+                                                              divs=divs,
+                                                              stenogram_text=stenogram_text))
                 sitemap.add(filename, 0.7, [('absences%s.png' % stenogram_date.strftime('%Y%m%d'),
                                              u'Промяна на броя присъстващи/отсъстващи депутати на %s.' % stenogram_date.strftime('%Y-%m-%d'))])
         else:
@@ -663,8 +671,8 @@ def write_stenogram_pages():
                                                               votes_by_session_type_party=None,
                                                               reg_presences=reg_presences,
                                                               reg_expected=reg_expected,
-                                                              text=text,
-                                                              vote_line_nb=vote_line_nb))
+                                                              divs=divs,
+                                                              stenogram_text=stenogram_text))
                 sitemap.add(filename, 0.7)
 
 
@@ -672,7 +680,7 @@ def write_stenogram_pages():
 # Execute all.
 ##############################################################################
 todo = [
-#        copy_static,
+        copy_static,
 #        write_sql_dump,
 #        write_static_pages,
 #        write_MPs_emails_page,
@@ -683,6 +691,8 @@ todo = [
         write_stenogram_pages,
 #        sitemap.write
         ]
+import pk_plots
+pk_plots.do_plots = False
 for f in todo:
     try:
         f()

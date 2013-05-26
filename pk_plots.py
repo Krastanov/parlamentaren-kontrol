@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rcParams, gridspec
 
+do_plots = True
 
 ##############################################################################
 # Matplotlib configuration.
@@ -26,6 +27,7 @@ rcParams['lines.antialiased'] = True
 ##############################################################################
 def registration_figure(date, names, reg_presences, reg_expected):
     """Barchart: x:name vs y:stacked presences and absences."""
+    if not do_plots: return
     datestr = date.strftime('%Y%m%d')
     datestr_human = date.strftime('%d/%m/%Y')
     absences = reg_expected - reg_presences
@@ -53,6 +55,7 @@ def registration_figure(date, names, reg_presences, reg_expected):
 
 def absences_figure(date, names, vote_absences, vote_absences_percent):
     """Time series chart: x:session nb vs y:absences, color:name"""
+    if not do_plots: return
     datestr = date.strftime('%Y%m%d')
     datestr_human = date.strftime('%d/%m/%Y')
     vote_absences = np.column_stack(vote_absences)
@@ -90,6 +93,7 @@ main.set_ylabel(u'Брой Депутати')
 summ.set_title(u'Общо')
 
 def session_votes_by_party_figure(date, i, party_names, yes, no, abstain, absences):
+    if not do_plots: return
     datestr = date.strftime('%Y%m%d')
     datestr_human = date.strftime('%d/%m/%Y')
     pos = np.arange(len(party_names))
@@ -119,6 +123,7 @@ def session_votes_by_party_figure(date, i, party_names, yes, no, abstain, absenc
 # Pie plots for MPs.
 ##############################################################################
 def alltime_regs(present, absent, manual):
+    if not do_plots: return
     f = plt.figure(figsize=figsize_square)
     f.suptitle(u'Обобщение на Всички Регистрации.')
     s = f.add_subplot(1,1,1)
@@ -128,6 +133,7 @@ def alltime_regs(present, absent, manual):
     plt.close()
 
 def alltime_votes(y, n, abst, absent):
+    if not do_plots: return
     f = plt.figure(figsize=figsize_square)
     f.suptitle(u'Обобщение на Всички Гласове.')
     s = f.add_subplot(1,1,1)
@@ -137,6 +143,7 @@ def alltime_votes(y, n, abst, absent):
     plt.close()
 
 def alltime_regs_singleMP((present, absent, manual), name, asciiname):
+    if not do_plots: return
     f = plt.figure(figsize=figsize_square_small)
     f.suptitle(u'Обобщение на Всички Регистрации на\n%s'%name)
     s = f.add_subplot(1,1,1)
@@ -146,6 +153,7 @@ def alltime_regs_singleMP((present, absent, manual), name, asciiname):
     plt.close()
 
 def alltime_votes_singleMP_compare_all((w, a), (abst, absent), name, asciiname):
+    if not do_plots: return
     f = plt.figure(figsize=figsize_square_small)
     f.suptitle(u'Обобщение на Всички Гласове на\n%s'%name)
     s = f.add_subplot(1,1,1)
@@ -155,6 +163,7 @@ def alltime_votes_singleMP_compare_all((w, a), (abst, absent), name, asciiname):
     plt.close()
 
 def alltime_votes_singleMP_compare_party((w, a), (abst, absent), name, asciiname):
+    if not do_plots: return
     f = plt.figure(figsize=figsize_square_small)
     f.suptitle(u'Обобщение на Всички Гласове на\n%s'%name)
     s = f.add_subplot(1,1,1)
@@ -164,6 +173,7 @@ def alltime_votes_singleMP_compare_party((w, a), (abst, absent), name, asciiname
     plt.close()
 
 def evolution_of_votes_singleMP(dates, votes, wa_all, wa_party, name, asciiname):
+    if not do_plots: return
     f = plt.figure(figsize=figsize_long)
     f.suptitle(u'Гласове и отсъствия на %s през годините.'%name)
     absences = f.add_subplot(3,1,3)

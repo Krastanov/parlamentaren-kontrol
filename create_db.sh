@@ -23,10 +23,22 @@ CREATE TABLE parties (
 );
 
 CREATE TABLE mps (
-       mp_name          text PRIMARY KEY,
+       mp_name  text PRIMARY KEY,
+       email    text[]
+);
+
+CREATE TABLE parliaments (
+       parliament  integer PRIMARY KEY
+);
+INSERT INTO parliaments VALUES (41);
+INSERT INTO parliaments VALUES (42);
+
+CREATE TABLE elections (
+       mp_name          text REFERENCES mps (mp_name),
        orig_party_name  text REFERENCES parties (party_name),
-       email            text,
-       original_url     text UNIQUE NOT NULL
+       parliament       integer REFERENCES parliaments (parliament),
+       original_url     text UNIQUE NOT NULL,
+       PRIMARY KEY (mp_name, orig_party_name, parliament)
 );
 
 CREATE TYPE mp_vote_enum AS ENUM ('yes', 'no', 'abstain', 'absent');

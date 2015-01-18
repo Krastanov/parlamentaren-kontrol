@@ -184,13 +184,14 @@ logger_to_db = logging.getLogger('to_db')
 
 
 cur.execute("""SELECT original_url FROM stenograms""")
-urls_already_in_db = set(zip(*cur.fetchall())[0])
-stenogram_IDs = [i for i in map(str.strip, open('data/IDs_plenary_stenograms').readlines())
-                 if unicode('http://www.parliament.bg/bg/plenaryst/ns/7/ID/'+i) not in urls_already_in_db]
-for i, ID in enumerate(stenogram_IDs):
+urls_already_in_db = set(_[0] for _ in cur.fetchall())
+stenogram_IDs = [(i, u'http://www.parliament.bg/bg/plenaryst/ns/7/ID/'+i)
+                 for i in map(str.strip, open('data/IDs_plenary_stenograms_41').readlines())]
+stenogram_IDs += [(i, u'http://www.parliament.bg/bg/plenaryst/ns/50/ID/'+i)
+                  for i in map(str.strip, open('data/IDs_plenary_stenograms_42').readlines())]
+for i, (ID, original_url) in enumerate(stenogram_IDs[-5:]):
     problem_by_name = False
     problem_by_party = False
-    original_url = unicode('http://www.parliament.bg/bg/plenaryst/ns/7/ID/'+ID)
     logger_to_db.info("Parsing stenogram %s - %d of %d." % (ID, i+1, len(stenogram_IDs)))
 
     try:

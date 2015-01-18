@@ -1,3 +1,7 @@
+# The Project is in Hibernation
+
+Go to `parlament.obshtestvo.bg` for a similar somewhat more alive project.
+
 # Quick Start
 
  1. Install the necessary packages.

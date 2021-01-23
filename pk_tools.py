@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import itertools
 import re
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import unidecode as _unidecode
 
 from pk_db import db
@@ -13,8 +13,8 @@ def urlopen(url, retry=3):
     """``urllib2.urlopen`` with retry"""
     for i in range(retry):
         try:
-            return urllib2.urlopen(url)
-        except urllib2.HTTPError as e:
+            return urllib.request.urlopen(url)
+        except urllib.error.HTTPError as e:
             pass
     raise e
 
@@ -23,26 +23,26 @@ def canonical_party_name(name):
     """Gives a canonical name for a party."""
     party_dict = {
         # for the xml parser
-        u'Партия "Атака"'                   : u'АТАКА',
-        u'ПП „Атака“'                       : u'АТАКА',
-        u'ПП „ГЕРБ“'                        : u'ГЕРБ',
-        u'ДПС "Движение за права и свободи"': u'ДПС',
-        u'ПП „Движение за права и свободи“' : u'ДПС',
-        u'"Синята коалиция"'                : u'СК',
-        u'"Коалиция за България"'           : u'КБ',
-        u'КП „Коалиция за България“'        : u'КБ',
-        u'"Ред, законност и справедливост"' : u'РЗС',
+        'Партия "Атака"'                   : 'АТАКА',
+        'ПП „Атака“'                       : 'АТАКА',
+        'ПП „ГЕРБ“'                        : 'ГЕРБ',
+        'ДПС "Движение за права и свободи"': 'ДПС',
+        'ПП „Движение за права и свободи“' : 'ДПС',
+        '"Синята коалиция"'                : 'СК',
+        '"Коалиция за България"'           : 'КБ',
+        'КП „Коалиция за България“'        : 'КБ',
+        '"Ред, законност и справедливост"' : 'РЗС',
         # for the excel parser
-        u'НЕЗ': u'независим',
+        'НЕЗ': 'независим',
     }
     return party_dict.get(name, name)
 
 
 def unidecode(string):
     """Transliterate unicode to latin."""
-    return _unidecode.unidecode(string.replace(u'ѝ',u'и')
-                                      .replace(u'ъ',u'а').replace(u'Ъ',u'А')
-                                      .replace(u'ь',u'й').replace(u'Ь',u'Й'))
+    return _unidecode.unidecode(string.replace('ѝ','и')
+                                      .replace('ъ','а').replace('Ъ','А')
+                                      .replace('ь','й').replace('Ь','Й'))
 
 
 def unicode2urlsafe(string):
@@ -56,16 +56,16 @@ links = ["mp_%s.html"%unicode2urlsafe(n) for n in names]
 fl_names = [' '.join(n.split()[::2]) for n in names]
 l_names = [n.split()[-1] for n in names]
 
-names_links    = sortgroupby_list(zip(   names,names,links), lambda _:_[0])
-fl_names_links = sortgroupby_list(zip(fl_names,names,links), lambda _:_[0])
-l_names_links  = sortgroupby_list(zip( l_names,names,links), lambda _:_[0])
+names_links    = sortgroupby_list(list(zip(   names,names,links)), lambda _:_[0])
+fl_names_links = sortgroupby_list(list(zip(fl_names,names,links)), lambda _:_[0])
+l_names_links  = sortgroupby_list(list(zip( l_names,names,links)), lambda _:_[0])
 
 permited_separators =  '=[.,?!:; ()]'
 re1 = '(?<{s}){k}(?{s})'
 re2 =       '^{k}(?{s})'
 re3 = '(?<{s}){k}$'
 re4 =       '^{k}$'
-base_re = (u'(%s|%s|%s|%s)(?!=&nbsp;)'%(re1, re2, re3, re4)).format(s=permited_separators, k='{k}')
+base_re = ('(%s|%s|%s|%s)(?!=&nbsp;)'%(re1, re2, re3, re4)).format(s=permited_separators, k='{k}')
 
 escape_spaces = lambda n: n.replace(' ', '&nbsp;')
 

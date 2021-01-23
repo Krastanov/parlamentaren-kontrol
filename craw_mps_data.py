@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function
+
 import itertools
 import os
 import xml
@@ -49,7 +49,7 @@ new_mps = [
 com = """curl http://www.parliament.bg/bg/MP 2> /dev/null | grep ">Информация" | grep -o '[0-9]*' | sort -n | """
 new_mps = [int(_.strip()) for _ in os.popen(com+"cat","r").readlines()]
 first, last = min(new_mps), max(new_mps)
-new_mps += range(new_mps[-1]+1, last+1)
+new_mps += list(range(new_mps[-1]+1, last+1))
 # Preprocessed list of MPs from previous parliaments. (There is no fast way to
 # get this from the website). `range(835, last+1)` will work as well but there
 # are many invalid ids that are just a waste of time to craw.
@@ -81,11 +81,11 @@ border_id = old_mps[-1]+1
 cur.execute("""SELECT original_url FROM elections""")
 urls_already_in_db = set(_[0] for _ in cur.fetchall())
 for i in all_mps:
-    original_url = u'http://www.parliament.bg/bg/MP/%d'%i
+    original_url = 'http://www.parliament.bg/bg/MP/%d'%i
     if original_url in urls_already_in_db:
         continue
     logger_mps.info("Parsing data for MP id %s" % i)
-    xml_file = u'http://www.parliament.bg/export.php/bg/xml/MP/%d'%i
+    xml_file = 'http://www.parliament.bg/export.php/bg/xml/MP/%d'%i
     xml_str = urlopen(xml_file).read()
     try:
         r = xmltodict.parse(xml_str)
@@ -105,7 +105,7 @@ for i in all_mps:
             mail = ', '.join([d.strip() for d in data[9][1:]])
             mail = mail.replace(';', ',').replace(':', ',')
             force = ' '.join(data[6][-1].split(' ')[:-1])
-        except Exception, e:
+        except Exception as e:
             logger_mps.error("The csv file for MP %s is unparsable as well due to %s. Skipping this id."%(i, str(e)))
             continue
     url_list.append(original_url)
@@ -116,16 +116,16 @@ for i in all_mps:
 
 forces_list = [canonical_party_name(_) for _ in forces_list]
 mails_list = [[__.strip() for __ in _.split(',')] for _ in mails_list]
-dict_name_mail = dict(zip(names_list, mails_list))
+dict_name_mail = dict(list(zip(names_list, mails_list)))
 
 
 cur.execute("""SELECT party_name FROM parties""")
 forces_already_in_db = set(_[0] for _ in cur.fetchall())
 cur.executemany("""INSERT INTO parties VALUES (%s)""",
-                [(_,) for _ in set(forces_list+[u'независим'])
+                [(_,) for _ in set(forces_list+['независим'])
                       if _ not in forces_already_in_db])
 cur.executemany("""INSERT INTO mps VALUES (%s, %s)""",
-                dict_name_mail.items())
+                list(dict_name_mail.items()))
 cur.executemany("""INSERT INTO elections VALUES (%s, %s, %s, %s)""",
                 ((n, f, 41 if int(u.split('/')[-1]) < border_id else 42, u)
                  for n, f, u in zip(names_list, forces_list, url_list)))

@@ -46,7 +46,7 @@ new_mps = [
 1684, 1685, 1686, 1687, 1688, 1689, 1690, 1691, 1692, 1693, 1694, 1695, 1696,
 1697, 1698, 1699, 1700, 1701, 1702, 1703, 1704, 1705, 1706, 1707, 1708, 1709,
 1727, 1728, 1729, 1730, 1732, 1733, 1734]
-com = """curl http://www.parliament.bg/bg/MP 2> /dev/null | grep ">Информация" | grep -o '[0-9]*' | sort -n | """
+com = """curl https://www.parliament.bg/bg/MP 2> /dev/null | grep ">Информация" | grep -o '[0-9]*' | sort -n | """
 new_mps = [int(_.strip()) for _ in os.popen(com+"cat","r").readlines()]
 first, last = min(new_mps), max(new_mps)
 new_mps += list(range(new_mps[-1]+1, last+1))
@@ -81,11 +81,11 @@ border_id = old_mps[-1]+1
 cur.execute("""SELECT original_url FROM elections""")
 urls_already_in_db = set(_[0] for _ in cur.fetchall())
 for i in all_mps:
-    original_url = 'http://www.parliament.bg/bg/MP/%d'%i
+    original_url = 'https://www.parliament.bg/bg/MP/%d'%i
     if original_url in urls_already_in_db:
         continue
     logger_mps.info("Parsing data for MP id %s" % i)
-    xml_file = 'http://www.parliament.bg/export.php/bg/xml/MP/%d'%i
+    xml_file = 'https://www.parliament.bg/export.php/bg/xml/MP/%d'%i
     xml_str = urlopen(xml_file).read()
     try:
         r = xmltodict.parse(xml_str)
@@ -98,7 +98,7 @@ for i in all_mps:
     except xml.parsers.expat.ExpatError:
         logger_mps.warning("Parsing the xml file for MP %s failed. Trying csv."%i)
         try:
-            csv_file = urlopen('http://www.parliament.bg/export.php/bg/csv/MP/%d'%i)
+            csv_file = urlopen('https://www.parliament.bg/export.php/bg/csv/MP/%d'%i)
             data = [l.decode('utf-8').strip().replace('&quot;','"').split(';')[:-1] for l in
                     csv_file.readlines()]
             name = ' '.join([d.strip() for d in data[0]])

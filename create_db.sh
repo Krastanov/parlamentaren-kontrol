@@ -30,8 +30,6 @@ CREATE TABLE mps (
 CREATE TABLE parliaments (
        parliament  integer PRIMARY KEY
 );
-INSERT INTO parliaments VALUES (41);
-INSERT INTO parliaments VALUES (42);
 
 CREATE TABLE elections (
        mp_name          text REFERENCES mps (mp_name),

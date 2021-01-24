@@ -1,26 +1,23 @@
-curl "http://www.parliament.bg/bg/plenaryst/ns/7/period/" 2> /dev/null |\
-    grep -P "/bg/plenaryst/ns/7/period/\d" |\
+download () {
+echo Assembly $2
+curl "https://www.parliament.bg/bg/plenaryst/ns/$1/period/" 2> /dev/null |\
+    grep -P "/bg/plenaryst/ns/$1/period/\d" |\
     perl -pe "s|.*?([12]\d\d\d-\d*).*|\1|" |\
-    cat > data/periods_plenary_stenograms_41
-curl "http://www.parliament.bg/bg/plenaryst/ns/50/period/" 2> /dev/null |\
-    grep -P "/bg/plenaryst/ns/50/period/\d" |\
-    perl -pe "s|.*?([12]\d\d\d-\d*).*|\1|" |\
-    cat > data/periods_plenary_stenograms_42
+    cat > craw_data/periods_plenary_stenograms_$2
 
+rm -f craw_data/IDs_plenary_stenograms_$2
+for i in `cat craw_data/periods_plenary_stenograms_$2`
+do
+    echo $i
+    curl "https://www.parliament.bg/bg/plenaryst/ns/$1/period/"$i 2> /dev/null |\
+        grep "/bg/plenaryst/ns/$1/ID/" |\
+        perl -pe "s|.*?/ID/(\d*).*|\1|" |\
+        cat >> craw_data/IDs_plenary_stenograms_$2
+done
+}
 
-rm -f data/IDs_plenary_stenograms_41
-for i in `cat data/periods_plenary_stenograms_41`
-do
-    curl "http://www.parliament.bg/bg/plenaryst/ns/7/period/"$i 2> /dev/null |\
-        grep "/bg/plenaryst/ns/7/ID/" |\
-        perl -pe "s|.*?/ID/(\d*).*|\1|" |\
-        cat >> data/IDs_plenary_stenograms_41
-done
-rm -f data/IDs_plenary_stenograms_42
-for i in `cat data/periods_plenary_stenograms_42`
-do
-    curl "http://www.parliament.bg/bg/plenaryst/ns/50/period/"$i 2> /dev/null |\
-        grep "/bg/plenaryst/ns/50/ID/" |\
-        perl -pe "s|.*?/ID/(\d*).*|\1|" |\
-        cat >> data/IDs_plenary_stenograms_42
-done
+# XXX Hardcoded values
+download 7 41
+download 50 42
+download 51 43
+download 52 44

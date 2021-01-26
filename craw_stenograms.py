@@ -1,13 +1,14 @@
 import datetime
+import os.path
 import re
 
 import xlrd
+import openpyxl
 
 from pk_db import db, cur
 from pk_logging import logging, logger_workaround
 from pk_namedtuples import *
 from pk_tools import urlopen, canonical_party_name, StenogramsHTMLParser
-canonical_party_name = lambda a:a
 
 ##############################################################################
 # Excel Parsing
@@ -24,8 +25,53 @@ class ExcelWarnings(object):
 excel_warnings = ExcelWarnings()
 
 
-registration_marker = u'РЕГИСТРАЦИЯ'
-vote_marker = u'ГЛАСУВАНЕ'
+class XLSFile(object):
+    def __init__(self, filename):
+        self.book = xlrd.open_workbook(filename, logfile=excel_warnings)
+        self.sheet = self.book.sheet_by_index(0)
+    @property
+    def nrows(self):
+        return self.sheet.nrows
+    @property
+    def ncols(self):
+        return self.sheet.ncols
+    def cell_value(self, rowx, colx):
+        return self.sheet.cell_value(rowx=rowx, colx=colx)
+    def close(self):
+        pass
+
+class XLSXFile(object):
+    def __init__(self, filename):
+        self.wb = openpyxl.load_workbook(filename=filename, read_only=True)
+        self.ws = self.wb.active
+        self.rows = list(self.ws.rows)
+    @property
+    def nrows(self):
+        if self.rows[-1]==(): # Seems to be consistently empty
+            return len(self.rows)-1
+        return len(self.rows)
+    @property
+    def ncols(self):
+        return len(self.rows[2]) # The one that usually contains the vote headers
+    def cell_value(self, rowx, colx):
+        try:
+            return self.rows[rowx][colx].value
+        except IndexError:
+            return ''
+    def close(self):
+        self.wb.close()
+
+def xlsopen(filename):
+    if filename.endswith('xls'):
+        return XLSFile(filename)
+    elif filename.endswith('xlsx'):
+        return XLSXFile(filename)
+    else:
+        raise ValueError('Bad excel file extension')
+            
+
+registration_marker = 'РЕГИСТРАЦИЯ'
+vote_marker = 'ГЛАСУВАНЕ'
 
 def parse_excel_by_name(filename):
     """
@@ -45,18 +91,20 @@ def parse_excel_by_name(filename):
     # XXX Workarounds
     # Correct spelling errors in names of MPs.
     def MP_name_spellcheck(name):
-        tr_dict = {u'МАРИЯНА ПЕТРОВА ИВАНОВА-НИКОЛОВА': u'МАРИАНА ПЕТРОВА ИВАНОВА-НИКОЛОВА',
-                   u'ВЕНЦЕСЛАВ ВАСИЛЕВ ВЪРБАНОВ': u'ВЕНЦИСЛАВ ВАСИЛЕВ ВЪРБАНОВ',
-                   u'АЛЕКСАНДЪР СТОЙЧЕВ СТОЙЧЕВ': u'АЛЕКСАНДЪР СТОЙЧЕВ СТОЙКОВ'}
+        tr_dict = {'МАРИЯНА ПЕТРОВА ИВАНОВА-НИКОЛОВА': 'МАРИАНА ПЕТРОВА ИВАНОВА-НИКОЛОВА',
+                   'ВЕНЦЕСЛАВ ВАСИЛЕВ ВЪРБАНОВ': 'ВЕНЦИСЛАВ ВАСИЛЕВ ВЪРБАНОВ',
+                   'АЛЕКСАНДЪР СТОЙЧЕВ СТОЙЧЕВ': 'АЛЕКСАНДЪР СТОЙЧЕВ СТОЙКОВ',
+                   'СЛАВЧО ПЕНЧЕВ БИНЕВ': 'СЛАВИ ПЕНЧЕВ БИНЕВ',
+                   'ДЕНИЦА ЗЛАТКОВА КАРАДЖОВА': 'ДЕНИЦА ЗЛАТКОВА ЗЛАТЕВА'}
         if name in tr_dict:
             logger_workaround.warning("Spelling error: %s" % name)
             return tr_dict[name]
         return name
     # Remove unregistered MPs.
     def filter_names(*args):
-        to_filter_out = [u'МИХАИЛ ВЛАДИМИРОВ ВЛАДОВ', u'НИКОЛАЙ НАНКОВ НАНКОВ']
-        zip_args = zip(*args)
-        filtered = filter(lambda a: a[0] not in to_filter_out, zip_args)
+        to_filter_out = ['МИХАИЛ ВЛАДИМИРОВ ВЛАДОВ', 'НИКОЛАЙ НАНКОВ НАНКОВ', 'ЕЛЕНА СТЕФАНОВА АКСИЕВА', 'ГЕОРГИ ДОБРЕВ ЕЛЕНКОВ']
+        zip_args = list(zip(*args))
+        filtered = list(filter(lambda a: a[0] not in to_filter_out, zip_args))
         if len(filtered) != len(zip_args):
             logger_workaround.warning("An MP was filtered out of the by-names list, because they are not registered as an MP.")
             return zip(*filtered)
@@ -64,11 +112,10 @@ def parse_excel_by_name(filename):
     # XXX End of Workarounds.
 
     # Translate the registration and vote markers.
-    tr_reg = {u'О':'absent', u'П':'present', u'Р':'manually_registered'}
+    tr_reg = {'О':'absent', 'П':'present', 'Р':'manually_registered'}
     tr_vote = {'+':'yes', '-':'no', '=':'abstain', '0':'absent'}
 
-    book = xlrd.open_workbook(filename, logfile=excel_warnings)
-    sheet = book.sheet_by_index(0)
+    sheet = xlsopen(filename)
     cols = sheet.ncols
     rows = sheet.nrows
 
@@ -85,10 +132,10 @@ def parse_excel_by_name(filename):
         elif all(v in tr_vote.keys() for v in values):
             vote_sessions.append([tr_vote[v] for v in values])
         elif all(v=='' for v in values):
-            logger_excel.warning("Empty column found in the by_names excell file. Skipping it.")
+            logger_excel.warning("Empty column %s found in the by_names excell file. Skipping it."%col)
         else:
-            logger_excel.error("Strange column found in the by_names excell file. Skipping it.")
-    vote_sessions = zip(*vote_sessions)
+            logger_excel.error("Strange column %s found in the by_names excell file. Skipping it."%col)
+    vote_sessions = list(zip(*vote_sessions))
 
     if len(reg_sessions) > 1:
         logger_excel.warning("There are more than one registration for this stenogram.")
@@ -99,7 +146,7 @@ def parse_excel_by_name(filename):
 
 
 def parse_excel_by_party(filename):
-    u"""
+    """
     Parse excel files with vote statistics by party.
 
     One excel file per stenogram.
@@ -114,8 +161,7 @@ def parse_excel_by_party(filename):
     - After this line, there are two lines we don't care about, and the next
     parties_count consecutive lines contain the vote/presence statistics by party.
     """
-    book = xlrd.open_workbook(filename, logfile=excel_warnings)
-    sheet = book.sheet_by_index(0)
+    sheet = xlsopen(filename)
     rows = sheet.nrows
     sessions = []
     assert registration_marker in sheet.cell_value(rowx=1,colx=0), "No registration marker"
@@ -125,16 +171,15 @@ def parse_excel_by_party(filename):
     parties_count = 0
     while row < rows:
         cell = sheet.cell_value(rowx=row,colx=0)
-        if vote_marker in cell:
+        if vote_marker in cell or registration_marker in cell: # Some stenograms have more than one registrations
             break
-        if 'НЕЗ' in cell:
+        if 'НЕЗ' in cell: # Not all stenograms include a complete list of parties (or list totals for independents)
             parties_count += 1
             break
         row += 1
         parties_count += 1
     else:
-        logger_to_db.error('Could not reliably find parties_count in %s'%filename)
-        raise ValueError('Could not reliably find parties_count')
+        logger_to_db.info("Only a single registration and no votes detected in party xls file %s"%filename)
     row = 0
     while row < rows:
         first = sheet.cell_value(rowx=row, colx=0)
@@ -150,7 +195,7 @@ def parse_excel_by_party(filename):
             reg_by_party_dict = per_party_dict
         elif vote_marker in first:
             description = first.split(vote_marker)[-1].strip()
-            time, description = description.split(u'по тема')
+            time, description = description.split('по тема')
             time = datetime.datetime.strptime(time[-6:], '%H:%M ')
             description = description.strip()
             row += 2
@@ -165,6 +210,7 @@ def parse_excel_by_party(filename):
                 votes_by_party_dict[party] = vote_stats_per_party_tuple(yes, no, abstained, total)
             sessions.append(session_tuple(description, time, None, votes_by_party_dict))
         row += 1
+    sheet.close()
     return reg_by_party_dict, sessions
 
 
@@ -174,18 +220,26 @@ def parse_excel_by_party(filename):
 logger_to_db = logging.getLogger('stenograms_to_db')
 
 
-cur.execute("""SELECT original_url FROM stenograms""")
-urls_already_in_db = set(_[0] for _ in cur.fetchall())
 stenogram_IDs = []
 assemblies_and_ids = [(7,41),(50,42),(51,43),(52,44)] # XXX Hardcoded values
-all_parties = set()
 for internal_id, assembly_number in assemblies_and_ids:
     stenogram_IDs += [(i, 'https://www.parliament.bg/bg/plenaryst/ns/%d/ID/'%internal_id+i)
                       for i in map(str.strip, open('craw_data/IDs_plenary_stenograms_%d'%assembly_number).readlines())]
 
 
+cur.execute("""SELECT original_url FROM stenograms""")
+urls_already_in_db = set(_[0] for _ in cur.fetchall())
+
+cur.execute("""SELECT party_name FROM parties""")
+forces_already_in_db = set(_[0] for _ in cur.fetchall())
+all_parties = set(forces_already_in_db)
+logger_to_db.info("Parties already in db %s" % all_parties)
+
 for i, (ID, original_url) in enumerate(stenogram_IDs):
     if original_url in urls_already_in_db:
+        continue
+    if ID == '5660': # XXX Workaround malformated html file: fixed in 5661.
+        logger_workaround.warning('Workaround for ID 5660.')
         continue
 
     problem_by_name = False
@@ -204,32 +258,61 @@ for i, (ID, original_url) in enumerate(stenogram_IDs):
 
     try:
         filename = './craw_data/stenograms/%s-%s-g.xls'%(ID,date_string)
-        reg_by_party_dict, sessions = parse_excel_by_party(filename)
+        if not os.path.isfile(filename):
+            filename += 'x'
+        if not os.path.isfile(filename):
+            if not parser.votes_indices:
+                logger_to_db.info("No party excel file was found for ID %s because no votes happened according to stenogram."%(ID))
+            else:
+                logger_to_db.error("No party xls file for ID %s - check it was downloaded"%ID)
+                problem_by_party = True
+        else:
+            reg_by_party_dict, sessions = parse_excel_by_party(filename)
+            # Check for new parties
+            size = len(all_parties)
+            old_parties = set(all_parties)
+            all_parties.update(set(reg_by_party_dict.keys()))
+            if size!=len(all_parties):
+                new_parties = all_parties-old_parties
+                logger_to_db.info("Detected new parties %s"%new_parties)
+                cur.executemany("""INSERT INTO parties VALUES (%s)""",
+                                [(_,) for _ in new_parties])
     except Exception as e:
-        logger_to_db.error("No party excel file was found for ID %s due to %s"%(ID,str(e)))
+        logger_to_db.error("Problem with party excel file ID %s due to %s"%(ID,repr(e)))
         problem_by_party = True
-
-    from pprint import pprint
-    #pprint(reg_by_party_dict)
-    size = len(all_parties)
-    all_parties.update(set(reg_by_party_dict.keys()))
-    print('\r',i+1,'      ',end='',flush=True)
-    if size!=len(all_parties):
-        print()
-        pprint(all_parties)
-        print()
-    continue
 
     try:
         filename = './craw_data/stenograms/%s-%s-i.xls'%(ID,date_string)
         if ID == '2766': # XXX Workaround malformated excel file.
             logger_workaround.warning('Using the workaround for ID 2766.')
-            mp_names, mp_parties, mp_reg_session, mp_vote_sessions = parse_excel_by_name('workarounds/iv050712_ID2766_line32-33_workaround.xls')
+            filename = 'workarounds/iv050712_ID2766_line32-33_workaround.xls'
+        if not os.path.isfile(filename):
+            filename += 'x'
+        if not os.path.isfile(filename):
+            if not parser.votes_indices:
+                logger_to_db.info("No MP name excel file was found for ID %s because no votes happened according to stenogram."%(ID))
+            else:
+                logger_to_db.error("No MP name xls file for ID %s - check it was downloaded"%ID)
+                problem_by_name = True
         else:
             mp_names, mp_parties, mp_reg_session, mp_vote_sessions = parse_excel_by_name(filename)
     except Exception as e:
-        logger_to_db.error("No MP name excel file was found for ID %s due to %s"%(ID,str(e)))
+        logger_to_db.error("Problem with MP name excel file ID %s due to %s"%(ID,repr(e)))
         problem_by_name = True
+
+    if parser.votes_indices and not (problem_by_name or problem_by_party):
+        if len(sessions) != len(parser.votes_indices):
+            logger_to_db.warning("The detected votes in the stenogram text do not match the votes from the parties xls file")
+        if mp_vote_sessions:
+            if len(mp_vote_sessions[0]) != len(parser.votes_indices):
+                logger_to_db.warning("The detected votes in the stenogram text do not match the votes from the MP xls file")
+            if len(sessions) != len(mp_vote_sessions[0]):
+                logger_to_db.error("The detected sessions in the MP xls file do not match the sessions from the parties xls file")
+        else:
+            if parser.votes_indices:
+                logger_to_db.warning("The detected votes in the stenogram text do not match the votes from the MP xls file")
+            if sessions:
+                logger_to_db.error("The detected sessions in the MP xls file do not match the sessions from the parties xls file")
 
 
     if problem_by_name or problem_by_party:

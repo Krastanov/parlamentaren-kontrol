@@ -33,12 +33,14 @@ party_dict = {
     'ПП "Атака"'                               : 'АТАКА',
     'Коалиция "Атака"'                         : 'АТАКА',
     'КП БЪЛГАРИЯ БЕЗ ЦЕНЗУРА'                  : 'ББЦ',
-    'БДЦ'                                      : 'БДЦ',         #Present in xls# Seems to have sprung out of ББЦ
-    'БДЦНС'                                    : 'БДЦНС',       #Present in xls# Seems to have sprung out of ББЦ
-    'БСП за БЪЛГАРИЯ'                          : 'БСП',#'ПГБСП',               # This one has arbitrary changing name in stenograms
-    'ПГБСП'                                    : 'БСП',#'ПГБСП',#Present in xls# This one has arbitrary changing name in stenograms
-    'БСП лява България'                        : 'БСП',#'БСПЛБ',               # This one has arbitrary changing name in stenograms
-    'БСПЛБ'                                    : 'БСП',#'БСПЛБ',#Present in xls# This one has arbitrary changing name in stenograms
+    'ББЦ'                                      : 'ББЦ',
+    'БДЦ'                                      : 'БДЦ',
+    'БДЦНС'                                    : 'БДЦНС',
+    'БСП'                                      : 'БСП',
+    'БСП за БЪЛГАРИЯ'                          : 'БСПЗБ',
+    'ПГБСП'                                    : 'БСПЗБ',
+    'БСП лява България'                        : 'БСПЛБ',
+    'БСПЛБ'                                    : 'БСПЛБ',
     'ВОЛЯ'                                     : 'ВОЛЯ',
     'ПП ГЕРБ'                                  : 'ГЕРБ',
     'ПП „ГЕРБ“'                                : 'ГЕРБ',

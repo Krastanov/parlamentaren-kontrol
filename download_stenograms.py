@@ -44,6 +44,7 @@ for i, (ID, original_url) in enumerate(stenogram_IDs):
         if not os.path.isfile(filename):
             time.sleep(1+random.uniform(1,3))
             wfilename = re.search(r"/pub/StenD/(\d*iv%s.xls[x]?)" % date_string, complete_stenogram_page).groups()[0]
+            if wfilename.endswith('.xlsx'): filename += 'x'
             by_name_web = urlopen("https://www.parliament.bg/pub/StenD/%s" % wfilename)
             by_name_temp = open(filename, 'wb')
             by_name_temp.write(by_name_web.read())
@@ -59,6 +60,7 @@ for i, (ID, original_url) in enumerate(stenogram_IDs):
         if not os.path.isfile(filename):
             time.sleep(1+random.uniform(1,3))
             wfilename = re.search(r"/pub/StenD/(\d*gv%s.xls[x]?)" % date_string, complete_stenogram_page).groups()[0]
+            if wfilename.endswith('.xlsx'): filename += 'x'
             by_party_web = urlopen("https://www.parliament.bg/pub/StenD/%s" % wfilename)
             by_party_temp = open(filename, 'wb')
             by_party_temp.write(by_party_web.read())

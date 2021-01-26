@@ -72,8 +72,10 @@ for i in all_mps:
         continue
     # XXX Workarounds
     # Adding missing party names
-    if i == 1136:
+    if i in [1136, 2142,]:
         force = 'ГЕРБ'
+    if name == 'ДЕНИЦА ЗЛАТКОВА ЗЛАТЕВА':
+        name = 'ДЕНИЦА ЗЛАТКОВА КАРАДЖОВА'
     # XXX End of Workarounds.
     assembly = int(assembly[:2])
     try:

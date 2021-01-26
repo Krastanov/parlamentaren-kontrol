@@ -11,6 +11,6 @@ console.setFormatter(logging.Formatter(fmt_string))
 logging.getLogger('').addHandler(console)
 
 logging.captureWarnings(True)
-warnings.formatwarning = lambda *args: args[0].message.strip().replace("\n", "")
+warnings.formatwarning = lambda *args: (args[0].message if hasattr(args[0],'message') else str(args)).strip().replace("\n", "")
 
 logger_workaround = logging.getLogger('workaround')

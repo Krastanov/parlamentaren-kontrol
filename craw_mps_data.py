@@ -87,9 +87,8 @@ for i in all_mps:
     assembly_list.append(assembly)
     dob_list.append(dob)
 
-
-#print(set(assembly_list))
-#print(set(forces_list))
+logger_mps.info('The assemblies seen in this dataset %s'%set(assembly_list))
+logger_mps.info('The parties seen in this dataset %s'%set(forces_list))
 
 # Check that names are unique in each assembly
 for assembly in set(assembly_list):
@@ -119,7 +118,6 @@ else:
 
 # This skips old emails # TODO include old emails
 dict_name_mail = dict(list(zip(names_list, mails_list)))
-
 
 cur.execute("""SELECT parliament FROM parliaments""")
 parliaments_already_in_db = set(_[0] for _ in cur.fetchall())

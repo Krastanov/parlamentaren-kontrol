@@ -1,37 +1,13 @@
-# -*- coding: utf-8 -*-
 import datetime
 import re
 
-import bs4
 import xlrd
 
 from pk_db import db, cur
 from pk_logging import logging, logger_workaround
 from pk_namedtuples import *
-from pk_tools import urlopen, canonical_party_name
-
-
-##############################################################################
-# HTML Parsing
-##############################################################################
-logger_html = logging.getLogger('html_parser')
-
-
-class StenogramsHTMLParser(bs4.BeautifulSoup):
-    def __init__(self, text):
-        super(StenogramsHTMLParser, self).__init__(text)
-
-        self.date = datetime.datetime.strptime(self.find('div', class_='dateclass').string.strip(), '%d/%m/%Y')
-
-        self.data_list = list(self.find('div', class_='markcontent').stripped_strings)
-
-        self.votes_indices = []
-        how_many_have_voted_marker = u'Гласувал[и]?[ ]*\d*[ ]*народни[ ]*представители:'
-        # The above marker regex must permit a number of spelling errors that can be present in the stenograms.
-        for i, l in enumerate(self.data_list):
-            if re.search(how_many_have_voted_marker, l):
-                self.votes_indices.append(i)
-
+from pk_tools import urlopen, canonical_party_name, StenogramsHTMLParser
+canonical_party_name = lambda a:a
 
 ##############################################################################
 # Excel Parsing
@@ -50,8 +26,6 @@ excel_warnings = ExcelWarnings()
 
 registration_marker = u'РЕГИСТРАЦИЯ'
 vote_marker = u'ГЛАСУВАНЕ'
-parties_count = 6
-
 
 def parse_excel_by_name(filename):
     """
@@ -133,7 +107,7 @@ def parse_excel_by_party(filename):
     Assumptions
     ===========
 
-    - There is a total of six parties (see parties_count above)
+    - The number of parties per vote is always the same.
     - For each session, there is a line containing either `vote_marker` or
     `registration_marker`, and that gives the kind of the session. There is
     only one registration per stenogram.
@@ -144,6 +118,23 @@ def parse_excel_by_party(filename):
     sheet = book.sheet_by_index(0)
     rows = sheet.nrows
     sessions = []
+    assert registration_marker in sheet.cell_value(rowx=1,colx=0), "No registration marker"
+    assert 'ПГ' in sheet.cell_value(rowx=2,colx=0), "No ПГ marker"
+    assert 'Общо' in sheet.cell_value(rowx=3,colx=0), "No Общо marker"
+    row = 4
+    parties_count = 0
+    while row < rows:
+        cell = sheet.cell_value(rowx=row,colx=0)
+        if vote_marker in cell:
+            break
+        if 'НЕЗ' in cell:
+            parties_count += 1
+            break
+        row += 1
+        parties_count += 1
+    else:
+        logger_to_db.error('Could not reliably find parties_count in %s'%filename)
+        raise ValueError('Could not reliably find parties_count')
     row = 0
     while row < rows:
         first = sheet.cell_value(rowx=row, colx=0)
@@ -180,56 +171,65 @@ def parse_excel_by_party(filename):
 ##############################################################################
 # Parse and save to disc.
 ##############################################################################
-logger_to_db = logging.getLogger('to_db')
+logger_to_db = logging.getLogger('stenograms_to_db')
 
 
 cur.execute("""SELECT original_url FROM stenograms""")
 urls_already_in_db = set(_[0] for _ in cur.fetchall())
-stenogram_IDs = [(i, u'http://www.parliament.bg/bg/plenaryst/ns/7/ID/'+i)
-                 for i in map(str.strip, open('data/IDs_plenary_stenograms_41').readlines())]
-stenogram_IDs += [(i, u'http://www.parliament.bg/bg/plenaryst/ns/50/ID/'+i)
-                  for i in map(str.strip, open('data/IDs_plenary_stenograms_42').readlines())]
-for i, (ID, original_url) in enumerate(stenogram_IDs[-5:]):
+stenogram_IDs = []
+assemblies_and_ids = [(7,41),(50,42),(51,43),(52,44)] # XXX Hardcoded values
+all_parties = set()
+for internal_id, assembly_number in assemblies_and_ids:
+    stenogram_IDs += [(i, 'https://www.parliament.bg/bg/plenaryst/ns/%d/ID/'%internal_id+i)
+                      for i in map(str.strip, open('craw_data/IDs_plenary_stenograms_%d'%assembly_number).readlines())]
+
+
+for i, (ID, original_url) in enumerate(stenogram_IDs):
+    if original_url in urls_already_in_db:
+        continue
+
     problem_by_name = False
     problem_by_party = False
     logger_to_db.info("Parsing stenogram %s - %d of %d." % (ID, i+1, len(stenogram_IDs)))
 
     try:
-        f = urlopen(original_url)
-        complete_stenogram_page = f.read().decode('utf-8')
+        filename = './craw_data/stenograms/%s.html'%ID
+        f = open(filename)
+        complete_stenogram_page = f.read()
         parser = StenogramsHTMLParser(complete_stenogram_page)
         date_string = parser.date.strftime('%d%m%y')
     except Exception as e:
         logger_to_db.error("Parsing problem with ID %s. %s"%(ID,str(e)))
         continue
 
+    try:
+        filename = './craw_data/stenograms/%s-%s-g.xls'%(ID,date_string)
+        reg_by_party_dict, sessions = parse_excel_by_party(filename)
+    except Exception as e:
+        logger_to_db.error("No party excel file was found for ID %s due to %s"%(ID,str(e)))
+        problem_by_party = True
+
+    from pprint import pprint
+    #pprint(reg_by_party_dict)
+    size = len(all_parties)
+    all_parties.update(set(reg_by_party_dict.keys()))
+    print('\r',i+1,'      ',end='',flush=True)
+    if size!=len(all_parties):
+        print()
+        pprint(all_parties)
+        print()
+    continue
 
     try:
-        filename = re.search(r"/pub/StenD/(\d*iv%s.xls)" % date_string, complete_stenogram_page).groups()[0]
-        by_name_web = urlopen("http://www.parliament.bg/pub/StenD/%s" % filename)
-        by_name_temp = open('/tmp/temp.excel', 'wb')
-        by_name_temp.write(by_name_web.read())
-        by_name_temp.close()
+        filename = './craw_data/stenograms/%s-%s-i.xls'%(ID,date_string)
         if ID == '2766': # XXX Workaround malformated excel file.
             logger_workaround.warning('Using the workaround for ID 2766.')
             mp_names, mp_parties, mp_reg_session, mp_vote_sessions = parse_excel_by_name('workarounds/iv050712_ID2766_line32-33_workaround.xls')
         else:
-            mp_names, mp_parties, mp_reg_session, mp_vote_sessions = parse_excel_by_name('/tmp/temp.excel')
+            mp_names, mp_parties, mp_reg_session, mp_vote_sessions = parse_excel_by_name(filename)
     except Exception as e:
         logger_to_db.error("No MP name excel file was found for ID %s due to %s"%(ID,str(e)))
         problem_by_name = True
-
-
-    try:
-        filename = re.search(r"/pub/StenD/(\d*gv%s.xls)" % date_string, complete_stenogram_page).groups()[0]
-        by_party_web = urlopen("http://www.parliament.bg/pub/StenD/%s" % filename)
-        by_party_temp = open('/tmp/temp.excel', 'wb')
-        by_party_temp.write(by_party_web.read())
-        by_party_temp.close()
-        reg_by_party_dict, sessions = parse_excel_by_party('/tmp/temp.excel')
-    except Exception as e:
-        logger_to_db.error("No party excel file was found for ID %s due to %s"%(ID,str(e)))
-        problem_by_party = True
 
 
     if problem_by_name or problem_by_party:

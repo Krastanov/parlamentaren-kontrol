@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
+import datetime
 import itertools
 import re
 import urllib.request, urllib.error, urllib.parse
+
+import bs4
 import unidecode as _unidecode
 
 from pk_db import db
@@ -11,23 +14,32 @@ sortgroupby_list = lambda l, kf: groupby_list(sorted(l, key=kf), kf)
 
 def urlopen(url, retry=3):
     """``urllib2.urlopen`` with retry"""
+    error = None
     for i in range(retry):
         try:
-            return urllib.request.urlopen(url)
+            opener = urllib.request.build_opener()
+            opener.addheader = [('User-Agent', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0')]
+            return opener.open(url)
         except urllib.error.HTTPError as e:
-            pass
-    raise e
+            error = e
+    raise error
 
 
 party_dict = {
-    # for the xml parser
+    # for the xml MP parser, based on the names seen in the xls stenograms
     'Коалиция АБВ - (Алтернатива за българско възраждане)' : 'АБВ',
     'Партия "Атака"'                           : 'АТАКА',
     'ПП „Атака“'                               : 'АТАКА',
     'ПП "Атака"'                               : 'АТАКА',
     'Коалиция "Атака"'                         : 'АТАКА',
-    'БСП за БЪЛГАРИЯ'                          : 'БСП',
-    'БСП лява България'                        : 'БСП',
+    'КП БЪЛГАРИЯ БЕЗ ЦЕНЗУРА'                  : 'ББЦ',
+    'БДЦ'                                      : 'БДЦ',         #Present in xls# Seems to have sprung out of ББЦ
+    'БДЦНС'                                    : 'БДЦНС',       #Present in xls# Seems to have sprung out of ББЦ
+    'БСП за БЪЛГАРИЯ'                          : 'БСП',#'ПГБСП',               # This one has arbitrary changing name in stenograms
+    'ПГБСП'                                    : 'БСП',#'ПГБСП',#Present in xls# This one has arbitrary changing name in stenograms
+    'БСП лява България'                        : 'БСП',#'БСПЛБ',               # This one has arbitrary changing name in stenograms
+    'БСПЛБ'                                    : 'БСП',#'БСПЛБ',#Present in xls# This one has arbitrary changing name in stenograms
+    'ВОЛЯ'                                     : 'ВОЛЯ',
     'ПП ГЕРБ'                                  : 'ГЕРБ',
     'ПП „ГЕРБ“'                                : 'ГЕРБ',
     'ПП "ГЕРБ"'                                : 'ГЕРБ',
@@ -38,22 +50,22 @@ party_dict = {
     'ДПС (ДПС – Либерален съюз – Евророма)'    : 'ДПС',
     'ДПС - Движение за права и свободи'        : 'ДПС',
     'ПП "Движение за права и свободи"'         : 'ДПС',
-    '"Синята коалиция"'                        : 'СК',
     '"Коалиция за България"'                   : 'КБ',
     'КП „Коалиция за България“'                : 'КБ',
     'КП "Коалиция за България"'                : 'КБ',
-    '"Ред, законност и справедливост"'         : 'РЗС',
-    'Коалиция "Български Народен Съюз"'        : 'БНС,',
-    '"Демократи за Силна България"'            : 'ДСБ',
     'ОБЕДИНЕНИ ПАТРИОТИ - НФСБ, АТАКА и ВМРО'  : 'ОП',
+    'ПАТРИОТИЧЕН ФРОНТ - НФСБ и ВМРО'          : 'ПФ',
+    'РЕФОРМАТОРСКИ БЛОК - БЗНС, ДБГ, ДСБ, НПСД, СДС' : 'РБ',
+    '"Ред, законност и справедливост"'         : 'РЗС',
+    '"Синята коалиция"'                        : 'СК',
+
+    # These are not present in XLS stenograms
+    'Коалиция "Български Народен Съюз"'        : 'БНС',
+    '"Демократи за Силна България"'            : 'ДСБ',
     'Коалиция "Обединени Демократични Сили"'   : 'ОДС',
     '"Обединени демократични сили – СДС, Народен съюз: БЗНС-Народен съюз и Демократическа партия, БСДП, Национално ДПС"' : 'ОДС',
-    'РЕФОРМАТОРСКИ БЛОК - БЗНС, ДБГ, ДСБ, НПСД, СДС' : 'РЕФОРМ',
     '"Национално движение Симеон Втори"'       : 'НДСВ',
-    'ПАТРИОТИЧЕН ФРОНТ - НФСБ и ВМРО'          : 'ПФ',
-    'КП БЪЛГАРИЯ БЕЗ ЦЕНЗУРА'                  : 'ББЦ',
-    'ВОЛЯ'                                     : 'ВОЛЯ',
-    # for the excel parser
+
     'НЕЗ': 'независим',
 }
 party_dict.update(dict(zip(party_dict.values(),party_dict.values())))
@@ -113,3 +125,22 @@ def annotate_mps(html_text):
         if n:
             divs.add(div)
     return html_text, divs
+
+##############################################################################
+# HTML Parsing
+##############################################################################
+class StenogramsHTMLParser(bs4.BeautifulSoup):
+    def __init__(self, text):
+        super(StenogramsHTMLParser, self).__init__(text, 'html.parser')
+
+        self.date = datetime.datetime.strptime(self.find('div', class_='dateclass').string.strip(), '%d/%m/%Y')
+
+        self.data_list = list(self.find('div', class_='markcontent').stripped_strings)
+
+        self.votes_indices = []
+        how_many_have_voted_marker = 'Гласувал[и]?[ ]*\d*[ ]*народни[ ]*представители:'
+        # The above marker regex must permit a number of spelling errors that can be present in the stenograms.
+        for i, l in enumerate(self.data_list):
+            if re.search(how_many_have_voted_marker, l):
+                self.votes_indices.append(i)
+

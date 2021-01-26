@@ -5,7 +5,7 @@ mkdir generated_html
 echo "Creating empty database"
 sh create_db.sh
 echo "Download MPs details"
-python download_mps_data.py
+# TODO for i in (seq 1 2984); echo $i; wget -q https://www.parliament.bg/export.php/bg/csv/MP/$i; sleep 0.2; end;
 echo "Parse MPs details"
 python craw_mps_data.py
 echo "Update all IDs of plenary stenograms."
